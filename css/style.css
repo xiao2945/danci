@@ -227,14 +227,32 @@ section h2 {
     background: #38a169;
 }
 
+.btn-warning {
+    background: #718096;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #4a5568;
+}
+
+.btn-info {
+    background: #718096;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #4a5568;
+}
+
 .btn-outline {
     background: transparent;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #38a169;
+    border: 2px solid #38a169;
 }
 
 .btn-outline:hover {
-    background: #667eea;
+    background: #38a169;
     color: white;
 }
 
