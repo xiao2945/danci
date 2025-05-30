@@ -481,18 +481,12 @@ section h2 {
 }
 
 .export-actions-container {
-    margin-top: 20px;
     display: flex;
-    justify-content: flex-start;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
-    min-height: 50px;
     white-space: nowrap;
-    overflow: hidden;
 }
 
 .batch-operations-inline {
