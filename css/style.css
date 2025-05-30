@@ -497,6 +497,8 @@ section h2 {
     gap: 12px;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-start;
+    flex: 1;
 }
 
 .export-buttons {
@@ -504,6 +506,8 @@ section h2 {
     gap: 12px;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
 }
 
 /* 响应式设计：小屏幕时垂直排列 */
@@ -518,11 +522,13 @@ section h2 {
     .batch-operations-inline {
         justify-content: center;
         gap: 15px;
+        flex: none;
     }
 
     .export-buttons {
         justify-content: center;
         gap: 15px;
+        flex: none;
     }
 }
 
