@@ -251,8 +251,8 @@ section h2 {
     flex: 0 0 auto;
 }
 
-.action-buttons .btn-primary {
-    margin-right: 15px;
+.action-buttons .btn:first-child {
+    margin-right: 5px;
 }
 
 .action-buttons .btn-secondary {
@@ -503,7 +503,7 @@ section h2 {
 }
 
 .batch-operations-inline .btn:last-child {
-    margin-right: 15px;
+    margin-right: 5px;
 }
 
 /* 响应式设计：小屏幕时垂直排列 */
