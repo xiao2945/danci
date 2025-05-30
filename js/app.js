@@ -467,10 +467,12 @@ class WordFilterApp {
             const filename = `filtered_words_${ruleName}_${timestamp}`;
 
             // 准备导出信息
+            const rule = this.ruleEngine.getRule(ruleName);
             const exportInfo = {
                 sourceFile: this.currentFile ? this.currentFile.name : '未知文件',
                 totalWords: this.currentWords.length,
                 ruleName: this.ruleEngine.getRuleName(ruleName) || ruleName,
+                ruleComment: rule ? rule.comment : '',
                 filteredCount: this.filteredWords.length,
                 deletedCount: this.deletedWords.size,
                 exportedCount: activeWords.length

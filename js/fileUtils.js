@@ -361,7 +361,15 @@ class FileUtils {
 
         // 添加筛选规则信息
         if (exportInfo.ruleName && exportInfo.filteredCount !== undefined) {
-            lines.push(`筛选规则：${exportInfo.ruleName} (筛选结果：${exportInfo.filteredCount}个单词)`);
+            let ruleDisplayName = exportInfo.ruleName;
+
+            // 如果有注释，在规则名后面加括号显示截取的注释
+            if (exportInfo.ruleComment && exportInfo.ruleComment.trim()) {
+                const truncatedComment = exportInfo.ruleComment.length > 20 ? exportInfo.ruleComment.substring(0, 20) + '...' : exportInfo.ruleComment;
+                ruleDisplayName += ` (${truncatedComment})`;
+            }
+
+            lines.push(`筛选规则：${ruleDisplayName} (筛选结果：${exportInfo.filteredCount}个单词)`);
         }
 
         // 添加删除统计信息
