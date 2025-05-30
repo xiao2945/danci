@@ -479,6 +479,46 @@ section h2 {
     font-size: 0.9rem;
 }
 
+.export-actions-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.batch-operations-inline {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* 响应式设计：小屏幕时垂直排列 */
+@media (max-width: 768px) {
+    .export-actions-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .batch-operations-inline {
+        justify-content: center;
+    }
+
+    .export-buttons {
+        justify-content: center;
+    }
+}
+
 .download-container {
     text-align: center;
 }

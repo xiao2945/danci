@@ -410,8 +410,7 @@ class WordFilterApp {
 
         container.innerHTML = html;
 
-        // 添加批量操作按钮
-        this.addBatchOperationButtons(container);
+        // 批量操作按钮现在在导出区域，这里不再添加
     }
 
     /**
@@ -445,6 +444,9 @@ class WordFilterApp {
     showExportOptions() {
         const exportContainer = document.getElementById('exportContainer');
         exportContainer.style.display = this.filteredWords.length > 0 ? 'block' : 'none';
+
+        // 添加批量操作按钮到导出区域
+        this.addBatchOperationButtonsInline();
     }
 
     /**
@@ -653,7 +655,27 @@ class WordFilterApp {
     }
 
     /**
-     * 添加批量操作按钮
+     * 添加批量操作按钮到导出区域
+     */
+    addBatchOperationButtonsInline() {
+        const batchContainer = document.getElementById('batchOperationsInline');
+        if (!batchContainer) return;
+
+        // 清空之前的按钮
+        batchContainer.innerHTML = '';
+
+        // 只有在有筛选结果时才显示批量操作按钮
+        if (this.filteredWords.length > 0) {
+            batchContainer.innerHTML = `
+                <button class="btn btn-warning" onclick="app.deleteAllWords()">全部删除</button>
+                <button class="btn btn-info" onclick="app.restoreAllWords()">全部恢复</button>
+                <button class="btn btn-secondary" onclick="app.clearDeleted()">清除已删除</button>
+            `;
+        }
+    }
+
+    /**
+     * 添加批量操作按钮（保留原方法以防其他地方使用）
      * @param {HTMLElement} container - 容器元素
      */
     addBatchOperationButtons(container) {
@@ -678,6 +700,7 @@ class WordFilterApp {
         }
         this.updateResultStats();
         this.displayWordList();
+        this.addBatchOperationButtonsInline(); // 更新按钮状态
         this.showMessage('已删除所有单词', 'info');
     }
 
@@ -688,6 +711,7 @@ class WordFilterApp {
         this.deletedWords.clear();
         this.updateResultStats();
         this.displayWordList();
+        this.addBatchOperationButtonsInline(); // 更新按钮状态
         this.showMessage('已恢复所有单词', 'info');
     }
 
@@ -711,6 +735,7 @@ class WordFilterApp {
         // 更新显示
         this.updateResultStats();
         this.displayWordList();
+        this.addBatchOperationButtonsInline(); // 更新按钮状态
 
         this.showMessage(`已清除 ${deletedCount} 个已删除的单词`, 'success');
     }
