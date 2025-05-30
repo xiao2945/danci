@@ -493,23 +493,12 @@ section h2 {
     white-space: nowrap;
 }
 
-.batch-operations-inline {
-    display: flex;
-    gap: 10px;
+#batchOperationsInline {
+    display: contents;
+}
+
+#previewActionButtons .btn:nth-child(4) {
     margin-right: 5px;
-}
-
-.batch-operations-inline .btn {
-    flex: 0 0 auto;
-}
-
-.export-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.export-buttons .btn {
-    flex: 0 0 auto;
 }
 
 /* 响应式设计：小屏幕时垂直排列 */
