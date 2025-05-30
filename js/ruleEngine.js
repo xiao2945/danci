@@ -63,6 +63,7 @@ class RuleEngine {
         const lines = ruleText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
         let ruleName = '';
+        let ruleComment = '';
         const localSets = new Map();
         let specificRule = '';
         let displayRule = '';
@@ -73,6 +74,9 @@ class RuleEngine {
             if (line.startsWith('#')) {
                 // 新格式：以#开头的规则名称
                 ruleName = line.substring(1).trim();
+            } else if (line.startsWith('//')) {
+                // 规则注释
+                ruleComment = line.substring(2).trim();
             } else if (line.startsWith('规则名称:') || line.startsWith('name:')) {
                 // 兼容旧格式
                 ruleName = line.split(':')[1].trim();
@@ -104,6 +108,7 @@ class RuleEngine {
 
         return {
             name: ruleName,
+            comment: ruleComment,
             localSets: localSets,
             specificRule: specificRule,
             displayRule: displayRule
@@ -323,6 +328,7 @@ class RuleEngine {
 
         savedRules[rule.name] = {
             name: rule.name,
+            comment: rule.comment || '',
             localSets: serializedLocalSets,
             specificRule: rule.specificRule,
             displayRule: rule.displayRule
@@ -389,6 +395,7 @@ class RuleEngine {
 
             const rule = {
                 name: ruleData.name,
+                comment: ruleData.comment || '',
                 localSets: localSets,
                 specificRule: ruleData.specificRule,
                 displayRule: ruleData.displayRule
@@ -433,6 +440,7 @@ class RuleEngine {
 
             const rule = {
                 name: ruleData.name,
+                comment: ruleData.comment || '',
                 localSets: localSets,
                 specificRule: ruleData.specificRule,
                 displayRule: ruleData.displayRule
@@ -550,26 +558,62 @@ class RuleEngine {
      */
     matchesCombinedRule(word, combinedRule, localSets) {
         // 移除开头的 !!
-        const ruleExpression = combinedRule.substring(2);
+        let ruleExpression = combinedRule.substring(2);
+
+        // 处理非操作符 "--"，转换为 "&& !"
+        ruleExpression = this.processNonOperator(ruleExpression);
 
         // 简化处理：支持基本的 && 和 || 运算
         if (ruleExpression.includes('&&')) {
             const parts = ruleExpression.split('&&');
             return parts.every(part => {
-                const ruleName = part.trim();
-                const referencedRule = this.getRule(ruleName);
-                return referencedRule && this.matchesRule(word, referencedRule);
+                const trimmedPart = part.trim();
+
+                // 处理否定操作
+                if (trimmedPart.startsWith('!')) {
+                    const ruleName = trimmedPart.substring(1).trim();
+                    const referencedRule = this.getRule(ruleName);
+                    return referencedRule ? !this.matchesRule(word, referencedRule) : true;
+                } else {
+                    const ruleName = trimmedPart;
+                    const referencedRule = this.getRule(ruleName);
+                    return referencedRule && this.matchesRule(word, referencedRule);
+                }
             });
         } else if (ruleExpression.includes('||')) {
             const parts = ruleExpression.split('||');
             return parts.some(part => {
-                const ruleName = part.trim();
-                const referencedRule = this.getRule(ruleName);
-                return referencedRule && this.matchesRule(word, referencedRule);
+                const trimmedPart = part.trim();
+
+                // 处理否定操作
+                if (trimmedPart.startsWith('!')) {
+                    const ruleName = trimmedPart.substring(1).trim();
+                    const referencedRule = this.getRule(ruleName);
+                    return referencedRule ? !this.matchesRule(word, referencedRule) : true;
+                } else {
+                    const ruleName = trimmedPart;
+                    const referencedRule = this.getRule(ruleName);
+                    return referencedRule && this.matchesRule(word, referencedRule);
+                }
             });
         }
 
         return false;
+    }
+
+    /**
+     * 处理非操作符 "--"，转换为 "&& !"
+     * @param {string} expression - 规则表达式
+     * @returns {string} 处理后的表达式
+     */
+    processNonOperator(expression) {
+        // 使用正则表达式匹配 "--" 操作符
+        // 格式：condition1 -- condition2
+        // 转换为：condition1 && !condition2
+        return expression.replace(
+            /(.*?)\s*--\s*(.*)/g,
+            '$1 && !$2'
+        );
     }
 
     /**

@@ -615,7 +615,11 @@
                             定义名称：CVC或CVCE<br>
                             定义集合：无（使用已定义规则）<br>
                             匹配模式：CVC模式或CVCE模式<br>
-                            排序方式：默认排序
+                            排序方式：默认排序<br>
+                            <strong>支持的操作符：</strong><br>
+                            • <span class="syntax-code">&&</span> - 逻辑与（同时满足两个条件）<br>
+                            • <span class="syntax-code">||</span> - 逻辑或（满足任一条件）<br>
+                            • <span class="syntax-code">--</span> - 非模式（满足前者但不满足后者）
                         </div>
                     </div>
                 </div>
@@ -651,6 +655,15 @@
 
 
 
+                    <!-- 规则注释输入框 -->
+                    <div class="rule-comment-section">
+                        <label for="ruleCommentInput"
+                            style="display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568;">规则注释（可选，最多60字符）：</label>
+                        <input type="text" id="ruleCommentInput" class="rule-comment-input"
+                            placeholder="// 在此输入规则注释，用于说明规则用途..." maxlength="60"
+                            style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; margin-bottom: 15px;">
+                    </div>
+
                     <textarea id="ruleEditor" class="rule-textarea" placeholder="在此输入规则定义...
 注意：
 - 集合定义仅在当前规则内有效
@@ -662,6 +675,7 @@
                         <button id="testRuleBtn" class="btn btn-secondary">测试规则</button>
                         <button id="clearRuleBtn" class="btn btn-outline">清空编辑器</button>
                         <button id="formatRuleBtn" class="btn btn-outline">格式化</button>
+
                     </div>
                 </div>
             </div>
@@ -813,6 +827,8 @@ ${setName}=={${setValues.join(',')}}`;
                     this.formatRule();
                 });
 
+
+
                 // 更新全局集合
                 document.getElementById('updateGlobalSetsBtn').addEventListener('click', () => {
                     this.updateGlobalSets();
@@ -841,6 +857,7 @@ ${setName}=={${setValues.join(',')}}`;
 
             saveRule() {
                 const ruleText = document.getElementById('ruleEditor').value.trim();
+                const ruleComment = document.getElementById('ruleCommentInput').value.trim();
 
                 if (!ruleText) {
                     this.showMessage('请输入规则内容', 'warning');
@@ -856,7 +873,16 @@ ${setName}=={${setValues.join(',')}}`;
                 }
 
                 try {
-                    const rule = this.ruleEngine.parseRule(ruleText);
+                    // 构建完整的规则文本（包含注释）
+                    let fullRuleText = ruleText;
+                    if (ruleComment) {
+                        // 在规则名称后添加注释行
+                        const ruleLines = ruleText.split('\n');
+                        ruleLines.splice(1, 0, `// ${ruleComment}`);
+                        fullRuleText = ruleLines.join('\n');
+                    }
+
+                    const rule = this.ruleEngine.parseRule(fullRuleText);
 
                     // 检查规则冲突
                     const conflicts = this.checkRuleConflicts(rule);
@@ -870,6 +896,7 @@ ${setName}=={${setValues.join(',')}}`;
                     this.ruleEngine.saveRule(rule);
                     this.loadSavedRules();
                     document.getElementById('ruleEditor').value = '';
+                    document.getElementById('ruleCommentInput').value = '';
 
                     this.showMessage(`规则 "${rule.name}" 保存成功`, 'success');
 
@@ -924,6 +951,9 @@ ${setName}=={${setValues.join(',')}}`;
 
                 document.getElementById('ruleEditor').value = formattedLines.join('\n');
             }
+
+            // 插入非操作符
+
 
             loadSavedRules() {
                 const container = document.getElementById('savedRulesContainer');
@@ -1012,7 +1042,9 @@ ${setName}=={${setValues.join(',')}}`;
                     ruleText += `\n${rule.displayRule}`;
                 }
 
+                // 填入规则文本和注释
                 document.getElementById('ruleEditor').value = ruleText;
+                document.getElementById('ruleCommentInput').value = rule.comment || '';
                 document.getElementById('ruleEditor').focus();
             }
 
@@ -1060,6 +1092,8 @@ ${setName}=={${setValues.join(',')}}`;
             // 创建规则项HTML
             createRuleItemHTML(ruleName, rule, isInGroup) {
                 const ruleText = this.reconstructRuleText(rule);
+                const commentHtml = rule.comment ? `<div class="rule-item-comment" style="font-size: 12px; color: #718096; font-style: italic; margin-top: 5px; padding: 4px 8px; background: #f7fafc; border-radius: 4px; border-left: 3px solid #667eea;">// ${rule.comment}</div>` : '';
+
                 return `
                     <div class="rule-item" draggable="true" data-rule-name="${ruleName}">
                         <div class="rule-item-header">
@@ -1069,6 +1103,7 @@ ${setName}=={${setValues.join(',')}}`;
                                 <button class="btn btn-small btn-secondary" onclick="ruleManager.deleteRule('${ruleName}')">删除</button>
                             </div>
                         </div>
+                        ${commentHtml}
                         <div class="rule-item-content">${ruleText}</div>
                     </div>
                 `;

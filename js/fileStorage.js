@@ -28,6 +28,7 @@ class FileStorageManager {
 
                 rulesData[name] = {
                     name: rule.name,
+                    comment: rule.comment || '',
                     localSets: serializedLocalSets,
                     specificRule: rule.specificRule,
                     displayRule: rule.displayRule

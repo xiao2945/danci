@@ -543,9 +543,18 @@ class WordFilterApp {
 
         // 添加规则选项
         ruleNames.forEach(name => {
+            const rule = this.ruleEngine.getRule(name);
             const option = document.createElement('option');
             option.value = name;
-            option.textContent = name;
+
+            // 显示规则名称和注释（如果有的话）
+            let displayText = name;
+            if (rule && rule.comment) {
+                const truncatedComment = rule.comment.length > 20 ? rule.comment.substring(0, 20) + '...' : rule.comment;
+                displayText += ` (${truncatedComment})`;
+            }
+
+            option.textContent = displayText;
             ruleSelect.appendChild(option);
         });
     }
