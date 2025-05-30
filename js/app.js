@@ -9,6 +9,7 @@ class WordFilterApp {
         this.currentWords = [];
         this.filteredWords = [];
         this.currentFile = null;
+        this.deletedWords = new Set(); // 存储已删除单词的索引
 
         this.initializeApp();
     }
@@ -250,6 +251,9 @@ class WordFilterApp {
             // 应用规则筛选
             this.filteredWords = this.ruleEngine.applyRule(this.currentWords, ruleName);
 
+            // 重置删除状态
+            this.deletedWords.clear();
+
             // 显示结果
             this.displayResults();
 
@@ -352,10 +356,12 @@ class WordFilterApp {
     updateResultStats() {
         const totalWords = this.currentWords.length;
         const filteredCount = this.filteredWords.length;
-        const filterRate = totalWords > 0 ? ((filteredCount / totalWords) * 100).toFixed(1) : 0;
+        const deletedCount = this.deletedWords.size;
+        const activeCount = filteredCount - deletedCount;
+        const filterRate = totalWords > 0 ? ((activeCount / totalWords) * 100).toFixed(1) : 0;
 
         document.getElementById('totalWords').textContent = totalWords;
-        document.getElementById('filteredWords').textContent = filteredCount;
+        document.getElementById('filteredWords').textContent = `${activeCount}${deletedCount > 0 ? ` (${deletedCount}已删除)` : ''}`;
         document.getElementById('filterRate').textContent = `${filterRate}%`;
     }
 
@@ -375,17 +381,37 @@ class WordFilterApp {
 
         let html = '';
         for (const [letter, words] of Object.entries(groupedWords)) {
+            // 计算未删除的单词数量
+            const activeWords = words.filter((word, index) => {
+                const globalIndex = this.filteredWords.indexOf(word);
+                return !this.deletedWords.has(globalIndex);
+            });
+
             html += `
                 <div class="word-group">
-                    <div class="group-title">${letter.toUpperCase()} (${words.length})</div>
+                    <div class="group-title">${letter.toUpperCase()} (${activeWords.length}/${words.length})</div>
                     <div class="word-list">
-                        ${words.map(word => `<div class="word-item">${word}</div>`).join('')}
+                        ${words.map((word, index) => {
+                const globalIndex = this.filteredWords.indexOf(word);
+                const isDeleted = this.deletedWords.has(globalIndex);
+                return `
+                                <div class="word-item ${isDeleted ? 'deleted' : ''}" data-index="${globalIndex}">
+                                    <span class="word-text">${word}</span>
+                                    <button class="delete-btn" onclick="app.toggleWordDelete(${globalIndex})" title="${isDeleted ? '恢复' : '删除'}">
+                                        ${isDeleted ? '↶' : '×'}
+                                    </button>
+                                </div>
+                            `;
+            }).join('')}
                     </div>
                 </div>
             `;
         }
 
         container.innerHTML = html;
+
+        // 添加批量操作按钮
+        this.addBatchOperationButtons(container);
     }
 
     /**
@@ -426,7 +452,9 @@ class WordFilterApp {
      * @param {string} format - 导出格式 ('txt' 或 'excel')
      */
     async exportResults(format) {
-        if (this.filteredWords.length === 0) {
+        const activeWords = this.getActiveWords();
+
+        if (activeWords.length === 0) {
             this.showMessage('没有可导出的结果', 'warning');
             return;
         }
@@ -441,16 +469,18 @@ class WordFilterApp {
                 sourceFile: this.currentFile ? this.currentFile.name : '未知文件',
                 totalWords: this.currentWords.length,
                 ruleName: this.ruleEngine.getRuleName(ruleName) || ruleName,
-                filteredCount: this.filteredWords.length
+                filteredCount: this.filteredWords.length,
+                deletedCount: this.deletedWords.size,
+                exportedCount: activeWords.length
             };
 
             if (format === 'txt') {
-                await this.fileUtils.exportToText(this.filteredWords, `${filename}.txt`, exportInfo);
+                await this.fileUtils.exportToText(activeWords, `${filename}.txt`, exportInfo);
             } else if (format === 'excel') {
-                await this.fileUtils.exportToExcel(this.filteredWords, `${filename}.xlsx`, exportInfo);
+                await this.fileUtils.exportToExcel(activeWords, `${filename}.xlsx`, exportInfo);
             }
 
-            this.showMessage(`结果已导出为 ${format.toUpperCase()} 文件`, 'success');
+            this.showMessage(`结果已导出为 ${format.toUpperCase()} 文件 (${activeWords.length}个单词)`, 'success');
 
         } catch (error) {
             if (error.name === 'AbortError') {
@@ -604,6 +634,93 @@ class WordFilterApp {
 
         // 显示预处理信息区域
         section.style.display = 'block';
+    }
+
+    /**
+     * 切换单词删除状态
+     * @param {number} index - 单词在filteredWords中的索引
+     */
+    toggleWordDelete(index) {
+        if (this.deletedWords.has(index)) {
+            this.deletedWords.delete(index);
+        } else {
+            this.deletedWords.add(index);
+        }
+
+        // 更新显示
+        this.updateResultStats();
+        this.displayWordList();
+    }
+
+    /**
+     * 添加批量操作按钮
+     * @param {HTMLElement} container - 容器元素
+     */
+    addBatchOperationButtons(container) {
+        const batchDiv = document.createElement('div');
+        batchDiv.className = 'batch-operations';
+        batchDiv.innerHTML = `
+            <div class="batch-buttons">
+                <button class="btn btn-warning" onclick="app.deleteAllWords()">全部删除</button>
+                <button class="btn btn-info" onclick="app.restoreAllWords()">全部恢复</button>
+                <button class="btn btn-secondary" onclick="app.clearDeleted()">清除已删除</button>
+            </div>
+        `;
+        container.appendChild(batchDiv);
+    }
+
+    /**
+     * 删除所有单词
+     */
+    deleteAllWords() {
+        for (let i = 0; i < this.filteredWords.length; i++) {
+            this.deletedWords.add(i);
+        }
+        this.updateResultStats();
+        this.displayWordList();
+        this.showMessage('已删除所有单词', 'info');
+    }
+
+    /**
+     * 恢复所有单词
+     */
+    restoreAllWords() {
+        this.deletedWords.clear();
+        this.updateResultStats();
+        this.displayWordList();
+        this.showMessage('已恢复所有单词', 'info');
+    }
+
+    /**
+     * 清除已删除的单词（从列表中移除）
+     */
+    clearDeleted() {
+        if (this.deletedWords.size === 0) {
+            this.showMessage('没有已删除的单词', 'warning');
+            return;
+        }
+
+        const deletedCount = this.deletedWords.size;
+
+        // 创建新的筛选结果，排除已删除的单词
+        this.filteredWords = this.filteredWords.filter((word, index) => !this.deletedWords.has(index));
+
+        // 清空删除记录
+        this.deletedWords.clear();
+
+        // 更新显示
+        this.updateResultStats();
+        this.displayWordList();
+
+        this.showMessage(`已清除 ${deletedCount} 个已删除的单词`, 'success');
+    }
+
+    /**
+     * 获取有效单词（未删除的单词）
+     * @returns {Array} 有效单词数组
+     */
+    getActiveWords() {
+        return this.filteredWords.filter((word, index) => !this.deletedWords.has(index));
     }
 
     /**

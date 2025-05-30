@@ -364,6 +364,15 @@ class FileUtils {
             lines.push(`筛选规则：${exportInfo.ruleName} (筛选结果：${exportInfo.filteredCount}个单词)`);
         }
 
+        // 添加删除统计信息
+        if (exportInfo.deletedCount !== undefined && exportInfo.exportedCount !== undefined) {
+            if (exportInfo.deletedCount > 0) {
+                lines.push(`删除统计：已删除 ${exportInfo.deletedCount} 个单词，导出 ${exportInfo.exportedCount} 个单词`);
+            } else {
+                lines.push(`删除统计：无删除单词，导出全部 ${exportInfo.exportedCount} 个单词`);
+            }
+        }
+
         // 添加生成时间
         const now = new Date();
         const timestamp = now.getFullYear() + '-' +
