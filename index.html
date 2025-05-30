@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词筛选工具</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>单词筛选工具</h1>
+            <p>从单词库中按规则筛选符合条件的单词</p>
+        </header>
+
+        <main>
+            <!-- 文件选择区域 -->
+            <section class="file-section">
+                <h2>1. 选择单词库文件</h2>
+                <div class="file-input-container">
+                    <input type="file" id="wordFile" accept=".txt,.xlsx,.xls,.csv" class="file-input">
+                    <label for="wordFile" class="file-label">
+                        <span class="file-icon">📁</span>
+                        <span class="file-text">选择文件（支持 txt, xlsx, xls, csv）</span>
+                    </label>
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+            </section>
+
+            <!-- 规则选择与生成区域 -->
+            <section class="rule-section">
+                <h2>2. 选择筛选规则并生成结果</h2>
+                <div class="rule-selector">
+                    <select id="ruleSelect" class="rule-select">
+                        <option value="">请选择规则...</option>
+                    </select>
+                </div>
+                <div class="rule-preview" id="rulePreview"></div>
+                <div class="action-buttons">
+                    <button id="generateBtn" class="btn btn-primary" disabled>生成筛选结果</button>
+                    <button id="manageRulesBtn2" class="btn btn-secondary"
+                        onclick="window.open('rule-manager.html', '_blank')">管理规则</button>
+                    <button id="exportRulesBtn2" class="btn btn-secondary">导出规则</button>
+                    <button id="importRulesBtn2" class="btn btn-secondary">导入规则</button>
+                </div>
+                <div class="result-info" id="resultInfo"></div>
+            </section>
+
+            <!-- 结果预览区域 -->
+            <section class="preview-section" id="resultSection">
+                <h2>3. 筛选结果预览</h2>
+                <div class="result-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalWords">0</div>
+                        <div class="stat-label">总单词数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="filteredWords">0</div>
+                        <div class="stat-label">筛选结果</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="filterRate">0%</div>
+                        <div class="stat-label">筛选率</div>
+                    </div>
+                </div>
+                <div class="result-container" id="resultContainer"></div>
+                <div class="download-container" id="exportContainer" style="display: none;">
+                    <button id="exportTxtBtn" class="btn btn-success">导出为TXT</button>
+                    <button id="exportExcelBtn" class="btn btn-success">导出为Excel</button>
+                </div>
+            </section>
+
+            <!-- 文件预处理信息区域 -->
+            <section class="preprocessing-section" id="preprocessingSection" style="display: none;">
+                <h2>文件预处理信息</h2>
+                <div class="preprocessing-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="extractedWords">0</div>
+                        <div class="stat-label">总单词数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="invalidWords">0</div>
+                        <div class="stat-label">无效单词数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="duplicateWords">0</div>
+                        <div class="stat-label">重复单词数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="validWords">0</div>
+                        <div class="stat-label">有效单词数</div>
+                    </div>
+                </div>
+                <div class="preprocessing-details">
+                    <h3>无效单词示例</h3>
+                    <div class="invalid-words-examples" id="invalidWordsExamples"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+
+    <!-- 加载指示器 -->
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+        <div class="spinner"></div>
+        <p>正在处理...</p>
+    </div>
+
+    <!-- 消息提示 -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <!-- 引入外部库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- 引入自定义脚本 -->
+    <script src="js/fileUtils.js"></script>
+    <script src="js/fileStorage.js"></script>
+    <script src="js/ruleEngine.js"></script>
+    <script src="js/version.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
