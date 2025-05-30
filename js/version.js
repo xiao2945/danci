@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.1.0';
-        this.releaseDate = '2025-05-30';
-        this.description = '重大更新 - 项目整理与文档完善';
+        this.version = 'v1.1.2';
+        this.releaseDate = '2025-01-27';
+        this.description = '功能增强 - 规则示例区交互优化';
     }
 
     /**
@@ -20,34 +20,28 @@ class VersionManager {
     }
 
     /**
-     * 在页面显示版本信息
-     */
+     * 在页面显示版本信�?     */
     displayVersion() {
-        // 在页面底部添加版本信息
-        const versionElement = document.createElement('div');
+        // 在页面底部添加版本信�?        const versionElement = document.createElement('div');
         versionElement.className = 'version-info';
         versionElement.innerHTML = `
             <small style="color: #666; font-size: 12px; position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                单词筛选工具 ${this.version} (${this.releaseDate})
+                单词筛选工�?${this.version} (${this.releaseDate})
             </small>
         `;
         document.body.appendChild(versionElement);
     }
 
     /**
-     * 检查是否有新版本（预留接口）
-     */
+     * 检查是否有新版本（预留接口�?     */
     checkForUpdates() {
-        // 预留功能，可以后续实现版本检查
-        console.log(`当前版本: ${this.version}`);
+        // 预留功能，可以后续实现版本检�?        console.log(`当前版本: ${this.version}`);
     }
 }
 
-// 导出版本管理器
-window.VersionManager = VersionManager;
+// 导出版本管理�?window.VersionManager = VersionManager;
 
-// 页面加载完成后显示版本信息
-document.addEventListener('DOMContentLoaded', function () {
-    const versionManager = new VersionManager();
-    versionManager.displayVersion();
-});
+// 页面加载完成后显示版本信�?document.addEventListener('DOMContentLoaded', function () {
+const versionManager = new VersionManager();
+versionManager.displayVersion();
+;

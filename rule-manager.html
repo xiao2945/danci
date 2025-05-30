@@ -86,8 +86,42 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        .examples-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .examples-header .panel-title {
+            margin: 0;
+        }
+
+        .toggle-all-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toggle-all-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .toggle-all-btn:active {
+            transform: translateY(0);
+        }
+
         .example-section {
-            margin-bottom: 25px;
+            margin-bottom: 0;
         }
 
         .example-title {
@@ -97,11 +131,47 @@
             margin-bottom: 10px;
             display: flex;
             align-items: center;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .example-title:hover {
+            background: #e2e8f0;
+            color: #2d3748;
         }
 
         .example-title::before {
             content: "📝";
             margin-right: 8px;
+        }
+
+        .example-title::after {
+            content: "▼";
+            margin-left: auto;
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+            color: #718096;
+        }
+
+        .example-section.collapsed .example-title::after {
+            transform: rotate(-90deg);
+        }
+
+        .example-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .example-section.collapsed .example-content {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
         }
 
         .example-code {
@@ -534,92 +604,148 @@
             <div class="rule-panels">
                 <!-- 左侧：示例区域 -->
                 <div class="rule-examples-panel">
-                    <h3 class="panel-title">规则示例</h3>
+                    <div class="examples-header">
+                        <h3 class="panel-title">规则示例</h3>
+                        <button class="toggle-all-btn" onclick="toggleAllExamples()" title="收缩/展开全部示例">
+                            <span class="toggle-all-text">收缩全部</span>
+                        </button>
+                    </div>
 
                     <div class="example-section">
-                        <div class="example-title">基础CVC模式</div>
-                        <div class="example-code">
-                            <button class="copy-btn" onclick="copyExample(this)">复制</button>
-                            #CVC模式
-                            !\bCVC\e
-                            @
-                        </div>
-                        <div class="example-description">
-                            定义名称：CVC模式<br>
-                            引用全局集合：C（辅音）、V（元音）<br>
-                            匹配模式：\b表示单词开头，\e表示单词结尾，完整匹配辅音-元音-辅音结构<br>
-                            排序方式：默认排序
+                        <div class="example-title" onclick="toggleExample(this)">四字母及以上单词</div>
+                        <div class="example-content">
+                            <div class="example-code"
+                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
+                                <div style="line-height: 1.6;">
+                                    <div><span style="color: #68d391;">#四字母及以上单词</span></div>
+                                    <div><span style="color: #63b3ed;">!LLLL</span></div>
+                                    <div><span style="color: #f6e05e;">@</span></div>
+                                </div>
+                            </div>
+                            <div class="example-description">
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配包含四个或更多连续字母的单词</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>!LLLL（部分匹配模式）</div>
+                                <div style="margin-bottom: 8px;"><strong>集合：</strong>L（全局集合，包含所有字母a-z）</div>
+                                <div style="margin-bottom: 8px;"><strong>示例：</strong>book, tree, jump, play, hello,
+                                    world,
+                                    beautiful, wonderful</div>
+                                <div style="color: #666; font-size: 0.9em;">注：如需恰好四个字母，请使用<span
+                                        style="color: red;">\b</span>LLLL<span style="color: red;">\e</span></div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="example-section">
-                        <div class="example-title">CVCE模式（魔法E）</div>
-                        <div class="example-code">
-                            <button class="copy-btn" onclick="copyExample(this)">复制</button>
-                            #CVCE模式
-                            !\bCVC[e]\e
-                            @
-                        </div>
-                        <div class="example-description">
-                            定义名称：CVCE模式<br>
-                            引用全局集合：C（辅音）、V（元音）<br>
-                            匹配模式：\b表示单词开头，[e]表示字面字符e，\e表示单词结尾，完整匹配辅音-元音-辅音-e结构<br>
-                            排序方式：默认排序
-                        </div>
-                    </div>
-
-                    <div class="example-section">
-                        <div class="example-title">双辅音开头（部分匹配）</div>
-                        <div class="example-code">
-                            <button class="copy-btn" onclick="copyExample(this)">复制</button>
-                            #双辅音开头
-                            BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}
-                            !\b(BL)VC
-                            @(BL)
-                        </div>
-                        <div class="example-description">
-                            定义名称：双辅音开头<br>
-                            定义局部集合：BL（双辅音组合，两个字母以上需用括号引用）<br>
-                            引用全局集合：V（元音）、C（辅音）<br>
-                            匹配模式：\b表示单词开头，支持部分匹配<br>
-                            排序方式：按双辅音类型分组
+                        <div class="example-title" onclick="toggleExample(this)">基础CVC模式</div>
+                        <div class="example-content">
+                            <div class="example-code"
+                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
+                                <div style="line-height: 1.6;">
+                                    <div><span style="color: #68d391;">#CVC模式</span></div>
+                                    <div><span style="color: #63b3ed;">!\bCVC\e</span></div>
+                                    <div><span style="color: #f6e05e;">@</span></div>
+                                </div>
+                            </div>
+                            <div class="example-description">
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配辅音-元音-辅音结构的三字母单词</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>!\bCVC\e（完整匹配模式）</div>
+                                <div style="margin-bottom: 8px;"><strong>集合：</strong>C（辅音）、V（元音）</div>
+                                <div style="margin-bottom: 8px;"><strong>示例：</strong>cat, dog, run, big, hat, pen, sit,
+                                    cup
+                                </div>
+                                <div style="color: #666; font-size: 0.9em;">注：\b表示单词开头，\e表示单词结尾</div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="example-section">
-                        <div class="example-title">长度限制</div>
-                        <div class="example-code">
-                            <button class="copy-btn" onclick="copyExample(this)">复制</button>
-                            #四字母单词
-                            !LLLL
-                            @
-                        </div>
-                        <div class="example-description">
-                            定义名称：四字母单词<br>
-                            引用全局集合：L（所有字母）<br>
-                            匹配模式：包含四个连续字母（部分匹配，重复L四次）<br>
-                            排序方式：默认排序<br>
-                            注：如需恰好四个字母，请使用\bLLLL\e；如需更复杂的长度匹配，可定义局部集合或使用组合规则
+                        <div class="example-title" onclick="toggleExample(this)">CVCE模式（魔法E）</div>
+                        <div class="example-content">
+                            <div class="example-code"
+                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
+                                <div style="line-height: 1.6;">
+                                    <div><span style="color: #68d391;">#CVCE模式</span></div>
+                                    <div><span style="color: #63b3ed;">!\bCVC[e]\e</span></div>
+                                    <div><span style="color: #f6e05e;">@</span></div>
+                                </div>
+                            </div>
+                            <div class="example-description">
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配辅音-元音-辅音-e结构的单词（魔法E模式）</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>!\bCVC[e]\e（完整匹配模式）</div>
+                                <div style="margin-bottom: 8px;"><strong>集合：</strong>C（辅音）、V（元音）、<span
+                                        style="color: red;">[e]表示字面字符e</span></div>
+                                <div style="margin-bottom: 8px;"><strong>示例：</strong>cake, make, bike, home, cute, hope,
+                                    time, name</div>
+                                <div style="color: #666; font-size: 0.9em;">注：当想使用字面字符时，需要用中括号[ ]，如[e]、[tion]</div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="example-section">
-                        <div class="example-title">组合规则</div>
-                        <div class="example-code">
-                            <button class="copy-btn" onclick="copyExample(this)">复制</button>
-                            #CVC或CVCE
-                            !!CVC模式||CVCE模式
-                            @
+                        <div class="example-title" onclick="toggleExample(this)">双辅音开头（部分匹配）</div>
+                        <div class="example-content">
+                            <div class="example-code"
+                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
+                                <div style="line-height: 1.6;">
+                                    <div><span style="color: #68d391;">#双辅音开头</span></div>
+                                    <div><span
+                                            style="color: #ed64a6;">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
+                                    </div>
+                                    <div><span style="color: #63b3ed;">!\b(BL)</span></div>
+                                    <div><span style="color: #f6e05e;">@(BL)</span></div>
+                                </div>
+                            </div>
+                            <div class="example-description">
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配以双辅音开头的单词</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>!\b(BL)（部分匹配模式）</div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>集合：</strong>BL（局部集合，包含bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw）
+                                </div>
+                                <div style="margin-bottom: 8px;"><strong>示例：</strong>black, brown, class, green, play,
+                                    tree,
+                                    stop, swim</div>
+                                <div style="color: #666; font-size: 0.9em;">注：两个字母以上的集合需用括号引用，如(BL)</div>
+                            </div>
                         </div>
-                        <div class="example-description">
-                            定义名称：CVC或CVCE<br>
-                            定义集合：无（使用已定义规则）<br>
-                            匹配模式：CVC模式或CVCE模式<br>
-                            排序方式：默认排序<br>
-                            <strong>支持的操作符：</strong><br>
-                            • <span class="syntax-code">&&</span> - 逻辑与（同时满足两个条件）<br>
-                            • <span class="syntax-code">||</span> - 逻辑或（满足任一条件）<br>
-                            • <span class="syntax-code">--</span> - 非模式（满足前者但不满足后者）
+                    </div>
+
+                    <div class="example-section">
+                        <div class="example-title" onclick="toggleExample(this)"><span style="color: red;">组合规则</span>
+                        </div>
+                        <div class="example-content">
+                            <div class="example-code"
+                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
+                                <div style="line-height: 1.6;">
+                                    <div><span style="color: #68d391;">#CVC或CVCE</span></div>
+                                    <div><span style="color: #63b3ed;">!!CVC模式||CVCE模式</span></div>
+                                    <div><span style="color: #f6e05e;">@</span></div>
+                                </div>
+                            </div>
+                            <div class="example-description">
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>组合多个规则，匹配满足CVC模式或CVCE模式的单词</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>!!CVC模式||CVCE模式（规则组合模式）</div>
+                                <div style="margin-bottom: 8px;"><strong>集合：</strong>无（引用已定义的规则）</div>
+                                <div style="margin-bottom: 8px;"><strong>示例：</strong>cat, dog, run, big, cake, make,
+                                    bike,
+                                    home</div>
+                                <div style="margin-bottom: 12px; color: #666; font-size: 0.9em;">注：!!表示引用已定义的规则</div>
+                                <div style="margin-bottom: 8px;"><strong><span
+                                            style="color: red;">支持的操作符：</span></strong>
+                                </div>
+                                <div style="margin-left: 16px;">
+                                    <div style="margin-bottom: 4px;">• <span class="syntax-code"
+                                            style="background-color: lightyellow;">&&</span> - 逻辑与（同时满足两个条件）</div>
+                                    <div style="margin-bottom: 4px;">• <span class="syntax-code"
+                                            style="background-color: lightyellow;">||</span> - 逻辑或（满足任一条件）</div>
+                                    <div style="margin-bottom: 4px;">• <span class="syntax-code"
+                                            style="background-color: lightyellow;">--</span> - 非模式（满足前者但不满足后者）</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1401,9 +1527,123 @@ ${setName}=={${setValues.join(',')}}`;
 
         // 初始化应用
         let ruleManager;
+        let isNarrowScreen = false;
+
         document.addEventListener('DOMContentLoaded', () => {
             ruleManager = new RuleManagerApp();
+            // 恢复示例的展开/收缩状态
+            restoreExampleStates();
+
+            // 初始化响应式监听
+            handleResponsiveExamples();
+            window.addEventListener('resize', handleResponsiveExamples);
         });
+
+        // 处理响应式示例收缩
+        function handleResponsiveExamples() {
+            const currentIsNarrow = window.innerWidth <= 768;
+
+            // 只在从宽屏切换到窄屏时自动收缩
+            if (!isNarrowScreen && currentIsNarrow) {
+                collapseAllExamples();
+            }
+
+            isNarrowScreen = currentIsNarrow;
+        }
+
+        // 收缩所有示例（不保存状态）
+        function collapseAllExamples() {
+            const exampleSections = document.querySelectorAll('.example-section');
+
+            exampleSections.forEach(section => {
+                section.classList.add('collapsed');
+            });
+
+            // 更新按钮文本
+            updateToggleAllButtonText();
+        }
+
+        // 全局收缩/展开函数
+        function toggleExample(titleElement) {
+            const exampleSection = titleElement.parentElement;
+            exampleSection.classList.toggle('collapsed');
+
+            // 保存展开/收缩状态到localStorage
+            const titleText = titleElement.textContent.trim();
+            const isCollapsed = exampleSection.classList.contains('collapsed');
+            const exampleStates = JSON.parse(localStorage.getItem('exampleStates') || '{}');
+            exampleStates[titleText] = isCollapsed;
+            localStorage.setItem('exampleStates', JSON.stringify(exampleStates));
+
+            // 更新收缩/展开全部按钮的文本
+            updateToggleAllButtonText();
+        }
+
+        // 恢复示例的展开/收缩状态
+        function restoreExampleStates() {
+            const exampleStates = JSON.parse(localStorage.getItem('exampleStates') || '{}');
+            const exampleSections = document.querySelectorAll('.example-section');
+
+            exampleSections.forEach(section => {
+                const titleElement = section.querySelector('.example-title');
+                const titleText = titleElement.textContent.trim();
+
+                if (exampleStates[titleText]) {
+                    section.classList.add('collapsed');
+                }
+            });
+
+            // 更新按钮文本
+            updateToggleAllButtonText();
+        }
+
+        // 收缩/展开全部示例
+        function toggleAllExamples() {
+            const exampleSections = document.querySelectorAll('.example-section');
+            const toggleBtn = document.querySelector('.toggle-all-btn .toggle-all-text');
+
+            // 检查当前状态：如果所有示例都是收缩的，则展开全部；否则收缩全部
+            const allCollapsed = Array.from(exampleSections).every(section =>
+                section.classList.contains('collapsed')
+            );
+
+            const exampleStates = {};
+
+            exampleSections.forEach(section => {
+                const titleElement = section.querySelector('.example-title');
+                const titleText = titleElement.textContent.trim();
+
+                if (allCollapsed) {
+                    // 展开全部
+                    section.classList.remove('collapsed');
+                    exampleStates[titleText] = false;
+                } else {
+                    // 收缩全部
+                    section.classList.add('collapsed');
+                    exampleStates[titleText] = true;
+                }
+            });
+
+            // 保存状态
+            localStorage.setItem('exampleStates', JSON.stringify(exampleStates));
+
+            // 更新按钮文本
+            updateToggleAllButtonText();
+        }
+
+        // 更新收缩/展开全部按钮的文本
+        function updateToggleAllButtonText() {
+            const exampleSections = document.querySelectorAll('.example-section');
+            const toggleBtn = document.querySelector('.toggle-all-btn .toggle-all-text');
+
+            if (!toggleBtn) return;
+
+            const allCollapsed = Array.from(exampleSections).every(section =>
+                section.classList.contains('collapsed')
+            );
+
+            toggleBtn.textContent = allCollapsed ? '展开全部' : '收缩全部';
+        }
 
         // 全局复制函数
         function copyExample(button) {
