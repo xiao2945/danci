@@ -247,11 +247,22 @@ section h2 {
 
 .btn-outline {
     background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.btn-outline:hover {
+    background: #667eea;
+    color: white;
+}
+
+.btn-help {
+    background: transparent;
     color: #38a169;
     border: 2px solid #38a169;
 }
 
-.btn-outline:hover {
+.btn-help:hover {
     background: #38a169;
     color: white;
 }
