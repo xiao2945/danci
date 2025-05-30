@@ -486,6 +486,10 @@ section h2 {
     margin: 20px 0;
     flex-wrap: wrap;
     align-items: center;
+}
+
+.export-actions-container .btn {
+    flex: 0 0 auto;
     white-space: nowrap;
 }
 
@@ -495,6 +499,11 @@ section h2 {
 
 .export-buttons {
     display: contents;
+    margin-left: 10px;
+}
+
+.batch-operations-inline .btn:last-child {
+    margin-right: 25px;
 }
 
 /* 响应式设计：小屏幕时垂直排列 */
@@ -502,22 +511,21 @@ section h2 {
     .export-actions-container {
         flex-direction: column;
         align-items: stretch;
-        gap: 15px;
-        padding: 15px;
+        gap: 10px;
     }
 
-    .batch-operations-inline {
-        justify-content: center;
-        gap: 10px;
-        flex: none;
-        flex-wrap: wrap;
+    .export-actions-container .btn {
+        flex: 1 1 auto;
+        min-width: 120px;
+        margin: 5px 0;
+    }
+
+    .batch-operations-inline .btn:last-child {
+        margin-right: 0;
     }
 
     .export-buttons {
-        justify-content: center;
-        gap: 10px;
-        flex: none;
-        flex-wrap: wrap;
+        margin-left: 0;
     }
 }
 
