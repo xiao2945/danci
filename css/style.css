@@ -503,7 +503,7 @@ section h2 {
 }
 
 .batch-operations-inline .btn:last-child {
-    margin-right: 5px;
+    margin-right: 10px;
 }
 
 /* 响应式设计：小屏幕时垂直排列 */
