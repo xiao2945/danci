@@ -497,6 +497,10 @@ section h2 {
     display: contents;
 }
 
+#previewActionButtons .btn:first-child {
+    margin-right: 0;
+}
+
 #previewActionButtons .btn:nth-child(3) {
     margin-right: 5px;
 }
