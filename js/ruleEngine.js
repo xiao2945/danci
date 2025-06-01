@@ -872,7 +872,7 @@ class RuleEngine {
             return '规则不存在';
         }
 
-        let preview = `规则名称: ${rule.name}\n`;
+        let preview = `规则名称: ${rule.name}`; \n        if (rule.comment) { \n            preview += ` // ${rule.comment}`; \n } \n        preview += '\n';
 
         // 显示全局集合定义
         if (this.globalSets.size > 0) {
