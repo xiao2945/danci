@@ -1231,14 +1231,14 @@ ${setName}=={${setValues.join(',')}}`;
 
                 return `
                     <div class="rule-item" draggable="true" data-rule-name="${ruleName}">
-                        <div class="rule-item-header">
+                        <div class="rule-item-header" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">
                             <div class="rule-item-main">
-                                <span class="drag-handle">⋮⋮</span>
+                                <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
                                 <span class="rule-item-expand-icon">▶</span>
-                                <span class="rule-item-name" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">${ruleName}</span>
+                                <span class="rule-item-name">${ruleName}</span>
                                 ${commentText ? `<span class="rule-item-comment">// ${commentText}</span>` : ''}
                             </div>
-                            <div class="rule-item-actions">
+                            <div class="rule-item-actions" onclick="event.stopPropagation()">
                                 <button class="btn btn-small btn-outline" onclick="ruleManager.editRule('${ruleName}')" title="编辑规则">编辑</button>
                                 <button class="btn btn-small btn-secondary" onclick="ruleManager.deleteRule('${ruleName}')" title="删除规则">删除</button>
                             </div>
