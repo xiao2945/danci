@@ -275,11 +275,21 @@
             overflow: hidden;
         }
 
-        .rule-item-header:last-of-type {
+        .rule-tree>div:last-child .rule-item-header {
             border-bottom: 2px solid #e2e8f0;
         }
 
-        .rule-item-content:last-of-type {
+        .rule-tree>div:last-child .rule-item-content {
+            border-bottom: 2px solid #e2e8f0;
+            border-left: 2px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
+        }
+
+        .rule-group:last-child .rule-group-content>div:last-child .rule-item-header {
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .rule-group:last-child .rule-group-content>div:last-child .rule-item-content {
             border-bottom: 2px solid #e2e8f0;
             border-left: 2px solid #e2e8f0;
             border-right: 2px solid #e2e8f0;
