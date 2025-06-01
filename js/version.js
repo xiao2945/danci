@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.1.3';
-        this.releaseDate = '2025-06-01';
-        this.description = '问题修复 - 规则预览同步与自动格式化优化';
+        this.version = 'v1.1.4';
+        this.releaseDate = '2025-01-16';
+        this.description = 'JavaScript语法错误修复';
     }
 
     /**
