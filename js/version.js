@@ -4,7 +4,7 @@
 class VersionManager {
     constructor() {
         this.version = 'v1.1.4';
-        this.releaseDate = '2025-01-16';
+        this.releaseDate = '2025-06-01';
         this.description = 'JavaScript语法错误修复';
     }
 
