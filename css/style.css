@@ -690,8 +690,8 @@ section h2 {
     align-items: center;
     width: 100%;
     padding: 12px 16px;
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
     border-bottom: none;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -700,11 +700,11 @@ section h2 {
 }
 
 .rule-item-header:last-child {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 2px solid #e2e8f0;
 }
 
 .rule-item-header:hover {
-    background: #f8fafc;
+    background: #edf2f7;
     border-color: #cbd5e0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
