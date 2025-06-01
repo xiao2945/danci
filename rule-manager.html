@@ -275,8 +275,14 @@
             overflow: hidden;
         }
 
-        .rule-item-header:last-child {
+        .rule-item-header:last-of-type {
             border-bottom: 2px solid #e2e8f0;
+        }
+
+        .rule-item-content:last-of-type {
+            border-bottom: 2px solid #e2e8f0;
+            border-left: 2px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
         }
 
         .rule-item-header:hover {
@@ -295,14 +301,17 @@
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 12px;
             color: #718096;
-            background: #e2e8f0;
-            padding: 8px;
-            border-radius: 4px;
+            background: #f1f5f9;
+            padding: 12px 16px;
+            border-left: 2px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
             overflow-x: auto;
-            white-space: nowrap;
-            margin-top: 8px;
-            text-overflow: ellipsis;
-            overflow: hidden;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        .rule-item-content.expanded {
+            display: block;
         }
 
         .rule-item-actions {
