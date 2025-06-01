@@ -766,6 +766,7 @@
                         </div>
                         <ul class="syntax-list">
                             <li><span class="syntax-code">#规则名</span> - 定义规则名称（以#开头）</li>
+                            <li><span class="syntax-code">// 注释内容</span> - 添加规则注释（建议放在规则名下一行，最多60字符）</li>
                             <li><span class="syntax-code">集合名=={元素1,元素2,...}</span> - 定义局部集合（仅在当前规则内有效）</li>
                             <li><span class="syntax-code">(集合名)</span> - 引用集合（单字母集合必须大写，多字母集合大小写敏感且必须用括号）</li>
                             <li><span class="syntax-code">!具体规则</span> - 定义匹配模式</li>
@@ -785,16 +786,16 @@
 
 
 
-                    <!-- 规则注释输入框 -->
-                    <div class="rule-comment-section">
-                        <label for="ruleCommentInput"
-                            style="display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568;">规则注释（可选，最多60字符）：</label>
-                        <input type="text" id="ruleCommentInput" class="rule-comment-input"
-                            placeholder="// 在此输入规则注释，用于说明规则用途..." maxlength="60"
-                            style="width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; margin-bottom: 15px;">
-                    </div>
+
 
                     <textarea id="ruleEditor" class="rule-textarea" placeholder="在此输入规则定义...
+格式示例：
+#规则名
+// 规则注释（可选，最多60字符）
+集合名=={元素1,元素2,...}
+!具体规则
+@显示规则
+
 注意：
 - 集合定义仅在当前规则内有效
 - 使用(集合名)引用全局集合
@@ -993,7 +994,6 @@ ${setName}=={${setValues.join(',')}}`;
 
             saveRule() {
                 const ruleText = document.getElementById('ruleEditor').value.trim();
-                const ruleComment = document.getElementById('ruleCommentInput').value.trim();
 
                 if (!ruleText) {
                     this.showMessage('请输入规则内容', 'warning');
@@ -1009,16 +1009,8 @@ ${setName}=={${setValues.join(',')}}`;
                 }
 
                 try {
-                    // 构建完整的规则文本（包含注释）
-                    let fullRuleText = ruleText;
-                    if (ruleComment) {
-                        // 在规则名称后添加注释行
-                        const ruleLines = ruleText.split('\n');
-                        ruleLines.splice(1, 0, `// ${ruleComment}`);
-                        fullRuleText = ruleLines.join('\n');
-                    }
-
-                    const rule = this.ruleEngine.parseRule(fullRuleText);
+                    // 直接解析规则文本（注释已包含在文本中）
+                    const rule = this.ruleEngine.parseRule(ruleText);
 
                     // 检查规则冲突
                     const conflicts = this.checkRuleConflicts(rule);
@@ -1032,7 +1024,6 @@ ${setName}=={${setValues.join(',')}}`;
                     this.ruleEngine.saveRule(rule);
                     this.loadSavedRules();
                     document.getElementById('ruleEditor').value = '';
-                    document.getElementById('ruleCommentInput').value = '';
 
                     this.showMessage(`规则 "${rule.name}" 保存成功`, 'success');
 
@@ -1178,9 +1169,16 @@ ${setName}=={${setValues.join(',')}}`;
                     ruleText += `\n${rule.displayRule}`;
                 }
 
-                // 填入规则文本和注释
+                // 如果有注释，将注释添加到规则文本中
+                if (rule.comment) {
+                    const lines = ruleText.split('\n');
+                    // 在规则名称后插入注释行
+                    lines.splice(1, 0, `// ${rule.comment}`);
+                    ruleText = lines.join('\n');
+                }
+
+                // 填入完整的规则文本（包含注释）
                 document.getElementById('ruleEditor').value = ruleText;
-                document.getElementById('ruleCommentInput').value = rule.comment || '';
                 document.getElementById('ruleEditor').focus();
             }
 
