@@ -710,7 +710,9 @@
                                 <div style="margin-bottom: 8px;"><strong>示例：</strong>black, brown, class, green, play,
                                     tree,
                                     stop, swim</div>
-                                <div style="color: #666; font-size: 0.9em;">注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序（BL)前添加-（如-（BL））表示按集合BL内的元素逆序排列；也可以增加多个排序关键字，表示次级排序</div>
+                                <div style="color: #666; font-size: 0.9em;">
+                                    注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序（BL)前添加-（如-（BL））表示按集合BL内的元素逆序排列；也可以增加多个排序关键字，表示次级排序
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -955,7 +957,13 @@ ${setName}=={${setValues.join(',')}}`;
                     this.formatRule();
                 });
 
-
+                // 规则编辑器粘贴事件 - 自动格式化
+                document.getElementById('ruleEditor').addEventListener('paste', (event) => {
+                    // 延迟执行格式化，确保粘贴内容已经插入
+                    setTimeout(() => {
+                        this.formatRule();
+                    }, 10);
+                });
 
                 // 更新全局集合
                 document.getElementById('updateGlobalSetsBtn').addEventListener('click', () => {
