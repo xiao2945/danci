@@ -17,7 +17,6 @@ class RuleEngine {
         // 基本字符集
         this.globalSets.set('C', new Set(['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']));
         this.globalSets.set('V', new Set(['a', 'e', 'i', 'o', 'u']));
-        this.globalSets.set('N', new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']));
         this.globalSets.set('L', new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']));
 
         // 加载保存的全局集合
