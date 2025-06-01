@@ -275,31 +275,30 @@
             overflow: hidden;
         }
 
-        /* 最后一个单个规则项 */
-        .rule-tree>div:last-child:not(.rule-group) .rule-item-header {
-            border-bottom: 2px solid #e2e8f0 !important;
-        }
-
-        .rule-tree>div:last-child:not(.rule-group) .rule-item-content {
+        /* 最后一个rule-item-content元素（无论是单个规则还是规则组内的） */
+        .rule-tree .rule-item-content:last-child {
             border-bottom: 2px solid #e2e8f0;
             border-left: 2px solid #e2e8f0;
             border-right: 2px solid #e2e8f0;
         }
 
-        /* 最后一个规则组 */
-        .rule-tree>.rule-group:last-child .rule-group-content>div:last-child .rule-item-header {
-            border-bottom: 2px solid #e2e8f0 !important;
-        }
-
-        .rule-tree>.rule-group:last-child .rule-group-content>div:last-child .rule-item-content {
-            border-bottom: 2px solid #e2e8f0;
-            border-left: 2px solid #e2e8f0;
-            border-right: 2px solid #e2e8f0;
-        }
-
-        /* 如果最后一个元素是规则组，但规则组是收缩状态，则给规则组header添加下边线 */
+        /* 如果最后一个元素是规则组且收缩状态，给规则组header添加下边线 */
         .rule-tree>.rule-group:last-child.collapsed .rule-group-header {
             border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* 确保最后一个rule-item-header的下一个兄弟元素rule-item-content有下边线 */
+        .rule-tree .rule-item-header:nth-last-child(2)+.rule-item-content {
+            border-bottom: 2px solid #e2e8f0 !important;
+            border-left: 2px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
+        }
+
+        /* 规则组内最后一个rule-item-content */
+        .rule-group-content .rule-item-content:last-child {
+            border-bottom: 2px solid #e2e8f0 !important;
+            border-left: 2px solid #e2e8f0;
+            border-right: 2px solid #e2e8f0;
         }
 
         .rule-item-header:hover {
