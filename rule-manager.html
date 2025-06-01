@@ -627,6 +627,7 @@
                                 <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配包含四个或更多连续字母的单词</div>
                                 <div style="margin-bottom: 8px;"><strong>语法：</strong>!LLLL（部分匹配模式）</div>
                                 <div style="margin-bottom: 8px;"><strong>集合：</strong>L（全局集合，包含所有字母a-z）</div>
+                                <div style="margin-bottom: 8px;"><strong>排序：</strong>@为空，则表示按字母顺序排序；@-，则表示按字母降序排列</div>
                                 <div style="margin-bottom: 8px;"><strong>示例：</strong>book, tree, jump, play, hello,
                                     world,
                                     beautiful, wonderful</div>
@@ -705,10 +706,11 @@
                                 <div style="margin-bottom: 8px;">
                                     <strong>集合：</strong>BL（局部集合，包含bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw）
                                 </div>
+                                <div style="margin-bottom: 8px;"><strong>排序：</strong>按集合BL包含的元素排序</div>
                                 <div style="margin-bottom: 8px;"><strong>示例：</strong>black, brown, class, green, play,
                                     tree,
                                     stop, swim</div>
-                                <div style="color: #666; font-size: 0.9em;">注：两个字母以上的集合需用括号引用，如(BL)</div>
+                                <div style="color: #666; font-size: 0.9em;">注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序（BL)前添加-（如-（BL））表示按集合BL内的元素逆序排列；也可以增加多个排序关键字，表示次级排序</div>
                             </div>
                         </div>
                     </div>
