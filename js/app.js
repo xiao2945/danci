@@ -303,6 +303,9 @@ class WordFilterApp {
      * @param {string} ruleName - 规则名称
      */
     showRulePreview(ruleName) {
+        // 重新加载全局集合以确保同步
+        this.ruleEngine.loadSavedGlobalSets();
+        
         const preview = this.ruleEngine.getRulePreview(ruleName);
         const previewDiv = document.getElementById('rulePreview');
 
@@ -345,6 +348,12 @@ class WordFilterApp {
 
         // 显示导出选项
         this.showExportOptions();
+
+        // 重置预览区滚动条位置到顶部
+        const resultContainer = document.getElementById('resultContainer');
+        if (resultContainer) {
+            resultContainer.scrollTop = 0;
+        }
 
         // 滚动到结果区域
         document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
