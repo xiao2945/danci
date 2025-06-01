@@ -1230,21 +1230,19 @@ ${setName}=={${setValues.join(',')}}`;
                 const commentText = rule.comment ? rule.comment : '';
 
                 return `
-                    <div class="rule-item" draggable="true" data-rule-name="${ruleName}">
-                        <div class="rule-item-header" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">
-                            <div class="rule-item-main">
-                                <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
-                                <span class="rule-item-expand-icon">▶</span>
-                                <span class="rule-item-name">${ruleName}</span>
-                                ${commentText ? `<span class="rule-item-comment">// ${commentText}</span>` : ''}
-                            </div>
-                            <div class="rule-item-actions" onclick="event.stopPropagation()">
-                                <button class="btn btn-small btn-outline" onclick="ruleManager.editRule('${ruleName}')" title="编辑规则">编辑</button>
-                                <button class="btn btn-small btn-secondary" onclick="ruleManager.deleteRule('${ruleName}')" title="删除规则">删除</button>
-                            </div>
+                    <div class="rule-item-header" draggable="true" data-rule-name="${ruleName}" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">
+                        <div class="rule-item-main">
+                            <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
+                            <span class="rule-item-expand-icon">▶</span>
+                            <span class="rule-item-name">${ruleName}</span>
+                            ${commentText ? `<span class="rule-item-comment">// ${commentText}</span>` : ''}
                         </div>
-                        <div class="rule-item-content">${ruleText}</div>
+                        <div class="rule-item-actions" onclick="event.stopPropagation()">
+                            <button class="btn btn-small btn-outline" onclick="ruleManager.editRule('${ruleName}')" title="编辑规则">编辑</button>
+                            <button class="btn btn-small btn-secondary" onclick="ruleManager.deleteRule('${ruleName}')" title="删除规则">删除</button>
+                        </div>
                     </div>
+                    <div class="rule-item-content">${ruleText}</div>
                 `;
             }
 
@@ -1314,12 +1312,17 @@ ${setName}=={${setValues.join(',')}}`;
 
             // 切换规则展开状态
             toggleRuleExpansion(ruleName) {
-                const ruleItem = document.querySelector(`[data-rule-name="${ruleName}"]`);
-                if (ruleItem) {
-                    ruleItem.classList.toggle('expanded');
-                    const expandIcon = ruleItem.querySelector('.rule-item-expand-icon');
+                const ruleHeader = document.querySelector(`[data-rule-name="${ruleName}"]`);
+                if (ruleHeader) {
+                    ruleHeader.classList.toggle('expanded');
+                    const expandIcon = ruleHeader.querySelector('.rule-item-expand-icon');
                     if (expandIcon) {
-                        expandIcon.textContent = ruleItem.classList.contains('expanded') ? '▼' : '▶';
+                        expandIcon.textContent = ruleHeader.classList.contains('expanded') ? '▼' : '▶';
+                    }
+                    // 切换内容显示
+                    const content = ruleHeader.nextElementSibling;
+                    if (content && content.classList.contains('rule-item-content')) {
+                        content.style.display = ruleHeader.classList.contains('expanded') ? 'block' : 'none';
                     }
                 }
             }
@@ -1327,8 +1330,8 @@ ${setName}=={${setValues.join(',')}}`;
             // 保存规则排序到本地存储
             saveRuleOrder() {
                 const container = document.getElementById('savedRulesContainer');
-                const ruleItems = container.querySelectorAll('.rule-item');
-                const ruleOrder = Array.from(ruleItems).map(item => item.dataset.ruleName);
+                const ruleHeaders = container.querySelectorAll('.rule-item-header');
+                const ruleOrder = Array.from(ruleHeaders).map(item => item.dataset.ruleName);
                 localStorage.setItem('ruleOrder', JSON.stringify(ruleOrder));
             }
 
@@ -1471,7 +1474,7 @@ ${setName}=={${setValues.join(',')}}`;
                     e.dataTransfer.dropEffect = 'move';
 
                     const afterElement = this.getDragAfterElement(container, e.clientY);
-                    const draggables = [...container.querySelectorAll('.rule-item:not(.dragging)')];
+                    const draggables = [...container.querySelectorAll('.rule-item-header:not(.dragging)')];
 
                     // 清除之前的指示器
                     draggables.forEach(el => el.classList.remove('drag-over'));
@@ -1517,7 +1520,7 @@ ${setName}=={${setValues.join(',')}}`;
 
             // 获取拖拽后的位置
             getDragAfterElement(container, y) {
-                const draggableElements = [...container.querySelectorAll('.rule-item:not(.dragging)')];
+                const draggableElements = [...container.querySelectorAll('.rule-item-header:not(.dragging)')];
 
                 return draggableElements.reduce((closest, child) => {
                     const box = child.getBoundingClientRect();
@@ -1533,8 +1536,8 @@ ${setName}=={${setValues.join(',')}}`;
 
             // 保存规则排序
             saveRuleOrder() {
-                const ruleItems = [...document.querySelectorAll('.rule-item[data-rule-name]')];
-                const order = ruleItems.map(item => item.getAttribute('data-rule-name'));
+                const ruleHeaders = [...document.querySelectorAll('.rule-item-header[data-rule-name]')];
+                const order = ruleHeaders.map(item => item.getAttribute('data-rule-name'));
                 localStorage.setItem('ruleOrder', JSON.stringify(order));
             }
 

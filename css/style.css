@@ -684,45 +684,34 @@ section h2 {
     border: none;
 }
 
-.rule-item {
-    display: block;
-    width: 100%;
-    background: white;
-    border-radius: 0;
-    border: 1px solid #e2e8f0;
-    border-bottom: none;
-    transition: all 0.2s ease;
-    overflow: hidden;
-}
-
-.rule-item:last-child {
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.rule-item:hover {
-    border-color: #cbd5e0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.rule-item.expanded {
-    background: #e6fffa;
-    border-left-color: #38b2ac;
-}
-
 .rule-item-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     padding: 12px 16px;
-    background: transparent;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;
+    overflow: hidden;
+}
+
+.rule-item-header:last-child {
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .rule-item-header:hover {
     background: #f8fafc;
+    border-color: #cbd5e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rule-item-header.expanded {
+    background: #e6fffa;
+    border-left-color: #38b2ac;
 }
 
 .rule-item-main {
@@ -765,7 +754,7 @@ section h2 {
     flex-shrink: 0;
 }
 
-.rule-item.expanded .rule-item-expand-icon {
+.rule-item-header.expanded .rule-item-expand-icon {
     transform: rotate(90deg);
 }
 
@@ -786,16 +775,17 @@ section h2 {
 }
 
 .rule-item-content {
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 12px;
-    color: #2d3748;
-    background: #f1f5f9;
     padding: 16px;
-    white-space: pre-wrap;
-    word-break: break-all;
-    border-top: 1px solid #e2e8f0;
-    display: none;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-top: none;
     margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    color: #4a5568;
+    display: none;
 }
 
 .rule-item.expanded .rule-item-content {
@@ -810,14 +800,13 @@ section h2 {
 }
 
 /* 拖拽相关样式 */
-.rule-item.dragging {
+.rule-item-header.dragging {
     opacity: 0.5;
-    transform: rotate(2deg);
+    transform: rotate(5deg);
 }
 
-.rule-item.drag-over {
-    border-top: 3px solid #667eea;
-    margin-top: 3px;
+.rule-item-header.drag-over {
+    border-top: 3px solid #3182ce;
 }
 
 .drag-handle {
