@@ -1226,19 +1226,23 @@ ${setName}=={${setValues.join(',')}}`;
 
             // 创建规则项HTML
             createRuleItemHTML(ruleName, rule, isInGroup) {
-                const ruleText = this.reconstructRuleText(rule);
-                const commentHtml = rule.comment ? `<div class="rule-item-comment" style="font-size: 12px; color: #718096; font-style: italic; margin-top: 5px; padding: 4px 8px; background: #f7fafc; border-radius: 4px; border-left: 3px solid #667eea;">// ${rule.comment}</div>` : '';
+                const ruleText = this.formatRuleText(rule);
+                const commentText = rule.comment ? rule.comment : '';
 
                 return `
                     <div class="rule-item" draggable="true" data-rule-name="${ruleName}">
                         <div class="rule-item-header">
-                            <span class="rule-item-name">${ruleName}</span>
+                            <div class="rule-item-main">
+                                <span class="drag-handle">⋮⋮</span>
+                                <span class="rule-item-expand-icon">▶</span>
+                                <span class="rule-item-name" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">${ruleName}</span>
+                                ${commentText ? `<span class="rule-item-comment">// ${commentText}</span>` : ''}
+                            </div>
                             <div class="rule-item-actions">
-                                <button class="btn btn-small btn-outline" onclick="ruleManager.editRule('${ruleName}')">编辑</button>
-                                <button class="btn btn-small btn-secondary" onclick="ruleManager.deleteRule('${ruleName}')">删除</button>
+                                <button class="btn btn-small btn-outline" onclick="ruleManager.editRule('${ruleName}')" title="编辑规则">编辑</button>
+                                <button class="btn btn-small btn-secondary" onclick="ruleManager.deleteRule('${ruleName}')" title="删除规则">删除</button>
                             </div>
                         </div>
-                        ${commentHtml}
                         <div class="rule-item-content">${ruleText}</div>
                     </div>
                 `;
@@ -1269,6 +1273,111 @@ ${setName}=={${setValues.join(',')}}`;
                 }
 
                 return parts.join(' | ');
+            }
+
+            // 格式化规则文本用于展示
+            formatRuleText(rule) {
+                let lines = [];
+
+                // 规则名称
+                lines.push(`# ${rule.name}`);
+
+                // 注释
+                if (rule.comment) {
+                    lines.push(`// ${rule.comment}`);
+                }
+
+                // 局部集合定义
+                if (rule.localSets && rule.localSets.size > 0) {
+                    lines.push('');
+                    lines.push('# 局部集合定义:');
+                    for (const [setName, setValues] of rule.localSets) {
+                        const values = Array.isArray(setValues) ? setValues : Array.from(setValues);
+                        lines.push(`${setName} == {${values.join(', ')}}`);
+                    }
+                }
+
+                // 具体规则
+                if (rule.specificRule) {
+                    lines.push('');
+                    lines.push('# 具体规则:');
+                    lines.push(rule.specificRule);
+                }
+
+                // 显示规则
+                lines.push('');
+                lines.push('# 显示规则:');
+                lines.push(rule.displayRule || '@');
+
+                return lines.join('\n');
+            }
+
+            // 切换规则展开状态
+            toggleRuleExpansion(ruleName) {
+                const ruleItem = document.querySelector(`[data-rule-name="${ruleName}"]`);
+                if (ruleItem) {
+                    ruleItem.classList.toggle('expanded');
+                    const expandIcon = ruleItem.querySelector('.rule-item-expand-icon');
+                    if (expandIcon) {
+                        expandIcon.textContent = ruleItem.classList.contains('expanded') ? '▼' : '▶';
+                    }
+                }
+            }
+
+            // 保存规则排序到本地存储
+            saveRuleOrder() {
+                const container = document.getElementById('savedRulesContainer');
+                const ruleItems = container.querySelectorAll('.rule-item');
+                const ruleOrder = Array.from(ruleItems).map(item => item.dataset.ruleName);
+                localStorage.setItem('ruleOrder', JSON.stringify(ruleOrder));
+            }
+
+            // 从本地存储加载规则排序
+            loadRuleOrder() {
+                const savedOrder = localStorage.getItem('ruleOrder');
+                if (savedOrder) {
+                    try {
+                        return JSON.parse(savedOrder);
+                    } catch (e) {
+                        console.warn('Failed to parse saved rule order:', e);
+                    }
+                }
+                return [];
+            }
+
+            // 应用规则排序
+            applyRuleOrder(rules) {
+                const savedOrder = this.loadRuleOrder();
+                if (savedOrder.length === 0) {
+                    return rules;
+                }
+
+                const orderedRules = {};
+                const unorderedRules = {};
+
+                // 分离已排序和未排序的规则
+                for (const [name, rule] of Object.entries(rules)) {
+                    if (savedOrder.includes(name)) {
+                        orderedRules[name] = rule;
+                    } else {
+                        unorderedRules[name] = rule;
+                    }
+                }
+
+                // 按保存的顺序重新排列
+                const result = {};
+                for (const name of savedOrder) {
+                    if (orderedRules[name]) {
+                        result[name] = orderedRules[name];
+                    }
+                }
+
+                // 添加新的未排序规则到末尾
+                for (const [name, rule] of Object.entries(unorderedRules)) {
+                    result[name] = rule;
+                }
+
+                return result;
             }
 
             // 更新全局集合

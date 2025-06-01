@@ -305,7 +305,7 @@ class WordFilterApp {
     showRulePreview(ruleName) {
         // 重新加载全局集合以确保同步
         this.ruleEngine.loadSavedGlobalSets();
-        
+
         const preview = this.ruleEngine.getRulePreview(ruleName);
         const previewDiv = document.getElementById('rulePreview');
 
@@ -552,8 +552,24 @@ class WordFilterApp {
         // 清空现有选项
         ruleSelect.innerHTML = '<option value="">请选择规则</option>';
 
-        // 添加规则选项
+        // 获取保存的规则排序
+        const savedOrder = this.loadRuleOrder();
+
+        // 按保存的顺序排序规则
+        const orderedRules = [];
+        savedOrder.forEach(name => {
+            if (ruleNames.includes(name)) {
+                orderedRules.push(name);
+            }
+        });
         ruleNames.forEach(name => {
+            if (!orderedRules.includes(name)) {
+                orderedRules.push(name);
+            }
+        });
+
+        // 添加规则选项
+        orderedRules.forEach(name => {
             const rule = this.ruleEngine.getRule(name);
             const option = document.createElement('option');
             option.value = name;
@@ -568,6 +584,21 @@ class WordFilterApp {
             option.textContent = displayText;
             ruleSelect.appendChild(option);
         });
+    }
+
+    /**
+     * 从本地存储加载规则排序
+     */
+    loadRuleOrder() {
+        const savedOrder = localStorage.getItem('ruleOrder');
+        if (savedOrder) {
+            try {
+                return JSON.parse(savedOrder);
+            } catch (e) {
+                console.warn('Failed to parse saved rule order:', e);
+            }
+        }
+        return [];
     }
 
     // 规则编辑和删除功能已移至独立页面
