@@ -389,35 +389,103 @@ class WordFilterApp {
         const groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
 
         let html = '';
-        for (const [letter, words] of Object.entries(groupedWords)) {
-            // 计算未删除的单词数量
-            const activeWords = words.filter((word, index) => {
-                const globalIndex = this.filteredWords.indexOf(word);
-                return !this.deletedWords.has(globalIndex);
-            });
-
-            html += `
-                <div class="word-group">
-                    <div class="group-title">${letter.toUpperCase()} (${activeWords.length}/${words.length})</div>
-                    <div class="word-list">
-                        ${words.map((word, index) => {
-                const globalIndex = this.filteredWords.indexOf(word);
-                const isDeleted = this.deletedWords.has(globalIndex);
-                return `
-                                <div class="word-item ${isDeleted ? 'deleted' : ''}" data-index="${globalIndex}">
-                                    <span class="word-text">${word}</span>
-                                    <button class="delete-btn" onclick="app.toggleWordDelete(${globalIndex})" title="${isDeleted ? '恢复' : '删除'}">
-                                        ${isDeleted ? '↶' : '×'}
-                                    </button>
-                                </div>
-                            `;
-            }).join('')}
-                    </div>
-                </div>
-            `;
-        }
+        html += this.renderWordGroups(groupedWords, 0);
 
         container.innerHTML = html;
+    }
+
+    /**
+     * 递归渲染单词分组
+     * @param {Object} groups - 分组对象
+     * @param {number} level - 分组层级
+     * @returns {string} HTML字符串
+     */
+    renderWordGroups(groups, level = 0) {
+        let html = '';
+        const indent = '    '.repeat(level); // 缩进
+
+        for (const [groupName, content] of Object.entries(groups)) {
+            // 检查content是否为数组（单词列表）还是对象（子分组）
+            if (Array.isArray(content)) {
+                // 这是最终的单词列表
+                const activeWords = content.filter((word, index) => {
+                    const globalIndex = this.filteredWords.indexOf(word);
+                    return !this.deletedWords.has(globalIndex);
+                });
+
+                html += `
+                    <div class="word-group" style="margin-left: ${level * 20}px;">
+                        <div class="group-title level-${level}">${groupName} (${activeWords.length}/${content.length})</div>
+                        <div class="word-list">
+                            ${content.map((word, index) => {
+                    const globalIndex = this.filteredWords.indexOf(word);
+                    const isDeleted = this.deletedWords.has(globalIndex);
+                    return `
+                                    <div class="word-item ${isDeleted ? 'deleted' : ''}" data-index="${globalIndex}">
+                                        <span class="word-text">${word}</span>
+                                        <button class="delete-btn" onclick="app.toggleWordDelete(${globalIndex})" title="${isDeleted ? '恢复' : '删除'}">
+                                            ${isDeleted ? '↶' : '×'}
+                                        </button>
+                                    </div>
+                                `;
+                }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 这是子分组，需要递归处理
+                const totalWords = this.countWordsInGroup(content);
+                const activeWords = this.countActiveWordsInGroup(content);
+
+                html += `
+                    <div class="word-group" style="margin-left: ${level * 20}px;">
+                        <div class="group-title level-${level}">${groupName} (${activeWords}/${totalWords})</div>
+                        <div class="sub-groups">
+                            ${this.renderWordGroups(content, level + 1)}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        return html;
+    }
+
+    /**
+     * 递归计算分组中的总单词数
+     * @param {Object} group - 分组对象
+     * @returns {number} 单词总数
+     */
+    countWordsInGroup(group) {
+        let count = 0;
+        for (const content of Object.values(group)) {
+            if (Array.isArray(content)) {
+                count += content.length;
+            } else {
+                count += this.countWordsInGroup(content);
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 递归计算分组中的活跃单词数（未删除）
+     * @param {Object} group - 分组对象
+     * @returns {number} 活跃单词数
+     */
+    countActiveWordsInGroup(group) {
+        let count = 0;
+        for (const content of Object.values(group)) {
+            if (Array.isArray(content)) {
+                count += content.filter(word => {
+                    const globalIndex = this.filteredWords.indexOf(word);
+                    return !this.deletedWords.has(globalIndex);
+                }).length;
+            } else {
+                count += this.countActiveWordsInGroup(content);
+            }
+        }
+        return count;
 
         // 批量操作按钮现在在导出区域，这里不再添加
     }
@@ -428,6 +496,42 @@ class WordFilterApp {
      * @returns {Object} 分组结果
      */
     groupWordsByFirstLetter(words) {
+        // 获取当前选中的规则
+        const ruleName = document.getElementById('ruleSelect').value;
+        const rule = this.ruleEngine.getRule(ruleName);
+
+        // 检查是否有排序规则
+        if (rule && rule.displayRule && rule.displayRule.startsWith('@') && rule.displayRule.length > 1) {
+            const sortRule = rule.displayRule.substring(1);
+
+            // 如果有集合排序规则，按集合分组
+            if (sortRule !== '-' && sortRule !== '') {
+                return this.groupWordsBySetRule(words, sortRule, ruleName);
+            }
+        }
+
+        // 处理@-逆序或@正序的情况
+        if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
+            const sortRule = rule.displayRule.substring(1);
+            if (sortRule === '-' || sortRule === '') {
+                // 使用ruleEngine的applySorting方法处理排序
+                const sortedWords = this.ruleEngine.applySorting(words, rule.displayRule, rule.localSets);
+
+                // 按首字母分组已排序的单词
+                const groups = {};
+                sortedWords.forEach(word => {
+                    const firstLetter = word[0].toLowerCase();
+                    if (!groups[firstLetter]) {
+                        groups[firstLetter] = [];
+                    }
+                    groups[firstLetter].push(word);
+                });
+
+                return groups;
+            }
+        }
+
+        // 默认按首字母分组
         const groups = {};
 
         words.forEach(word => {
@@ -441,10 +545,110 @@ class WordFilterApp {
         // 按字母顺序排序
         const sortedGroups = {};
         Object.keys(groups).sort().forEach(key => {
-            sortedGroups[key] = groups[key].sort();
+            sortedGroups[key] = groups[key].sort((a, b) => this.ruleEngine.compareWords(a, b));
         });
 
         return sortedGroups;
+    }
+
+    /**
+     * 按集合规则分组单词
+     * @param {Array} words - 单词数组
+     * @param {string|Array} sortRule - 排序规则字符串或解析后的规则数组
+     * @param {string} ruleName - 规则名称
+     * @returns {Object} 分组后的单词对象
+     */
+    groupWordsBySetRule(words, sortRule, ruleName) {
+        const groups = {};
+
+        // 解析排序规则（如果传入的是字符串）
+        const sortGroups = Array.isArray(sortRule) ? sortRule : this.ruleEngine.parseSortRule(sortRule);
+
+        if (sortGroups.length === 0) {
+            return this.groupWordsByFirstLetter(words);
+        }
+
+        // 获取当前规则的局部集合
+        const rule = this.ruleEngine.getRule(ruleName);
+        const localSets = rule ? rule.localSets : new Map();
+
+        // 使用第一个集合进行分组
+        const primarySet = sortGroups[0];
+        const set = this.ruleEngine.getSet(primarySet.setName, localSets);
+
+        if (!set) {
+            // 如果集合不存在，按首字母分组
+            return this.groupWordsByFirstLetter(words);
+        }
+
+        // 获取集合元素并排序（用于显示顺序）
+        const setElements = Array.from(set).sort((a, b) => {
+            const comparison = a.localeCompare(b);
+            return primarySet.descending ? -comparison : comparison;
+        });
+
+        // 为每个集合元素创建分组
+        setElements.forEach(element => {
+            groups[element] = [];
+        });
+
+        // 添加"其他"分组
+        groups['其他'] = [];
+
+        // 将单词分配到对应的分组
+        words.forEach(word => {
+            const lowerWord = word.toLowerCase();
+            let matched = false;
+
+            // 根据集合类型选择匹配策略
+            if (primarySet.setName === 'V') {
+                // 对于元音集合，根据单词中包含的元音字母分组
+                // 优先匹配第一个出现的元音字母
+                for (let i = 0; i < lowerWord.length; i++) {
+                    const char = lowerWord[i];
+                    if (setElements.includes(char)) {
+                        groups[char].push(word);
+                        matched = true;
+                        break;
+                    }
+                }
+            } else {
+                // 对于其他集合，使用前缀匹配
+                // 创建按长度降序排列的元素副本，优先匹配较长的元素
+                const sortedElementsForMatching = [...setElements].sort((a, b) => b.length - a.length);
+
+                for (const element of sortedElementsForMatching) {
+                    if (lowerWord.startsWith(element.toLowerCase())) {
+                        groups[element].push(word);
+                        matched = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!matched) {
+                groups['其他'].push(word);
+            }
+        });
+
+        // 移除空分组并处理多级分组
+        Object.keys(groups).forEach(key => {
+            if (groups[key].length === 0) {
+                delete groups[key];
+            } else {
+                // 如果还有更多的排序规则，递归进行下一级分组
+                if (sortGroups.length > 1) {
+                    // 直接传递剩余的排序规则数组
+                    const remainingSortGroups = sortGroups.slice(1);
+                    groups[key] = this.groupWordsBySetRule(groups[key], remainingSortGroups, ruleName);
+                } else {
+                    // 最后一级，对单词进行排序
+                    groups[key].sort((a, b) => this.ruleEngine.compareWords(a, b));
+                }
+            }
+        });
+
+        return groups;
     }
 
     /**

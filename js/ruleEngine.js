@@ -509,7 +509,7 @@ class RuleEngine {
         }
 
         // 应用显示规则排序
-        return this.applySorting(filteredWords, rule.displayRule);
+        return this.applySorting(filteredWords, rule.displayRule, rule.localSets);
     }
 
     /**
@@ -843,22 +843,232 @@ class RuleEngine {
      * @param {string} displayRule - 显示规则
      * @returns {Array} 排序后的单词数组
      */
-    applySorting(words, displayRule) {
+    applySorting(words, displayRule, localSets = new Map()) {
         if (!displayRule || !displayRule.startsWith('@')) {
             // 默认按字母顺序排序
-            return words.sort((a, b) => a.localeCompare(b));
+            return this.sortByAlphabet(words);
         }
 
         // 解析显示规则
-        const sortRule = displayRule.substring(1);
-        const isDescending = sortRule.startsWith('-');
+        const sortRule = displayRule.substring(1); // 去掉@符号
 
-        const sortedWords = words.sort((a, b) => {
-            const comparison = a.localeCompare(b);
-            return isDescending ? -comparison : comparison;
+        // 处理@-的情况（倒序字母排序）
+        if (sortRule === '-' || sortRule === '') {
+            if (sortRule === '-') {
+                return this.sortByAlphabet(words, true); // 倒序
+            } else {
+                return this.sortByAlphabet(words); // 正序
+            }
+        }
+
+        // 解析集合排序规则
+        return this.sortBySetGroups(words, sortRule, localSets);
+    }
+
+    /**
+     * 按字母顺序排序
+     * @param {Array} words - 单词数组
+     * @param {boolean} descending - 是否倒序
+     * @returns {Array} 排序后的单词数组
+     */
+    sortByAlphabet(words, descending = false) {
+        return words.sort((a, b) => {
+            // 自定义字母排序：大小写字母相同，按下一个字母排序
+            // 只有连续两个字母相同且只有大小写差异时，才按第一个字母先大后小
+            const comparison = this.compareWords(a, b);
+            return descending ? -comparison : comparison;
+        });
+    }
+
+    /**
+     * 自定义单词比较函数
+     * @param {string} a - 第一个单词
+     * @param {string} b - 第二个单词
+     * @returns {number} 比较结果
+     */
+    compareWords(a, b) {
+        const minLen = Math.min(a.length, b.length);
+        let firstCaseDiffIndex = -1; // 记录第一个只有大小写不同的位置
+
+        for (let i = 0; i < minLen; i++) {
+            const charA = a[i];
+            const charB = b[i];
+
+            // 转换为小写进行比较
+            const lowerA = charA.toLowerCase();
+            const lowerB = charB.toLowerCase();
+
+            if (lowerA !== lowerB) {
+                // 处理特殊符号：连字符、点号等应优先于字母
+                const isSymbolA = /[^a-zA-Z]/.test(charA);
+                const isSymbolB = /[^a-zA-Z]/.test(charB);
+
+                if (isSymbolA && !isSymbolB) return -1;
+                if (!isSymbolA && isSymbolB) return 1;
+
+                // 都是字母或都是符号，按字母顺序比较
+                return lowerA.localeCompare(lowerB);
+            }
+
+            // 字母相同但大小写不同，记录第一个这样的位置
+            if (charA !== charB && firstCaseDiffIndex === -1) {
+                firstCaseDiffIndex = i;
+            }
+        }
+
+        // 如果所有比较的字符都相同（包括大小写），按长度排序
+        if (a.length !== b.length) {
+            return a.length - b.length;
+        }
+
+        // 长度也相同，如果有大小写差异，按第一个大小写差异位置排序（大写优先）
+        if (firstCaseDiffIndex !== -1) {
+            const charA = a[firstCaseDiffIndex];
+            const charB = b[firstCaseDiffIndex];
+            return charA < charB ? -1 : 1; // 大写字母ASCII值小于小写字母
+        }
+
+        // 完全相同
+        return 0;
+    }
+
+    /**
+     * 按集合分组排序
+     * @param {Array} words - 单词数组
+     * @param {string} sortRule - 排序规则
+     * @param {Map} localSets - 局部集合映射
+     * @returns {Array} 排序后的单词数组
+     */
+    sortBySetGroups(words, sortRule, localSets = new Map()) {
+        // 解析排序规则，提取集合名称和排序方向
+        const sortGroups = this.parseSortRule(sortRule);
+
+        if (sortGroups.length === 0) {
+            return this.sortByAlphabet(words);
+        }
+
+        // 为每个单词计算分组键
+        const wordsWithKeys = words.map(word => {
+            const groupKeys = this.calculateGroupKeys(word, sortGroups, localSets);
+            return { word, groupKeys };
         });
 
-        return sortedWords;
+        // 按分组键排序
+        wordsWithKeys.sort((a, b) => {
+            for (let i = 0; i < sortGroups.length; i++) {
+                const keyA = a.groupKeys[i];
+                const keyB = b.groupKeys[i];
+
+                if (keyA !== keyB) {
+                    const comparison = keyA.localeCompare(keyB);
+                    return sortGroups[i].descending ? -comparison : comparison;
+                }
+            }
+
+            // 所有分组键都相同，按字母顺序排序（不显示字母分组）
+            return this.compareWords(a.word, b.word);
+        });
+
+        return wordsWithKeys.map(item => item.word);
+    }
+
+    /**
+     * 解析排序规则
+     * @param {string} sortRule - 排序规则字符串
+     * @returns {Array} 解析后的排序组
+     */
+    parseSortRule(sortRule) {
+        const groups = [];
+        let i = 0;
+
+        while (i < sortRule.length) {
+            let descending = false;
+
+            // 检查是否有负号
+            if (sortRule[i] === '-') {
+                descending = true;
+                i++;
+            }
+
+            if (i >= sortRule.length) break;
+
+            let setName = '';
+
+            // 检查是否是括号引用的集合
+            if (sortRule[i] === '(') {
+                const closeIndex = sortRule.indexOf(')', i);
+                if (closeIndex === -1) {
+                    throw new Error(`排序规则中括号不匹配: ${sortRule}`);
+                }
+                setName = sortRule.substring(i + 1, closeIndex);
+                i = closeIndex + 1;
+            } else {
+                // 单字母集合
+                setName = sortRule[i];
+                i++;
+            }
+
+            if (setName) {
+                groups.push({ setName, descending });
+            }
+        }
+
+        // 限制排序分级层数，最多允许两级
+        if (groups.length > 2) {
+            throw new Error(`排序规则层数超过限制，最多允许两级排序，当前为 ${groups.length} 级`);
+        }
+
+        return groups;
+    }
+
+    /**
+     * 计算单词的分组键
+     * @param {string} word - 单词
+     * @param {Array} sortGroups - 排序组
+     * @param {Map} localSets - 局部集合映射
+     * @returns {Array} 分组键数组
+     */
+    calculateGroupKeys(word, sortGroups, localSets = new Map()) {
+        const keys = [];
+
+        for (const group of sortGroups) {
+            const key = this.findMatchingSetElement(word, group.setName, localSets);
+            keys.push(key);
+        }
+
+        return keys;
+    }
+
+    /**
+     * 查找单词匹配的集合元素
+     * @param {string} word - 单词
+     * @param {string} setName - 集合名称
+     * @param {Map} localSets - 局部集合映射
+     * @returns {string} 匹配的集合元素或字母
+     */
+    findMatchingSetElement(word, setName, localSets = new Map()) {
+        // 获取集合（优先使用局部集合）
+        const set = this.getSet(setName, localSets);
+
+        if (!set) {
+            // 如果集合不存在，按首字母分组
+            return word.charAt(0).toLowerCase();
+        }
+
+        // 查找单词开头匹配的集合元素
+        const lowerWord = word.toLowerCase();
+
+        // 按元素长度降序排列，优先匹配较长的元素
+        const sortedElements = Array.from(set).sort((a, b) => b.length - a.length);
+
+        for (const element of sortedElements) {
+            if (lowerWord.startsWith(element.toLowerCase())) {
+                return element.toLowerCase();
+            }
+        }
+
+        // 如果没有匹配的集合元素，返回首字母
+        return word.charAt(0).toLowerCase();
     }
 
     /**

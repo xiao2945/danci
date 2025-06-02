@@ -431,6 +431,41 @@ section h2 {
     border-radius: 5px;
 }
 
+/* 多级分组样式 */
+.group-title.level-0 {
+    background: #667eea;
+    color: white;
+    font-size: 1.1rem;
+    border-left: 4px solid #4c51bf;
+}
+
+.group-title.level-1 {
+    background: #81c784;
+    color: white;
+    font-size: 1rem;
+    border-left: 4px solid #4caf50;
+}
+
+.group-title.level-2 {
+    background: #ffb74d;
+    color: white;
+    font-size: 0.95rem;
+    border-left: 4px solid #ff9800;
+}
+
+.group-title.level-3 {
+    background: #f06292;
+    color: white;
+    font-size: 0.9rem;
+    border-left: 4px solid #e91e63;
+}
+
+.sub-groups {
+    margin-left: 10px;
+    border-left: 2px solid #e2e8f0;
+    padding-left: 10px;
+}
+
 .word-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -691,8 +726,7 @@ section h2 {
     width: 100%;
     padding: 12px 16px;
     background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-bottom: none;
+    border: 1px solid #e2e8f0;
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;

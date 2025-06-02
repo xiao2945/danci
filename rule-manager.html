@@ -267,38 +267,42 @@
             width: 100%;
             padding: 12px 16px;
             background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-bottom: none;
+            border: 1px solid #e2e8f0;
+            margin-top: -1px;
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
             overflow: hidden;
         }
 
-        /* 最后一个rule-item-content元素（无论是单个规则还是规则组内的） */
-        .rule-tree .rule-item-content:last-child {
-            border-bottom: 2px solid #e2e8f0;
-            border-left: 2px solid #e2e8f0;
-            border-right: 2px solid #e2e8f0;
+        .rule-item-header:first-child {
+            margin-top: 0;
         }
 
-        /* 如果最后一个元素是规则组且收缩状态，给规则组header添加下边线 */
-        .rule-tree>.rule-group:last-child.collapsed .rule-group-header {
-            border-bottom: 2px solid #e2e8f0;
+        /* 强制为所有最后的rule-item-content添加下边线 - 使用更高优先级 */
+        .rule-tree .rule-item-content:last-child {
+            border-bottom: 1px solid #e2e8f0 !important;
+            border-left: 1px solid #e2e8f0 !important;
+            border-right: 1px solid #e2e8f0 !important;
+        }
+
+        /* 强制为rule-tree直接子元素的最后一个content添加下边线 */
+        .rule-tree>div:last-child.rule-item-content {
+            border-bottom: 1px solid #e2e8f0 !important;
+            border-left: 1px solid #e2e8f0 !important;
+            border-right: 1px solid #e2e8f0 !important;
         }
 
         /* 确保最后一个rule-item-header的下一个兄弟元素rule-item-content有下边线 */
         .rule-tree .rule-item-header:nth-last-child(2)+.rule-item-content {
-            border-bottom: 2px solid #e2e8f0 !important;
-            border-left: 2px solid #e2e8f0;
-            border-right: 2px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0 !important;
+            border-left: 1px solid #e2e8f0 !important;
+            border-right: 1px solid #e2e8f0 !important;
         }
 
-        /* 规则组内最后一个rule-item-content */
-        .rule-group-content .rule-item-content:last-child {
-            border-bottom: 2px solid #e2e8f0 !important;
-            border-left: 2px solid #e2e8f0;
-            border-right: 2px solid #e2e8f0;
+        /* 通用强制样式 - 确保任何情况下最后的content都有下边线 */
+        div.rule-item-content:last-child {
+            border-bottom: 1px solid #e2e8f0 !important;
         }
 
         .rule-item-header:hover {
@@ -319,16 +323,22 @@
             color: #718096;
             background: #f1f5f9;
             padding: 12px 16px;
-            border-left: 2px solid #e2e8f0;
-            border-right: 2px solid #e2e8f0;
+            border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
             overflow-x: auto;
             white-space: pre-wrap;
+            display: block;
+        }
+
+        .rule-item.collapsed .rule-item-content {
             display: none;
         }
 
         .rule-item-content.expanded {
             display: block;
         }
+
+
 
         .rule-item-actions {
             display: flex;
@@ -432,138 +442,20 @@
             padding: 0;
             margin: 0;
             font-family: 'Courier New', monospace;
+            border-collapse: collapse;
         }
 
         .rule-tree-item {
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
-        .rule-group {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
 
-        .rule-group-header {
-            background: #edf2f7;
-            padding: 12px 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid #e2e8f0;
-            transition: background-color 0.3s ease;
-            user-select: none;
-        }
 
-        .rule-group-header:hover {
-            background: #e2e8f0;
-        }
 
-        .rule-group-title {
-            font-weight: 600;
-            color: #2d3748;
-            display: flex;
-            align-items: center;
-            flex: 1;
-        }
 
-        .rule-group-toggle {
-            font-size: 12px;
-            color: #718096;
-            transition: transform 0.3s ease;
-            width: 16px;
-            text-align: center;
-        }
 
-        .rule-group.collapsed .rule-group-toggle {
-            transform: rotate(-90deg);
-        }
 
-        .rule-group.expanded .rule-group-toggle {
-            transform: rotate(90deg);
-        }
 
-        .rule-group-content {
-            padding: 0;
-            max-height: 1000px;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .rule-group.collapsed .rule-group-content {
-            max-height: 0;
-        }
-
-        .rule-group.expanded .rule-group-content {
-            display: block;
-        }
-
-        .rule-sub-item {
-            padding: 12px 20px;
-            border-bottom: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            transition: background-color 0.3s ease;
-            cursor: move;
-        }
-
-        .rule-sub-item:hover {
-            background: #f8fafc;
-        }
-
-        .rule-sub-item:last-child {
-            border-bottom: none;
-        }
-
-        .rule-sub-item.dragging {
-            opacity: 0.5;
-            transform: rotate(2deg);
-        }
-
-        .rule-sub-info {
-            flex: 1;
-        }
-
-        .rule-sub-name {
-            font-weight: 500;
-            color: #2d3748;
-            margin-bottom: 4px;
-        }
-
-        .rule-sub-preview {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 11px;
-            color: #718096;
-            background: #f1f5f9;
-            padding: 4px 6px;
-            border-radius: 3px;
-        }
-
-        .rule-sub-actions {
-            display: flex;
-            gap: 6px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .rule-sub-item:hover .rule-sub-actions {
-            opacity: 1;
-        }
-
-        .drag-handle {
-            color: #cbd5e0;
-            cursor: move;
-            margin-right: 8px;
-            font-size: 14px;
-        }
-
-        .drag-handle:hover {
-            color: #a0aec0;
-        }
 
         @media (max-width: 1024px) {
             .rule-panels {
@@ -609,6 +501,34 @@
                 min-height: 120px;
             }
         }
+
+
+
+        /* 图标按钮样式 */
+        .btn-icon {
+            background: none;
+            border: none;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: #f3f4f6;
+        }
+
+        .btn-icon:active {
+            background: #e5e7eb;
+        }
+
+        /* 小按钮样式 */
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -631,8 +551,8 @@
                 <div class="rule-examples-panel">
                     <div class="examples-header">
                         <h3 class="panel-title">规则示例</h3>
-                        <button class="toggle-all-btn" onclick="toggleAllExamples()" title="收缩/展开全部示例">
-                            <span class="toggle-all-text">收缩全部</span>
+                        <button class="btn btn-small btn-outline" onclick="toggleAllExamples()" title="收缩/展开全部示例">
+                            <span class="toggle-all-text">➖ 收缩全部示例</span>
                         </button>
                     </div>
 
@@ -736,7 +656,7 @@
                                     tree,
                                     stop, swim</div>
                                 <div style="color: #666; font-size: 0.9em;">
-                                    注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序（BL)前添加-（如-（BL））表示按集合BL内的元素逆序排列；也可以增加多个排序关键字，表示次级排序
+                                    注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序(BL)前添加-（如-(BL)）表示按集合BL内的元素逆序排列；最多可指定两级排序
                                 </div>
                             </div>
                         </div>
@@ -841,12 +761,20 @@
                 <div class="saved-rules-header">
                     <h2>已保存的规则</h2>
                     <div style="margin-left: auto; display: flex; gap: 10px;">
+                        <button class="btn btn-small btn-outline" onclick="toggleAllSavedRules()" title="收缩/展开全部规则">
+                            <span class="toggle-all-saved-text">➖ 收缩全部规则</span>
+                        </button>
                         <button id="exportRulesBtn" class="btn btn-secondary">导出规则</button>
                         <button id="importRulesBtn" class="btn btn-secondary">导入规则</button>
                         <button id="clearAllRulesBtn" class="btn btn-danger" onclick="ruleManager.clearAllRules()">
                             🗑️ 清除所有规则
                         </button>
                     </div>
+                </div>
+                <div class="drag-sort-hint"
+                    style="color: #718096; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                    <span>⋮⋮</span>
+                    <span>拖动可调整排序</span>
                 </div>
                 <div id="savedRulesContainer" class="saved-rules-container"></div>
             </div>
@@ -916,6 +844,7 @@ V=={a,e,i,o,u}
         class RuleManagerApp {
             constructor() {
                 this.ruleEngine = new RuleEngine();
+                this.ruleOrder = []; // 初始化规则顺序数组
                 this.initializeApp();
             }
 
@@ -1070,7 +999,18 @@ ${setName}=={${setValues.join(',')}}`;
                 try {
                     const rule = this.ruleEngine.parseRule(ruleText);
 
-                    const testWords = ['apple', 'banana', 'cat', 'dog', 'elephant', 'fish', 'grape', 'house'];
+                    const testWords = [
+                        // CVC 模式
+                        'cat', 'dog', 'big', 'run', 'sit', 'hot',
+                        // CVCE 模式
+                        'cake', 'bike', 'home', 'cute', 'make', 'time',
+                        // 双辅音开头
+                        'black', 'green', 'smart', 'strong', 'place', 'train',
+                        // 长单词（10字母内）
+                        'beautiful', 'important', 'different', 'wonderful', 'education', 'computer',
+                        // 带词根词缀
+                        'unhappy', 'teacher', 'helpful', 'quickly'
+                    ];
                     const testResults = [];
 
                     for (const word of testWords) {
@@ -1078,8 +1018,26 @@ ${setName}=={${setValues.join(',')}}`;
                         testResults.push(`${word}: ${matches ? '✓' : '✗'}`);
                     }
 
-                    const resultText = `测试结果:\n${testResults.join('\n')}`;
-                    alert(resultText);
+                    // 将结果按4列排列显示
+                    const columns = 4;
+                    const rows = Math.ceil(testResults.length / columns);
+                    let formattedResults = '测试结果:\n\n';
+
+                    for (let row = 0; row < rows; row++) {
+                        const rowItems = [];
+                        for (let col = 0; col < columns; col++) {
+                            const index = row + col * rows;
+                            if (index < testResults.length) {
+                                // 格式化每个结果，确保对齐
+                                const result = testResults[index];
+                                const paddedResult = result.padEnd(15, ' ');
+                                rowItems.push(paddedResult);
+                            }
+                        }
+                        formattedResults += rowItems.join('  ') + '\n';
+                    }
+
+                    alert(formattedResults);
 
                 } catch (error) {
                     console.error('规则测试错误:', error);
@@ -1110,7 +1068,7 @@ ${setName}=={${setValues.join(',')}}`;
 
             loadSavedRules() {
                 const container = document.getElementById('savedRulesContainer');
-                const ruleNames = this.ruleEngine.getRuleNames();
+                let ruleNames = this.ruleEngine.getRuleNames();
 
                 if (ruleNames.length === 0) {
                     container.className = 'saved-rules-container empty';
@@ -1120,60 +1078,67 @@ ${setName}=={${setValues.join(',')}}`;
 
                 container.className = 'saved-rules-container';
 
-                // 获取保存的排序
-                const savedOrder = this.loadRuleOrder();
+                // 加载规则顺序配置
+                this.loadRuleOrder();
 
-                // 按保存的顺序排序，未排序的规则放在最后
-                const orderedRules = [];
-                savedOrder.forEach(name => {
-                    if (ruleNames.includes(name)) {
-                        orderedRules.push(name);
-                    }
-                });
-                ruleNames.forEach(name => {
-                    if (!orderedRules.includes(name)) {
-                        orderedRules.push(name);
-                    }
-                });
+                // 清理不存在的规则
+                this.cleanupNonExistentRules(ruleNames);
 
-                // 按名称分组，创建树形结构
-                const ruleGroups = this.groupRulesByName(orderedRules);
+                // 按照保存的顺序排序规则
+                ruleNames = this.sortRulesByOrder(ruleNames);
+
                 let html = '<div class="rule-tree">';
 
-                for (const [groupName, rules] of Object.entries(ruleGroups)) {
-                    if (rules.length === 1) {
-                        // 单个规则
-                        const rule = this.ruleEngine.getRule(rules[0]);
-                        html += this.createRuleItemHTML(rules[0], rule, false);
-                    } else {
-                        // 规则组（默认收缩）
-                        html += `
-                            <div class="rule-group collapsed">
-                                <div class="rule-group-header" onclick="this.parentNode.classList.toggle('collapsed')">
-                                    <span class="rule-group-toggle">▶</span>
-                                    <span class="rule-group-title">${groupName}</span>
-                                    <span class="group-count">(${rules.length})</span>
-                                </div>
-                                <div class="rule-group-content">
-                        `;
 
-                        rules.forEach(ruleName => {
-                            const rule = this.ruleEngine.getRule(ruleName);
-                            html += this.createRuleItemHTML(ruleName, rule, true);
-                        });
 
-                        html += `
-                                </div>
-                            </div>
-                        `;
+                // 渲染所有规则
+                ruleNames.forEach(ruleName => {
+                    const rule = this.ruleEngine.getRule(ruleName);
+                    if (rule) {
+                        html += this.createRuleItemHTML(ruleName, rule);
                     }
-                }
+                });
 
                 html += '</div>';
                 container.innerHTML = html;
 
-                // 添加拖拽排序功能
-                this.initializeDragAndDrop(container);
+                // 只在第一次加载时添加拖拽排序功能
+                if (!container.hasAttribute('data-drag-initialized')) {
+                    this.initializeDragAndDrop(container);
+                    container.setAttribute('data-drag-initialized', 'true');
+                }
+
+                // 动态添加最后一个规则的下边线
+                this.addLastRuleBorder();
+
+                // 恢复规则展开/收缩状态
+                this.restoreSavedRuleStates();
+
+                // 更新收缩展开全部按钮的文本
+                updateToggleAllSavedButtonText();
+            }
+
+            // 动态添加最后一个规则的下边线
+            addLastRuleBorder() {
+                const ruleTree = document.querySelector('.rule-tree');
+                if (!ruleTree) return;
+
+                // 移除之前添加的样式
+                const existingStyles = ruleTree.querySelectorAll('.last-rule-border');
+                existingStyles.forEach(el => el.classList.remove('last-rule-border'));
+
+                // 找到所有的rule-item-content元素
+                const allContents = ruleTree.querySelectorAll('.rule-item-content');
+                if (allContents.length === 0) return;
+
+                // 获取最后一个content元素
+                const lastContent = allContents[allContents.length - 1];
+
+                // 添加特殊类名和样式
+                lastContent.classList.add('last-rule-border');
+                lastContent.style.borderBottom = '2px solid #e2e8f0';
+                lastContent.style.borderLeft = '2px solid #e2e8f0';
+                lastContent.style.borderRight = '2px solid #e2e8f0';
             }
 
             editRule(ruleName) {
@@ -1233,41 +1198,29 @@ ${setName}=={${setValues.join(',')}}`;
             }
 
             // 按名称分组规则
-            groupRulesByName(ruleNames) {
-                const groups = {};
-
-                ruleNames.forEach(name => {
-                    // 提取基础名称（去掉数字后缀等）
-                    const baseName = name.replace(/\d+$/, '').replace(/[_-]\d+$/, '');
-
-                    if (!groups[baseName]) {
-                        groups[baseName] = [];
-                    }
-                    groups[baseName].push(name);
-                });
-
-                return groups;
-            }
+            // groupRulesByName方法已删除，避免与手动分组功能冲突
 
             // 创建规则项HTML
-            createRuleItemHTML(ruleName, rule, isInGroup) {
+            createRuleItemHTML(ruleName, rule) {
                 const ruleText = this.formatRuleText(rule);
                 const commentText = rule.comment ? rule.comment : '';
 
                 return `
-                    <div class="rule-item-header" draggable="true" data-rule-name="${ruleName}" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">
-                        <div class="rule-item-main">
-                            <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
-                            <span class="rule-item-expand-icon">▶</span>
-                            <span class="rule-item-name">${ruleName}</span>
-                            ${commentText ? `<span class="rule-item-comment">// ${commentText}</span>` : ''}
+                    <div class="rule-item collapsed" data-rule-id="${ruleName}">
+                        <div class="rule-item-header" draggable="true" data-rule-name="${ruleName}" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">
+                            <div class="rule-item-main">
+                                <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
+                                <span class="rule-item-expand-icon triangle-icon"></span>
+                                <span class="rule-item-name">${ruleName}</span>
+                                ${commentText ? `<span class="rule-item-comment">// ${commentText}</span>` : ''}
+                            </div>
+                            <div class="rule-item-actions" onclick="event.stopPropagation()">
+                                <button class="btn-icon" onclick="ruleManager.editRule('${ruleName}')" title="编辑规则">✏️</button>
+                                <button class="btn-icon" onclick="ruleManager.deleteRule('${ruleName}')" title="删除规则">🗑️</button>
+                            </div>
                         </div>
-                        <div class="rule-item-actions" onclick="event.stopPropagation()">
-                            <button class="btn btn-small btn-outline" onclick="ruleManager.editRule('${ruleName}')" title="编辑规则">编辑</button>
-                            <button class="btn btn-small btn-secondary" onclick="ruleManager.deleteRule('${ruleName}')" title="删除规则">删除</button>
-                        </div>
+                        <div class="rule-item-content">${ruleText}</div>
                     </div>
-                    <div class="rule-item-content">${ruleText}</div>
                 `;
             }
 
@@ -1337,19 +1290,40 @@ ${setName}=={${setValues.join(',')}}`;
 
             // 切换规则展开状态
             toggleRuleExpansion(ruleName) {
-                const ruleHeader = document.querySelector(`[data-rule-name="${ruleName}"]`);
-                if (ruleHeader) {
-                    ruleHeader.classList.toggle('expanded');
-                    const expandIcon = ruleHeader.querySelector('.rule-item-expand-icon');
-                    if (expandIcon) {
-                        expandIcon.textContent = ruleHeader.classList.contains('expanded') ? '▼' : '▶';
-                    }
-                    // 切换内容显示
-                    const content = ruleHeader.nextElementSibling;
-                    if (content && content.classList.contains('rule-item-content')) {
-                        content.style.display = ruleHeader.classList.contains('expanded') ? 'block' : 'none';
-                    }
+                const ruleItem = document.querySelector(`[data-rule-id="${ruleName}"]`);
+                if (ruleItem) {
+                    ruleItem.classList.toggle('collapsed');
+                    // 图标旋转由CSS控制，无需手动设置文本
+
+                    // 保存展开/收缩状态
+                    const savedRuleStates = JSON.parse(localStorage.getItem('savedRuleStates') || '{}');
+                    savedRuleStates[ruleName] = ruleItem.classList.contains('collapsed');
+                    localStorage.setItem('savedRuleStates', JSON.stringify(savedRuleStates));
+
+                    // 更新收缩展开全部按钮的文本
+                    updateToggleAllSavedButtonText();
                 }
+            }
+
+            // 恢复规则展开/收缩状态
+            restoreSavedRuleStates() {
+                const savedRuleStates = JSON.parse(localStorage.getItem('savedRuleStates') || '{}');
+                const ruleItems = document.querySelectorAll('.rule-item');
+
+                ruleItems.forEach(item => {
+                    const ruleId = item.dataset.ruleId;
+                    if (!ruleId) return;
+
+                    const isCollapsed = savedRuleStates[ruleId];
+                    if (isCollapsed !== undefined) {
+                        if (isCollapsed) {
+                            item.classList.add('collapsed');
+                        } else {
+                            item.classList.remove('collapsed');
+                        }
+                        // 图标旋转由CSS控制，无需手动设置文本
+                    }
+                });
             }
 
             // 保存规则排序到本地存储
@@ -1475,21 +1449,28 @@ ${setName}=={${setValues.join(',')}}`;
                 let draggedElement = null;
 
                 container.addEventListener('dragstart', (e) => {
-                    if (e.target.classList.contains('rule-item')) {
-                        draggedElement = e.target;
-                        e.target.classList.add('dragging');
+                    // 检查是否是从rule-item-header或其子元素（如拖拽句柄）开始拖拽
+                    const headerElement = e.target.closest('.rule-item-header');
+
+                    if (headerElement) {
+                        draggedElement = headerElement;
+                        headerElement.classList.add('dragging');
                         e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/html', e.target.outerHTML);
+                        e.dataTransfer.setData('text/html', headerElement.outerHTML);
                     }
                 });
 
                 container.addEventListener('dragend', (e) => {
-                    if (e.target.classList.contains('rule-item')) {
-                        e.target.classList.remove('dragging');
+                    // 检查是否是从rule-item-header或其子元素结束拖拽
+                    const headerElement = e.target.closest('.rule-item-header');
+
+                    if (headerElement) {
+                        headerElement.classList.remove('dragging');
                         // 清除所有拖拽指示器
                         container.querySelectorAll('.drag-over').forEach(el => {
                             el.classList.remove('drag-over');
                         });
+
                         draggedElement = null;
                     }
                 });
@@ -1498,15 +1479,17 @@ ${setName}=={${setValues.join(',')}}`;
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
 
-                    const afterElement = this.getDragAfterElement(container, e.clientY);
-                    const draggables = [...container.querySelectorAll('.rule-item-header:not(.dragging)')];
-
                     // 清除之前的指示器
-                    draggables.forEach(el => el.classList.remove('drag-over'));
+                    container.querySelectorAll('.drag-over').forEach(el => {
+                        el.classList.remove('drag-over');
+                    });
 
-                    // 添加新的指示器
-                    if (afterElement) {
-                        afterElement.classList.add('drag-over');
+                    if (draggedElement) {
+                        // 简化的规则项拖拽逻辑
+                        const afterElement = this.getDragAfterElement(container, e.clientY);
+                        if (afterElement) {
+                            afterElement.classList.add('drag-over');
+                        }
                     }
                 });
 
@@ -1516,21 +1499,41 @@ ${setName}=={${setValues.join(',')}}`;
                     if (draggedElement) {
                         const afterElement = this.getDragAfterElement(container, e.clientY);
 
-                        if (afterElement == null) {
-                            container.appendChild(draggedElement);
-                        } else {
-                            container.insertBefore(draggedElement, afterElement);
+                        // 获取拖拽元素所在的rule-item容器
+                        const draggedRuleItem = draggedElement.closest('.rule-item');
+                        const draggedRuleName = draggedElement.dataset.ruleName;
+
+                        if (draggedRuleItem && draggedRuleName) {
+                            // 简化的拖拽处理逻辑
+                            if (afterElement) {
+                                const afterRuleItem = afterElement.closest('.rule-item');
+                                if (afterRuleItem) {
+                                    // 在目标元素之前插入
+                                    const targetContainer = afterRuleItem.parentNode;
+                                    if (targetContainer && targetContainer.contains(draggedRuleItem)) {
+                                        targetContainer.insertBefore(draggedRuleItem, afterRuleItem);
+                                        // 更新规则顺序
+                                        this.updateRuleOrder();
+                                        this.showMessage('规则位置已更新', 'success');
+                                    }
+                                }
+                            } else {
+                                // 移动到末尾
+                                const targetContainer = draggedRuleItem.parentNode;
+                                if (targetContainer) {
+                                    targetContainer.appendChild(draggedRuleItem);
+                                    // 更新规则顺序
+                                    this.updateRuleOrder();
+                                    this.showMessage('规则位置已更新', 'success');
+                                }
+                            }
                         }
 
-                        // 保存新的排序到本地存储
-                        this.saveRuleOrder();
-                        this.showMessage('规则排序已更新', 'success');
+                        // 清除拖拽指示器
+                        container.querySelectorAll('.drag-over').forEach(el => {
+                            el.classList.remove('drag-over');
+                        });
                     }
-
-                    // 清除拖拽指示器
-                    container.querySelectorAll('.drag-over').forEach(el => {
-                        el.classList.remove('drag-over');
-                    });
                 });
 
                 container.addEventListener('dragleave', (e) => {
@@ -1546,7 +1549,6 @@ ${setName}=={${setValues.join(',')}}`;
             // 获取拖拽后的位置
             getDragAfterElement(container, y) {
                 const draggableElements = [...container.querySelectorAll('.rule-item-header:not(.dragging)')];
-
                 return draggableElements.reduce((closest, child) => {
                     const box = child.getBoundingClientRect();
                     const offset = y - box.top - box.height / 2;
@@ -1559,18 +1561,87 @@ ${setName}=={${setValues.join(',')}}`;
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
             }
 
-            // 保存规则排序
-            saveRuleOrder() {
-                const ruleHeaders = [...document.querySelectorAll('.rule-item-header[data-rule-name]')];
-                const order = ruleHeaders.map(item => item.getAttribute('data-rule-name'));
-                localStorage.setItem('ruleOrder', JSON.stringify(order));
+
+
+            // 更新规则顺序
+            updateRuleOrder() {
+                const container = document.querySelector('.saved-rules-container');
+                if (!container) return;
+
+                // 获取所有规则项
+                const ruleItems = [...container.querySelectorAll('.rule-item')];
+
+                // 提取规则名称
+                const newOrder = ruleItems.map(item => {
+                    const header = item.querySelector('.rule-item-header[data-rule-name]');
+                    return header ? header.getAttribute('data-rule-name') : null;
+                }).filter(name => name !== null);
+
+                // 更新规则顺序
+                this.ruleOrder = newOrder;
+                this.saveRuleOrder();
             }
 
-            // 加载规则排序
+
+
+            // 分组管理功能
+            // 保存规则顺序配置
+            saveRuleOrder() {
+                localStorage.setItem('ruleOrder', JSON.stringify(this.ruleOrder));
+            }
+
+            // 加载规则顺序配置
             loadRuleOrder() {
                 const savedOrder = localStorage.getItem('ruleOrder');
-                return savedOrder ? JSON.parse(savedOrder) : [];
+                if (savedOrder) {
+                    this.ruleOrder = JSON.parse(savedOrder);
+                } else {
+                    this.ruleOrder = [];
+                }
             }
+
+            // 按照保存的顺序排序规则
+            sortRulesByOrder(ruleNames) {
+                const orderedRules = [];
+                const unorderedRules = [...ruleNames];
+
+                // 先添加已排序的规则
+                this.ruleOrder.forEach(ruleName => {
+                    const index = unorderedRules.indexOf(ruleName);
+                    if (index !== -1) {
+                        orderedRules.push(ruleName);
+                        unorderedRules.splice(index, 1);
+                    }
+                });
+
+                // 再添加新的未排序规则
+                orderedRules.push(...unorderedRules);
+
+                // 更新规则顺序
+                this.ruleOrder = orderedRules;
+                this.saveRuleOrder();
+
+                return orderedRules;
+            }
+
+
+
+
+
+            // 清理不存在的规则
+            cleanupNonExistentRules(ruleNames) {
+                this.ruleOrder = this.ruleOrder.filter(ruleName => ruleNames.includes(ruleName));
+            }
+
+
+
+
+
+
+
+
+
+
 
             // 检查规则冲突
             checkRuleConflicts(newRule) {
@@ -1605,7 +1676,7 @@ ${setName}=={${setValues.join(',')}}`;
             clearAllRules() {
                 if (confirm('确定要清除所有已保存的规则吗？此操作不可撤销！')) {
                     // 清除RuleEngine中的所有规则
-                    const ruleNames = this.ruleEngine.getRuleNames();
+                    let ruleNames = this.ruleEngine.getRuleNames();
                     ruleNames.forEach(ruleName => {
                         this.ruleEngine.deleteRule(ruleName);
                     });
@@ -1638,7 +1709,9 @@ ${setName}=={${setValues.join(',')}}`;
              */
             async exportRules() {
                 try {
-                    const success = await this.ruleEngine.exportRulesToFile();
+                    // 按照当前排序顺序获取规则
+                    const orderedRules = this.getOrderedRulesForExport();
+                    const success = await this.ruleEngine.fileStorage.saveRulesToFile(orderedRules);
                     if (success) {
                         this.showMessage('规则导出成功！', 'success');
                     }
@@ -1650,6 +1723,26 @@ ${setName}=={${setValues.join(',')}}`;
                     console.error('导出规则失败:', error);
                     this.showMessage('导出规则失败: ' + error.message, 'error');
                 }
+            }
+
+            /**
+             * 按照当前显示顺序获取规则用于导出
+             */
+            getOrderedRulesForExport() {
+                const container = document.getElementById('savedRulesContainer');
+                const ruleHeaders = container.querySelectorAll('.rule-item-header');
+                const orderedRules = new Map();
+
+                // 按照当前显示顺序添加规则
+                Array.from(ruleHeaders).forEach(header => {
+                    const ruleName = header.dataset.ruleName;
+                    const rule = this.ruleEngine.getRule(ruleName);
+                    if (rule) {
+                        orderedRules.set(ruleName, rule);
+                    }
+                });
+
+                return orderedRules;
             }
 
             /**
@@ -1677,12 +1770,19 @@ ${setName}=={${setValues.join(',')}}`;
 
         document.addEventListener('DOMContentLoaded', () => {
             ruleManager = new RuleManagerApp();
+            window.ruleManager = ruleManager; // 使ruleManager全局可访问
+
             // 恢复示例的展开/收缩状态
             restoreExampleStates();
 
             // 初始化响应式监听
             handleResponsiveExamples();
             window.addEventListener('resize', handleResponsiveExamples);
+
+            // 页面加载完成后添加最后一个规则的边框
+            setTimeout(() => {
+                ruleManager.addLastRuleBorder();
+            }, 500);
         });
 
         // 处理响应式示例收缩
@@ -1780,7 +1880,7 @@ ${setName}=={${setValues.join(',')}}`;
         // 更新收缩/展开全部按钮的文本
         function updateToggleAllButtonText() {
             const exampleSections = document.querySelectorAll('.example-section');
-            const toggleBtn = document.querySelector('.toggle-all-btn .toggle-all-text');
+            const toggleBtn = document.querySelector('.examples-header .btn-outline .toggle-all-text');
 
             if (!toggleBtn) return;
 
@@ -1788,7 +1888,62 @@ ${setName}=={${setValues.join(',')}}`;
                 section.classList.contains('collapsed')
             );
 
-            toggleBtn.textContent = allCollapsed ? '展开全部' : '收缩全部';
+            toggleBtn.textContent = allCollapsed ? '➕ 展开全部示例' : '➖ 收缩全部示例';
+        }
+
+        // 收缩/展开全部已保存规则
+        function toggleAllSavedRules() {
+            const ruleItems = document.querySelectorAll('.rule-item');
+            const toggleBtn = document.querySelector('.toggle-all-saved-text');
+
+            if (ruleItems.length === 0) return;
+
+            // 检查当前状态：如果所有规则都是收缩的，则展开全部；否则收缩全部
+            const allCollapsed = Array.from(ruleItems).every(item =>
+                item.classList.contains('collapsed')
+            );
+
+            const savedRuleStates = {};
+
+            ruleItems.forEach(item => {
+                const ruleId = item.dataset.ruleId;
+                if (!ruleId) return;
+
+                if (allCollapsed) {
+                    // 展开全部
+                    item.classList.remove('collapsed');
+                    savedRuleStates[ruleId] = false;
+                } else {
+                    // 收缩全部
+                    item.classList.add('collapsed');
+                    savedRuleStates[ruleId] = true;
+                }
+            });
+
+            // 保存状态
+            localStorage.setItem('savedRuleStates', JSON.stringify(savedRuleStates));
+
+            // 更新按钮文本
+            updateToggleAllSavedButtonText();
+        }
+
+        // 更新已保存规则收缩/展开全部按钮的文本
+        function updateToggleAllSavedButtonText() {
+            const ruleItems = document.querySelectorAll('.rule-item');
+            const toggleBtn = document.querySelector('.saved-rules-header .btn-outline .toggle-all-saved-text');
+
+            if (!toggleBtn) return;
+
+            if (ruleItems.length === 0) {
+                toggleBtn.textContent = '➖ 收缩全部规则';
+                return;
+            }
+
+            const allCollapsed = Array.from(ruleItems).every(item =>
+                item.classList.contains('collapsed')
+            );
+
+            toggleBtn.textContent = allCollapsed ? '➕ 展开全部规则' : '➖ 收缩全部规则';
         }
 
         // 全局复制函数
