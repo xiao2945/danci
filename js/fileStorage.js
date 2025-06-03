@@ -12,11 +12,21 @@ class FileStorageManager {
      * 保存规则到文件
      * @param {Map} rules - 规则Map对象
      */
-    async saveRulesToFile(rules) {
+    async saveRulesToFile(rules, globalSets = null) {
         try {
-            const rulesData = {};
+            const exportData = {};
 
-            // 将Map转换为可序列化的对象
+            // 添加全局集合信息到导出文件的最前面
+            if (globalSets && globalSets.size > 0) {
+                const globalSetsData = {};
+                for (const [setName, setValues] of globalSets) {
+                    globalSetsData[setName] = Array.from(setValues);
+                }
+                exportData.globalSets = globalSetsData;
+            }
+
+            // 序列化规则数据
+            const rulesData = {};
             for (const [name, rule] of rules) {
                 // 正确序列化localSets：将Map<string, Set>转换为Array<[string, Array]>
                 const serializedLocalSets = [];
@@ -34,9 +44,10 @@ class FileStorageManager {
                     displayRule: rule.displayRule
                 };
             }
+            exportData.rules = rulesData;
 
             // 创建文件数据
-            const dataStr = JSON.stringify(rulesData, null, 2);
+            const dataStr = JSON.stringify(exportData, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
             // 使用文件选择器保存文件
@@ -53,7 +64,7 @@ class FileStorageManager {
     /**
      * 从文件加载规则
      * @param {File} file - 文件对象
-     * @returns {Promise<Object>} 规则数据
+     * @returns {Promise<Object>} 包含规则数据和全局集合的对象
      */
     async loadRulesFromFile(file) {
         return new Promise((resolve, reject) => {
@@ -61,9 +72,27 @@ class FileStorageManager {
 
             reader.onload = (e) => {
                 try {
-                    const rulesData = JSON.parse(e.target.result);
-                    console.log('从文件加载规则成功:', Object.keys(rulesData));
-                    resolve(rulesData);
+                    const fileData = JSON.parse(e.target.result);
+
+                    // 检查文件格式：新格式包含globalSets和rules，旧格式直接是规则数据
+                    if (fileData.rules && typeof fileData.rules === 'object') {
+                        // 新格式：包含全局集合和规则
+                        console.log('从文件加载规则成功（新格式）:', Object.keys(fileData.rules));
+                        if (fileData.globalSets) {
+                            console.log('从文件加载全局集合成功:', Object.keys(fileData.globalSets));
+                        }
+                        resolve({
+                            rules: fileData.rules,
+                            globalSets: fileData.globalSets || {}
+                        });
+                    } else {
+                        // 旧格式：直接是规则数据
+                        console.log('从文件加载规则成功（旧格式）:', Object.keys(fileData));
+                        resolve({
+                            rules: fileData,
+                            globalSets: {}
+                        });
+                    }
                 } catch (error) {
                     console.error('解析规则文件失败:', error);
                     reject(error);

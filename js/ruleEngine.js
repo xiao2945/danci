@@ -89,7 +89,7 @@ class RuleEngine {
                 // 组合规则
                 specificRule = line;
             } else if (line.startsWith('@')) {
-                // 显示规则
+                // 排序规则
                 displayRule = line;
             } else if (i === 0 && !ruleName) {
                 // 如果是第一行且还没有规则名称，则将第一行作为规则名称
@@ -339,7 +339,7 @@ class RuleEngine {
      * 导出所有规则到文件
      */
     async exportRulesToFile() {
-        return await this.fileStorage.saveRulesToFile(this.rules);
+        return await this.fileStorage.saveRulesToFile(this.rules, this.globalSets);
     }
 
     /**
@@ -348,13 +348,34 @@ class RuleEngine {
     importRulesFromFile() {
         this.fileStorage.createFileInput(async (file) => {
             try {
-                const rulesData = await this.fileStorage.loadRulesFromFile(file);
-                await this.loadRulesFromData(rulesData);
+                const importData = await this.fileStorage.loadRulesFromFile(file);
+                await this.loadRulesFromData(importData.rules);
+
+                // 导入全局集合（如果存在）
+                if (importData.globalSets && Object.keys(importData.globalSets).length > 0) {
+                    const newGlobalSets = new Map();
+                    for (const [setName, setValues] of Object.entries(importData.globalSets)) {
+                        newGlobalSets.set(setName, new Set(setValues));
+                    }
+                    this.updateGlobalSets(newGlobalSets);
+
+                    // 保存到localStorage
+                    localStorage.setItem('globalSets', JSON.stringify(importData.globalSets));
+                }
 
                 // 触发规则列表更新事件
                 window.dispatchEvent(new CustomEvent('rulesUpdated'));
 
-                alert(`成功导入 ${Object.keys(rulesData).length} 个规则！`);
+                // 触发全局集合更新事件
+                window.dispatchEvent(new CustomEvent('globalSetsUpdated'));
+
+                const ruleCount = Object.keys(importData.rules).length;
+                const globalSetCount = Object.keys(importData.globalSets || {}).length;
+                let message = `成功导入 ${ruleCount} 个规则！`;
+                if (globalSetCount > 0) {
+                    message += `\n同时导入了 ${globalSetCount} 个全局集合。`;
+                }
+                alert(message);
             } catch (error) {
                 alert('导入规则失败: ' + error.message);
             }
@@ -508,7 +529,7 @@ class RuleEngine {
             }
         }
 
-        // 应用显示规则排序
+        // 应用排序规则排序
         return this.applySorting(filteredWords, rule.displayRule, rule.localSets);
     }
 
@@ -840,7 +861,7 @@ class RuleEngine {
     /**
      * 应用排序规则
      * @param {Array} words - 单词数组
-     * @param {string} displayRule - 显示规则
+     * @param {string} displayRule - 排序规则
      * @returns {Array} 排序后的单词数组
      */
     applySorting(words, displayRule, localSets = new Map()) {
@@ -849,7 +870,7 @@ class RuleEngine {
             return this.sortByAlphabet(words);
         }
 
-        // 解析显示规则
+        // 解析排序规则
         const sortRule = displayRule.substring(1); // 去掉@符号
 
         // 处理@-的情况（倒序字母排序）
@@ -1084,7 +1105,7 @@ class RuleEngine {
 
         let preview = `规则名称: ${rule.name}`;
         if (rule.comment) {
-            preview += ` // ${rule.comment}`;
+            preview += ` /* ${rule.comment} */`;
         }
         preview += '\n';
 
@@ -1111,7 +1132,7 @@ class RuleEngine {
         preview += `\n具体规则: ${rule.specificRule}\n`;
 
         if (rule.displayRule) {
-            preview += `显示规则: ${rule.displayRule}\n`;
+            preview += `排序规则: ${rule.displayRule}\n`;
         }
 
         return preview;

@@ -121,7 +121,7 @@ section h2 {
     display: flex;
     gap: 15px;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .rule-buttons {
@@ -175,15 +175,15 @@ section h2 {
     border-radius: 5px;
     overflow-x: auto;
     font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 /* 按钮样式 */
 .btn {
     padding: 8px 16px;
     border: none;
-    border-radius: 6px;
-    font-size: 12px;
+    border-radius: 4px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -191,79 +191,97 @@ section h2 {
     display: inline-block;
     text-align: center;
     white-space: nowrap;
+    min-width: 80px;
+    height: 36px;
+    line-height: 20px;
 }
 
 .btn:disabled {
-    opacity: 0.6;
+    background: #b3d9ff !important;
+    color: white !important;
     cursor: not-allowed;
+    opacity: 1;
 }
 
 .btn-primary {
-    background: #667eea;
+    background: #007bff;
     color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #5a67d8;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
 .btn-secondary {
-    background: #718096;
+    background: #6c757d;
     color: white;
 }
 
 .btn-secondary:hover {
-    background: #4a5568;
+    background: #545b62;
 }
 
 .btn-success {
-    background: #48bb78;
+    background: #28a745;
     color: white;
 }
 
 .btn-success:hover {
-    background: #38a169;
+    background: #1e7e34;
 }
 
-.btn-warning {
-    background: #718096;
+.btn-danger {
+    background: #e74c3c;
     color: white;
 }
 
-.btn-warning:hover {
-    background: #4a5568;
-}
-
-.btn-info {
-    background: #718096;
-    color: white;
-}
-
-.btn-info:hover {
-    background: #4a5568;
+.btn-danger:hover {
+    background: #c0392b;
 }
 
 .btn-outline {
     background: transparent;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #495057;
+    border: 2px solid #495057;
+    font-weight: 600;
 }
 
 .btn-outline:hover {
-    background: #667eea;
+    background: #495057;
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(73, 80, 87, 0.2);
+}
+
+/* 保留原有样式以兼容现有代码 */
+.btn-warning {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #c82333;
+}
+
+.btn-info {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #545b62;
 }
 
 .btn-help {
     background: transparent;
-    color: #38a169;
-    border: 2px solid #38a169;
+    color: #6c757d;
+    border: 1px solid #6c757d;
 }
 
 .btn-help:hover {
-    background: #38a169;
+    background: #6c757d;
     color: white;
 }
 
@@ -271,7 +289,7 @@ section h2 {
 .action-buttons {
     display: flex;
     gap: 10px;
-    margin: 20px 0;
+    margin: 15px 0 5px 0;
     flex-wrap: wrap;
     align-items: center;
 }
@@ -285,7 +303,7 @@ section h2 {
 }
 
 .action-buttons .btn-secondary {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .result-info {
@@ -309,6 +327,7 @@ section h2 {
 .preview-section {
     background: #f7fafc;
     border: 1px solid #e2e8f0;
+    padding: 25px 25px 10px 25px;
 }
 
 .result-stats {
@@ -334,7 +353,7 @@ section h2 {
 
 .stat-label {
     color: #718096;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 /* 文件预处理信息样式 */
@@ -389,7 +408,7 @@ section h2 {
     padding: 5px 0;
     border-bottom: 1px solid #e8f5e8;
     font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #2d7d32;
 }
 
@@ -405,12 +424,12 @@ section h2 {
     margin: 2px;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     border: 1px solid #ffcdd2;
 }
 
 .result-container {
-    max-height: 400px;
+    max-height: 560px;
     overflow-y: auto;
     background: white;
     border-radius: 8px;
@@ -419,16 +438,41 @@ section h2 {
 }
 
 .word-group {
-    margin-bottom: 25px;
+    margin-bottom: 10px;
 }
 
 .group-title {
     font-weight: bold;
     color: #4a5568;
     margin-bottom: 10px;
-    padding: 8px 12px;
+    padding: 8px 8px;
     background: #edf2f7;
     border-radius: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.group-title.collapsible {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.group-title.collapsible:hover {
+    opacity: 0.8;
+}
+
+.group-title.collapsible::before {
+    content: "▼";
+    margin-right: 5px;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+    color: #000000;
+    display: inline-block;
+}
+
+.group-title.collapsible.collapsed::before {
+    transform: rotate(-90deg);
 }
 
 /* 多级分组样式 */
@@ -456,7 +500,7 @@ section h2 {
 .group-title.level-3 {
     background: #f06292;
     color: white;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     border-left: 4px solid #e91e63;
 }
 
@@ -468,34 +512,58 @@ section h2 {
 
 .word-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 8px;
     margin-left: 20px;
 }
 
+/* 窄屏设备：使用较大的最小宽度以减少列数 */
+@media (max-width: 768px) {
+    .word-list {
+        grid-template-columns: repeat(auto-fill, minmax(130px, max-content));
+    }
+}
+
+/* 宽屏设备：使用较小的最小宽度以增加列数 */
+@media (min-width: 769px) {
+    .word-list {
+        grid-template-columns: repeat(auto-fill, minmax(130px, max-content));
+    }
+}
+
 .word-item {
-    padding: 6px 12px;
+    padding: 8px 8px;
     background: #f7fafc;
     border-radius: 4px;
     border-left: 3px solid #667eea;
     font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
     transition: all 0.3s ease;
+    width: 100%;
+    /* 占满网格单元格宽度 */
+    min-height: 36px;
+    /* 确保最小高度一致 */
 }
 
 .word-item.deleted {
     background: #fed7d7;
     border-left-color: #e53e3e;
     opacity: 0.6;
+}
+
+.word-item.deleted .word-text {
     text-decoration: line-through;
 }
 
 .word-item .word-text {
     flex: 1;
+    margin-right: 4px;
+    /* 确保与按钮的间距 */
+    word-break: break-word;
+    /* 长单词自动换行 */
 }
 
 .word-item .delete-btn {
@@ -503,16 +571,18 @@ section h2 {
     color: white;
     border: none;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
+    width: 15px;
+    height: 15px;
+    font-size: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 8px;
+    margin-left: 0px;
     transition: all 0.2s ease;
     opacity: 0.7;
+    flex-shrink: 0;
+    /* 防止按钮被压缩 */
 }
 
 .word-item .delete-btn:hover {
@@ -541,7 +611,7 @@ section h2 {
 
 .batch-buttons .btn {
     padding: 8px 16px;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .export-actions-container {
@@ -685,7 +755,7 @@ section h2 {
     border: 2px solid #e2e8f0;
     border-radius: 8px;
     font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     line-height: 1.5;
     resize: vertical;
     background: #f7fafc;
@@ -712,7 +782,7 @@ section h2 {
     display: flex;
     flex-direction: column;
     gap: 0;
-    max-height: 600px;
+    max-height: 1000px;
     overflow-y: auto;
     padding: 0;
     background: transparent;
@@ -724,7 +794,7 @@ section h2 {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    padding: 12px 16px;
+    padding: 5px 16px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     cursor: pointer;
@@ -756,11 +826,12 @@ section h2 {
 }
 
 .rule-item-name {
-    font-size: 1.1rem;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
     font-weight: 600;
     color: #4a5568;
     cursor: pointer;
-    margin-right: 12px;
+    margin-right: 5px;
     flex-shrink: 0;
 }
 
@@ -777,19 +848,43 @@ section h2 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-left: 8px;
+    margin-left: 0;
 }
 
 .rule-item-expand-icon {
-    font-size: 12px;
-    color: #a0aec0;
-    transition: transform 0.2s ease;
+    font-size: 16px;
+    font-weight: bold;
+    color: #667eea;
+    transition: all 0.2s ease;
     margin-right: 8px;
     flex-shrink: 0;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background-color: transparent;
+    border: none;
+    margin: 0;
 }
 
-.rule-item-header.expanded .rule-item-expand-icon {
-    transform: rotate(90deg);
+.rule-item-expand-icon:hover {
+    background-color: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.rule-item.collapsed .rule-item-expand-icon::before {
+    content: "⋯";
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+    transform: translateY(2px);
+}
+
+.rule-item.expanded .rule-item-expand-icon::before {
+    content: "⋮";
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+    transform: translateY(2px);
 }
 
 .rule-name {
@@ -799,7 +894,7 @@ section h2 {
 
 .rule-description {
     color: #718096;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     margin-top: 5px;
 }
 
@@ -810,15 +905,16 @@ section h2 {
 
 .rule-item-content {
     padding: 16px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #2d3748;
+    border: 1px solid #4a5568;
     border-top: none;
+    border-radius: 0 0 8px 8px;
     margin: 0;
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.5;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
     white-space: pre-wrap;
-    color: #4a5568;
+    color: #e2e8f0;
     display: none;
 }
 
@@ -828,7 +924,7 @@ section h2 {
 
 .rule-item-actions {
     display: flex;
-    gap: 8px;
+    gap: 0;
     flex-shrink: 0;
     align-items: center;
 }
@@ -847,8 +943,8 @@ section h2 {
     cursor: grab;
     color: #a0aec0;
     font-size: 14px;
-    padding: 4px;
-    margin-right: 8px;
+    padding: 4px 5px 4px 0;
+    margin-right: 0;
     transition: color 0.2s ease;
 }
 
@@ -887,7 +983,7 @@ section h2 {
     border-radius: 8px;
     overflow-x: auto;
     font-family: 'Courier New', monospace;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     margin-top: 10px;
 }
 
@@ -1003,14 +1099,23 @@ section h2 {
     }
 
     .action-buttons {
-        flex-direction: column;
-        align-items: stretch;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 5px !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        margin: 0px !important;
     }
 
     .action-buttons .btn {
-        flex: 1 1 auto;
-        min-width: 120px;
-        margin: 5px 0;
+        flex: 1 !important;
+        padding: 8px 4px !important;
+        font-size: 14px !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin: 0 !important;
     }
 
     .rule-selector {
@@ -1040,7 +1145,7 @@ section h2 {
     }
 
     .result-stats {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
         gap: 10px;
     }
 
@@ -1053,9 +1158,7 @@ section h2 {
         padding: 20px;
     }
 
-    .word-list {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    }
+
 }
 
 /* 滚动条样式 */

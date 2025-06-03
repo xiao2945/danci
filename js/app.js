@@ -49,10 +49,10 @@ class WordFilterApp {
             }
         });
 
-        // 定时检查规则变化（每2秒检查一次）
-        this.ruleCheckInterval = setInterval(() => {
-            this.checkAndUpdateRules();
-        }, 2000);
+        // 移除定时检查，改为点击时检查
+        // this.ruleCheckInterval = setInterval(() => {
+        //     this.checkAndUpdateRules();
+        // }, 2000);
     }
 
     /**
@@ -95,6 +95,16 @@ class WordFilterApp {
         // 规则选择
         const ruleSelect = document.getElementById('ruleSelect');
         ruleSelect.addEventListener('change', (e) => this.handleRuleChange(e));
+
+        // 在点击规则选择框时刷新规则列表
+        ruleSelect.addEventListener('click', () => {
+            this.checkAndUpdateRules();
+        });
+
+        // 在规则选择框获得焦点时刷新规则列表
+        ruleSelect.addEventListener('focus', () => {
+            this.checkAndUpdateRules();
+        });
 
         // 生成按钮
         const generateBtn = document.getElementById('generateBtn');
@@ -223,6 +233,8 @@ class WordFilterApp {
         const ruleName = event.target.value;
         if (ruleName) {
             this.showRulePreview(ruleName);
+            // 滚动到规则区域
+            document.querySelector('.rule-section').scrollIntoView({ behavior: 'smooth' });
         } else {
             this.hideRulePreview();
         }
@@ -413,10 +425,13 @@ class WordFilterApp {
                     return !this.deletedWords.has(globalIndex);
                 });
 
+                const groupId = `group-${level}-${groupName.replace(/[^a-zA-Z0-9]/g, '')}-${Math.random().toString(36).substr(2, 9)}`;
                 html += `
                     <div class="word-group" style="margin-left: ${level * 20}px;">
-                        <div class="group-title level-${level}">${groupName} (${activeWords.length}/${content.length})</div>
-                        <div class="word-list">
+                        <div class="group-title level-${level} collapsible" onclick="app.toggleGroupCollapse('${groupId}')">
+                            ${groupName} (${activeWords.length}/${content.length})
+                        </div>
+                        <div class="word-list" id="${groupId}">
                             ${content.map((word, index) => {
                     const globalIndex = this.filteredWords.indexOf(word);
                     const isDeleted = this.deletedWords.has(globalIndex);
@@ -437,10 +452,13 @@ class WordFilterApp {
                 const totalWords = this.countWordsInGroup(content);
                 const activeWords = this.countActiveWordsInGroup(content);
 
+                const groupId = `group-${level}-${groupName.replace(/[^a-zA-Z0-9]/g, '')}-${Math.random().toString(36).substr(2, 9)}`;
                 html += `
                     <div class="word-group" style="margin-left: ${level * 20}px;">
-                        <div class="group-title level-${level}">${groupName} (${activeWords}/${totalWords})</div>
-                        <div class="sub-groups">
+                        <div class="group-title level-${level} collapsible" onclick="app.toggleGroupCollapse('${groupId}')">
+                            ${groupName} (${activeWords}/${totalWords})
+                        </div>
+                        <div class="sub-groups" id="${groupId}">
                             ${this.renderWordGroups(content, level + 1)}
                         </div>
                     </div>
@@ -910,6 +928,30 @@ class WordFilterApp {
     }
 
     /**
+     * 切换分组折叠状态
+     * @param {string} groupId - 分组的ID
+     */
+    toggleGroupCollapse(groupId) {
+        const groupContent = document.getElementById(groupId);
+        const groupTitle = groupContent.previousElementSibling;
+
+        if (groupContent && groupTitle) {
+            if (groupContent.style.display === 'none') {
+                // 根据元素类型恢复正确的显示模式
+                if (groupContent.classList.contains('word-list')) {
+                    groupContent.style.display = 'grid';
+                } else {
+                    groupContent.style.display = 'block';
+                }
+                groupTitle.classList.remove('collapsed');
+            } else {
+                groupContent.style.display = 'none';
+                groupTitle.classList.add('collapsed');
+            }
+        }
+    }
+
+    /**
      * 添加批量操作按钮到导出区域
      */
     addBatchOperationButtonsInline() {
@@ -922,9 +964,9 @@ class WordFilterApp {
         // 只有在有筛选结果时才显示批量操作按钮
         if (this.filteredWords.length > 0) {
             batchContainer.innerHTML = `
-                <button class="btn btn-warning" onclick="app.deleteAllWords()">全部删除</button>
-                <button class="btn btn-info" onclick="app.restoreAllWords()">全部恢复</button>
-                <button class="btn btn-secondary" onclick="app.clearDeleted()">清除已删除</button>
+                <button class="btn btn-danger" onclick="app.deleteAllWords()">全部删除</button>
+                <button class="btn btn-danger" onclick="app.restoreAllWords()">全部恢复</button>
+                <button class="btn btn-danger" onclick="app.clearDeleted()">清除已删除</button>
             `;
         }
     }
@@ -938,9 +980,9 @@ class WordFilterApp {
         batchDiv.className = 'batch-operations';
         batchDiv.innerHTML = `
             <div class="batch-buttons">
-                <button class="btn btn-warning" onclick="app.deleteAllWords()">全部删除</button>
-                <button class="btn btn-info" onclick="app.restoreAllWords()">全部恢复</button>
-                <button class="btn btn-secondary" onclick="app.clearDeleted()">清除已删除</button>
+                <button class="btn btn-danger" onclick="app.deleteAllWords()">全部删除</button>
+                <button class="btn btn-danger" onclick="app.restoreAllWords()">全部恢复</button>
+                <button class="btn btn-danger" onclick="app.clearDeleted()">清除已删除</button>
             </div>
         `;
         container.appendChild(batchDiv);
@@ -980,6 +1022,11 @@ class WordFilterApp {
         }
 
         const deletedCount = this.deletedWords.size;
+
+        // 添加确认对话框
+        if (!confirm(`确定要永久清除 ${deletedCount} 个已删除的单词吗？此操作不可撤销。`)) {
+            return;
+        }
 
         // 创建新的筛选结果，排除已删除的单词
         this.filteredWords = this.filteredWords.filter((word, index) => !this.deletedWords.has(index));

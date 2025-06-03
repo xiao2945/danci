@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>详细语法帮助 - 单词筛选工具</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .syntax-help-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .syntax-help-container {
+                padding: 10px !important;
+                max-width: 100% !important;
+            }
+        }
+
+        .syntax-help-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .syntax-help-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .syntax-help-content {
+                padding: 20px !important;
+            }
+        }
+
+        .syntax-help-content h1 {
+            color: #2d3748;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        .syntax-help-content h2 {
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .syntax-help-content h3 {
+            color: #2d3748;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .syntax-help-content h4 {
+            color: #4a5568;
+            margin-top: 25px;
+            margin-bottom: 12px;
+        }
+
+        .syntax-help-content ul,
+        .syntax-help-content ol {
+            margin-bottom: 15px;
+            padding-left: 25px;
+        }
+
+        .syntax-help-content li {
+            margin-bottom: 8px;
+        }
+
+        .syntax-help-content code {
+            background: #f7fafc;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #e53e3e;
+        }
+
+        .syntax-help-content pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .syntax-help-content pre .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .syntax-help-content pre .copy-btn:hover {
+            background: #667eea;
+        }
+
+        /* 代码高亮样式 */
+        .syntax-help-content pre .comment {
+            color: #68d391;
+        }
+
+        .syntax-help-content pre .rule-name {
+            color: #68d391;
+        }
+
+        .syntax-help-content pre .rule-content {
+            color: #63b3ed;
+        }
+
+        .syntax-help-content pre .sort-rule {
+            color: #f6e05e;
+        }
+
+        .syntax-help-content pre .set-definition {
+            color: #fbb6ce;
+        }
+
+        .syntax-help-content pre .operator {
+            color: #fbd38d;
+        }
+
+        .syntax-help-content blockquote {
+            background: #f0f8ff;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .syntax-help-content .note {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .syntax-help-content .note strong {
+            color: #c53030;
+        }
+
+        .syntax-help-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .syntax-help-content table th,
+        .syntax-help-content table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .syntax-help-content table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .back-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5a67d8;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="syntax-help-container">
+        <div class="syntax-help-content">
+            <h1>规则语法详细帮助</h1>
+
+            <h2>1. 基本语法</h2>
+
+            <p><strong>1.1 规则名定义</strong>：<code>#规则名</code> - 定义规则名称（必须，以#开头）</p>
+            <p><strong>1.2 注释内容</strong>：<code>//注释内容</code> - 添加规则注释（可选，以//开头）</p>
+            <p><strong>1.3
+                    局部集合定义</strong>：<code>BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</code> -
+                局部集合定义</p>
+            <p><strong>1.4 匹配模式</strong>：<code>!具体规则</code> - 定义匹配模式（必须，以!开头）</p>
+            <p><strong>1.5 排序规则</strong>：<code>@排序规则</code> - 定义排序方式（可选，以@开头）</p>
+
+            <h2>2. 集合相关</h2>
+
+            <h3>2.1 集合定义</h3>
+
+            <p><strong>语法格式</strong>：<code>集合名=={元素1,元素2,...}</code></p>
+
+            <p><strong>2.1.1 命名规则</strong>：</p>
+            <ul>
+                <li>单字母集合名必须大写（如：C、V、L）</li>
+                <li>多字母集合名大小写敏感（如：BL、Vowels）</li>
+            </ul>
+
+            <p><strong>2.1.2 元素规则</strong>：</p>
+            <ul>
+                <li>集合元素大小写敏感</li>
+                <li>使用逗号<code>,</code>分隔集合中的元素</li>
+                <li>逗号前后的空位置表示空元素（如：<code>{,a}</code>、<code>{a,,b}</code>表示包含空元素）</li>
+            </ul>
+
+            <h3>2.2 集合分类</h3>
+
+            <h4>2.2.1 全局集合</h4>
+            <p>可以在具体规则中直接引用，无需另行定义。</p>
+
+            <p><strong>A. 默认全局集合（无法删除）</strong>：</p>
+            <ul>
+                <li><code>C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}</code> - 辅音字母</li>
+                <li><code>V=={a,e,i,o,u}</code> - 元音字母</li>
+                <li><code>L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}</code> - 所有字母</li>
+            </ul>
+
+            <p><strong>B. 自定义全局集合</strong>：</p>
+            <p>可在"全局集合定义"功能中创建新的全局集合（可以删除）</p>
+
+            <h4>2.2.2 局部集合</h4>
+            <p>仅在当前规则中可用，必须先定义后使用。</p>
+
+            <p><strong>特性</strong>：</p>
+            <ul>
+                <li>无法跨规则引用局部集合</li>
+                <li>当局部集合和全局集合同名时，局部集合会覆盖全局集合</li>
+            </ul>
+
+            <h3>2.3 集合运算符</h3>
+
+            <p><strong>2.3.1 别名定义</strong>：<code>==</code></p>
+            <p>给集合定义一个别名</p>
+            <p>示例：<code>X==V</code> （定义X为V的别名，即X=={a,e,i,o,u}）</p>
+
+            <p><strong>2.3.2 集合减法</strong>：<code>&gt;&gt;</code></p>
+            <p>从集合中去掉另一个集合的内容</p>
+            <p>示例：<code>Y==L&gt;&gt;C</code> （从L中去掉C的内容，结果Y=={a,e,i,o,u}）</p>
+
+            <p><strong>2.3.3 集合加法</strong>：<code>&lt;&lt;</code></p>
+            <p>向集合中加入另一个集合的内容</p>
+            <p>示例：<code>Z==C&lt;&lt;V</code> （向C中加入V的内容，结果Z=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}）</p>
+
+            <h3>2.4 字面字符</h3>
+
+            <p>使用中括号<code>[ ]</code>表示字面字符，如<code>[e]</code>、<code>[tion]</code>。</p>
+            <ul>
+                <li>字面字符大小写敏感</li>
+                <li>用于匹配具体的字符或字符串</li>
+            </ul>
+
+            <h2>3. 具体规则</h2>
+
+            <h3>3.1 基础规则</h3>
+
+            <p><strong>格式</strong>：必须以<code>!</code>开头，由位置标志、集合组合而成。</p>
+
+            <p><strong>特殊情况</strong>：<code>!</code>后为空时表示匹配全部单词（但必须保留<code>!</code>符号）。</p>
+
+            <h4>3.1.1 位置标志</h4>
+            <p>用于指定匹配时的位置约束：</p>
+
+            <ul>
+                <li><code>\b</code> - 单词开头</li>
+                <li><code>\e</code> - 单词结尾</li>
+                <li><code>\m</code> - 单词中间</li>
+                <li><code>\-b</code> - 不在开头</li>
+                <li><code>\-e</code> - 不在结尾</li>
+            </ul>
+
+            <h4>3.1.2 可引用的集合</h4>
+            <ul>
+                <li>全局集合（如：C、V、L）</li>
+                <li>局部集合（当前规则中定义的）</li>
+                <li>字面字符（如：[e]、[tion]）</li>
+            </ul>
+
+            <div class="note">
+                <strong>注意</strong>：引用集合时大小写敏感，集合名必须与定义时完全一致。
+            </div>
+
+            <h3>3.2 组合规则</h3>
+
+            <p><strong>格式</strong>：以<code>!!</code>开头，由基础规则（规则名）、逻辑操作符组合而成。</p>
+
+            <p><strong>限制</strong>：只能引用已有的基础规则。</p>
+
+            <h4>3.2.1 支持的逻辑操作符</h4>
+
+            <ul>
+                <li><code>&amp;&amp;</code> - 逻辑与（同时满足两个条件）</li>
+                <li><code>||</code> - 逻辑或（满足任一条件）</li>
+                <li><code>--</code> - 非模式（满足前者但不满足后者）</li>
+            </ul>
+
+            <h2>4. 排序规则</h2>
+
+            <h3>4.1 基础排序</h3>
+
+            <p><strong>格式</strong>：无<code>@</code>符号、<code>@</code>后为空或<code>@</code>后为逆序标志<code>-</code>（即<code>@-</code>）
+            </p>
+
+            <p><strong>排序方式</strong>：</p>
+            <ul>
+                <li>按首字母分组</li>
+                <li>分组按字母正序（无<code>@</code>或<code>@</code>后为空）或逆序（<code>@-</code>）排列</li>
+                <li>组内按字母顺序排列</li>
+            </ul>
+
+            <h3>4.2 集合排序</h3>
+
+            <p><strong>格式</strong>：以<code>@</code>开头，由逆序标志<code>-</code>、集合（集合名）组合而成。</p>
+
+            <p><strong>排序方式</strong>：</p>
+            <ul>
+                <li>按指定集合的元素分组</li>
+                <li>分组按集合内元素的顺序正序（如<code>@V</code>）或逆序（如<code>@-V</code>）排列</li>
+            </ul>
+
+            <h4>4.2.1 多级集合排序</h4>
+
+            <p><strong>格式</strong>：最多可指定两级集合排序（如<code>@-(BL)-V</code>、<code>@-(BL)V</code>）</p>
+
+            <p><strong>排序逻辑</strong>：</p>
+            <ol>
+                <li>先按第一级分组</li>
+                <li>在每个第一级分组内再按第二级分组</li>
+                <li>两级分组各按其集合内元素的顺序排列</li>
+                <li>逆序标志独立控制每一级（如<code>@-(BL)-V</code>：第一级逆序，第二级逆序；<code>@-(BL)V</code>：第一级逆序，第二级正序）</li>
+                <li>最终组内按字母顺序排列</li>
+            </ol>
+
+            <h2>5. 规则示例</h2>
+
+            <h3>5.1 基础规则示例</h3>
+
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 定义全局集合 */</span>
+<span class="set-definition">C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}</span>
+<span class="set-definition">V=={a,e,i,o,u}</span>
+<span class="set-definition">L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}</span>
+<span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
+
+<span class="comment">/* 位置匹配示例 */</span>
+<span class="rule-name">#开头元音</span>
+<span class="comment">//匹配以元音开头的单词</span>
+<span class="rule-content">!\bV</span>
+<span class="sort-rule">@-</span>
+
+<span class="comment">/* CVC模式 */</span>
+<span class="rule-name">#CVC</span>
+<span class="comment">//匹配辅音-元音-辅音模式的单词</span>
+<span class="rule-content">!\bCVC\e</span>
+<span class="sort-rule">@</span>
+
+<span class="comment">/* CVCE模式 */</span>
+<span class="rule-name">#CVCE</span>
+<span class="comment">//匹配辅音-元音-辅音-e模式的单词</span>
+<span class="rule-content">!\bCVC[e]\e</span>
+<span class="sort-rule">@V</span></pre>
+
+            <h3>5.2 组合规则示例</h3>
+
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 组合规则：CVC或CVCE */</span>
+<span class="rule-name">#CVC或CVCE</span>
+<span class="comment">//匹配CVC模式或CVCE模式的单词</span>
+<span class="rule-content">!!CVC||CVCE</span>
+<span class="sort-rule">@</span>
+
+<span class="comment">/* 组合规则：有元音但不是CVC */</span>
+<span class="rule-name">#有元音非CVC</span>
+<span class="comment">//匹配包含元音但不是CVC模式的单词</span>
+<span class="rule-content">!!开头元音--CVC</span>
+<span class="sort-rule">@V</span></pre>
+
+            <h3>5.3 集合运算示例</h3>
+
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 局部集合定义 */</span>
+<span class="rule-name">#特殊辅音组合</span>
+<span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
+<span class="set-definition">ShortV==V>>{u}</span>  <span class="comment">// 短元音（去掉u）</span>
+<span class="rule-content">!\b(BL)ShortV\e</span>
+<span class="sort-rule">@(BL)</span></pre>
+
+            <h2>6. 注意事项与常见错误</h2>
+
+            <h3>6.1 常见错误</h3>
+
+            <p><strong>6.1.1 位置标志错误</strong>：</p>
+            <ul>
+                <li>❌ 错误：<code>!bVC</code> （缺少位置标志反斜杠）</li>
+                <li>✅ 正确：<code>!\bCVC\e</code> （正确使用位置标志）</li>
+            </ul>
+
+            <p><strong>6.1.2 集合引用错误</strong>：</p>
+            <ul>
+                <li>❌ 错误：<code>!\bvc\e</code> （集合名大小写错误）</li>
+                <li>✅ 正确：<code>!\bCVC\e</code> （集合名必须大写）</li>
+            </ul>
+
+            <p><strong>6.1.3 多字母集合引用错误</strong>：</p>
+            <ul>
+                <li>❌ 错误：<code>!BLV</code> （多字母集合未加括号）</li>
+                <li>✅ 正确：<code>!(BL)V</code> （多字母集合需要括号）</li>
+            </ul>
+
+            <p><strong>6.1.4 局部集合作用域错误</strong>：</p>
+            <ul>
+                <li>❌ 错误：在规则A中定义的局部集合在规则B中使用</li>
+                <li>✅ 正确：每个规则中单独定义所需的局部集合</li>
+            </ul>
+
+            <h3>6.2 使用建议</h3>
+
+            <p><strong>6.2.1 命名规范</strong>：</p>
+            <ul>
+                <li>使用有意义的集合名称（如：Vowels而不是X）</li>
+                <li>保持命名一致性</li>
+            </ul>
+
+            <p><strong>6.2.2 规则组织</strong>：</p>
+            <ul>
+                <li>复杂规则建议拆分为多个简单规则</li>
+                <li>使用组合规则连接多个基础规则</li>
+            </ul>
+
+            <p><strong>6.2.3 性能考虑</strong>：</p>
+            <ul>
+                <li>避免过度复杂的集合运算</li>
+                <li>合理使用位置标志减少匹配范围</li>
+            </ul>
+
+            <h3>6.3 调试技巧</h3>
+
+            <p><strong>6.3.1 测试规则</strong>：使用"测试规则"功能验证规则正确性</p>
+            <p><strong>6.3.2 分步调试</strong>：复杂规则可以分步测试各个组成部分</p>
+            <p><strong>6.3.3 查看匹配结果</strong>：通过实际匹配结果验证规则逻辑</p>
+        </div>
+    </div>
+
+    <script>
+        function copyCode(button) {
+            const pre = button.parentElement;
+            const code = pre.textContent.replace('复制', '').trim();
+
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '已复制';
+                button.style.background = '#48bb78';
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#4a5568';
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动选择文本复制');
+            });
+        }
+    </script>
+</body>
+
+</html>

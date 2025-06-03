@@ -13,13 +13,38 @@
             padding: 20px;
         }
 
+        @media (max-width: 768px) {
+            .rule-manager-container {
+                padding: 10px !important;
+                max-width: 100% !important;
+            }
+        }
+
         .rule-manager-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
             border-bottom: 2px solid #e2e8f0;
+        }
+
+        .rule-manager-header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            margin-right: 15px;
+        }
+
+        .rule-manager-header p {
+            font-size: 0.9rem;
+            margin: 0;
+            color: white;
+        }
+
+        .rule-manager-header>div:first-child {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
         }
 
         .rule-manager-content {
@@ -30,6 +55,14 @@
             margin: 0 auto;
             padding: 20px;
             min-height: 60vh;
+        }
+
+        @media (max-width: 768px) {
+            .rule-manager-content {
+                padding: 10px !important;
+                gap: 15px !important;
+                max-width: 100% !important;
+            }
         }
 
         .rule-panels {
@@ -218,8 +251,8 @@
 
         .rule-actions {
             display: flex;
-            gap: 12px;
-            margin-top: 20px;
+            gap: 10px;
+            margin-top: 0px;
             flex-wrap: wrap;
         }
 
@@ -232,20 +265,24 @@
 
         .saved-rules-header {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
         }
 
         .saved-rules-header h2 {
-            margin: 0;
+            margin: 0 0 0 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            font-size: 1.17em;
         }
 
         .saved-rules-container {
             display: flex;
             flex-direction: column;
             gap: 0;
-            max-height: 500px;
+            max-height: 1000px;
             overflow-y: auto;
             padding: 0;
             min-height: 100px;
@@ -265,7 +302,7 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            padding: 12px 16px;
+            padding: 5px 11.2px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             margin-top: -1px;
@@ -312,6 +349,8 @@
         }
 
         .rule-item-name {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
             font-weight: 600;
             color: #2d3748;
             flex-shrink: 0;
@@ -319,15 +358,17 @@
 
         .rule-item-content {
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 12px;
-            color: #718096;
-            background: #f1f5f9;
-            padding: 12px 16px;
-            border-left: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #e2e8f0;
+            background: #2d3748;
+            padding: 16px;
+            border-left: 1px solid #4a5568;
+            border-right: 1px solid #4a5568;
+            border-radius: 0 0 8px 8px;
             overflow-x: auto;
             white-space: pre-wrap;
             display: block;
+            line-height: 1.6;
         }
 
         .rule-item.collapsed .rule-item-content {
@@ -342,7 +383,7 @@
 
         .rule-item-actions {
             display: flex;
-            gap: 8px;
+            gap: 0;
             flex-shrink: 0;
         }
 
@@ -357,7 +398,7 @@
             border: 1px solid #fed7d7;
             border-radius: 8px;
             padding: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 0;
         }
 
         .syntax-help h4 {
@@ -392,12 +433,12 @@
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 0;
         }
 
         .global-sets-textarea {
             width: 100%;
-            min-height: 120px;
+            min-height: 180px;
             padding: 12px;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
@@ -476,11 +517,6 @@
                 text-align: center;
             }
 
-            .rule-actions {
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-
             .rule-panels {
                 flex-direction: column;
                 gap: 15px;
@@ -498,7 +534,122 @@
             }
 
             .global-sets-textarea {
-                min-height: 120px;
+                min-height: 180px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .rule-manager-header {
+                padding-bottom: 15px !important;
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+
+            .rule-manager-header h1 {
+                font-size: 1.5rem !important;
+                margin-bottom: 10px !important;
+            }
+
+            .rule-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 5px !important;
+                flex-wrap: nowrap !important;
+                justify-content: space-between !important;
+                margin-top: 0px !important;
+            }
+
+            .rule-actions .btn {
+                flex: 1 !important;
+                padding: 8px 4px !important;
+                font-size: 14px !important;
+                min-width: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                margin: 0 !important;
+            }
+
+            .global-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 5px !important;
+                flex-wrap: nowrap !important;
+                justify-content: space-between !important;
+                margin-top: 0px !important;
+            }
+
+            .global-actions .btn {
+                flex: 1 !important;
+                padding: 8px 4px !important;
+                font-size: 14px !important;
+                min-width: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                margin: 0 !important;
+            }
+
+            .btn {
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+                min-width: auto !important;
+            }
+
+            .rule-examples-panel,
+            .rule-editor-panel {
+                padding: 15px !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+
+            .rule-textarea,
+            .global-sets-textarea {
+                font-size: 0.9rem !important;
+                padding: 10px !important;
+            }
+
+            .rule-textarea {
+                min-height: 216px !important;
+            }
+
+            .global-sets-textarea {
+                min-height: 150px !important;
+            }
+
+            .rule-panels {
+                flex-direction: column !important;
+                gap: 15px !important;
+            }
+
+            /* 已保存的规则区域在窄屏下的布局调整 */
+            .saved-rules-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px !important;
+            }
+
+            .saved-rules-header h2 {
+                margin-bottom: 0 !important;
+                width: 100% !important;
+            }
+
+            .saved-rules-header>div {
+                margin-left: 0 !important;
+                width: 100% !important;
+                justify-content: space-between !important;
+                flex-wrap: nowrap !important;
+                gap: 5px !important;
+            }
+
+            .saved-rules-header .btn {
+                flex: 1 !important;
+                padding: 6px 4px !important;
+                font-size: 14px !important;
+                min-width: 0 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
         }
 
@@ -526,7 +677,7 @@
         /* 小按钮样式 */
         .btn-small {
             padding: 4px 8px;
-            font-size: 12px;
+            font-size: 14px;
             border-radius: 4px;
         }
     </style>
@@ -540,7 +691,6 @@
                 <p>创建和管理单词筛选规则</p>
             </div>
             <div class="header-buttons">
-                <button id="backToMainBtn" class="btn btn-help">返回主页</button>
             </div>
         </header>
 
@@ -707,17 +857,15 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h4>快速语法提示</h4>
-                            <button id="detailedHelpBtn" class="btn btn-help btn-small">详细语法帮助</button>
+                            <button id="detailedHelpBtn" class="btn btn-outline btn-small">详细语法帮助</button>
                         </div>
                         <ul class="syntax-list">
-                            <li><span class="syntax-code">#规则名</span> - 定义规则名称（以#开头）</li>
-                            <li><span class="syntax-code">// 注释内容</span> - 添加规则注释（建议放在规则名下一行，最多60字符）</li>
-                            <li><span class="syntax-code">集合名=={元素1,元素2,...}</span> - 定义局部集合（仅在当前规则内有效）</li>
-                            <li><span class="syntax-code">(集合名)</span> - 引用集合（单字母集合必须大写，多字母集合大小写敏感且必须用括号）</li>
-                            <li><span class="syntax-code">!具体规则</span> - 定义匹配模式</li>
-                            <li><span class="syntax-code">@显示规则</span> - 定义排序方式（可选）</li>
-                            <li><span class="syntax-code">\b</span> - 单词开头，<span class="syntax-code">\e</span> -
-                                单词结尾，<span class="syntax-code">\m</span> - 单词中间</li>
+                            <li><span class="syntax-code">#规则名</span> - 定义规则名称（必须，以#开头）</li>
+                            <li><span class="syntax-code">//注释内容</span> - 添加规则注释（可选，以//开头）</li>
+                            <li><span class="syntax-code">集合名=={元素1,元素2,...}</span> - 定义局部集合（可选，单字母集合名必须大写，多字母集合名大小写敏感）
+                            </li>
+                            <li><span class="syntax-code">!具体规则</span> - 定义匹配模式（必须，以!开头）</li>
+                            <li><span class="syntax-code">@排序规则</span> - 定义排序方式（可选，以@开头）</li>
                         </ul>
                     </div>
 
@@ -726,31 +874,32 @@
                         <h4>全局集合定义</h4>
                         <textarea id="globalSetsEditor" class="global-sets-textarea"
                             placeholder="在此定义全局集合，每行一个集合定义，格式：集合名=={元素1,元素2,...}\n例如：\nC=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}\nV=={a,e,i,o,u}">C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}\nV=={a,e,i,o,u}\nL=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}</textarea>
-                        <button id="updateGlobalSetsBtn" class="btn btn-secondary">更新全局集合</button>
+                        <div class="global-actions" style="margin-top: 0px; display: flex; gap: 10px;">
+                            <button id="updateGlobalSetsBtn" class="btn btn-primary"
+                                style="margin-right: 5px;">更新全局集合</button>
+                            <button id="exportRulesFromGlobalBtn" class="btn btn-secondary">导出规则</button>
+                            <button id="importRulesFromGlobalBtn" class="btn btn-secondary">导入规则</button>
+                        </div>
                     </div>
 
 
 
 
 
-                    <textarea id="ruleEditor" class="rule-textarea" placeholder="在此输入规则定义...
-格式示例：
-#规则名
-// 规则注释（可选，最多60字符）
-集合名=={元素1,元素2,...}
-!具体规则
-@显示规则
+                    <textarea id="ruleEditor" class="rule-textarea" placeholder="在此输入规则...
 
 注意：
-- 集合定义仅在当前规则内有效
-- 使用(集合名)引用全局集合
-- 不允许使用大写字母组合直接定义集合"></textarea>
+• 具体规则中可引用全局集合和局部集合
+  ◦ 局部集合必须在当前规则中定义才能引用
+  ◦ 多字母集合名必须使用 (集合名) 引用
+• 具体规则中可使用 \位置符号 强制位置匹配
+  ◦ \b - 单词开头，\e - 单词结尾，\m - 单词中间"></textarea>
 
                     <div class="rule-actions">
                         <button id="saveRuleBtn" class="btn btn-primary">保存规则</button>
-                        <button id="testRuleBtn" class="btn btn-secondary">测试规则</button>
-                        <button id="clearRuleBtn" class="btn btn-outline">清空编辑器</button>
-                        <button id="formatRuleBtn" class="btn btn-outline">格式化</button>
+                        <button id="testRuleBtn" class="btn btn-secondary" style="margin-right: 5px;">测试规则</button>
+                        <button id="formatRuleBtn" class="btn btn-secondary">格式化</button>
+                        <button id="clearRuleBtn" class="btn btn-danger">清空编辑器</button>
 
                     </div>
                 </div>
@@ -772,7 +921,7 @@
                     </div>
                 </div>
                 <div class="drag-sort-hint"
-                    style="color: #718096; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                    style="color: #718096; font-size: 14px; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;">
                     <span>⋮⋮</span>
                     <span>拖动可调整排序</span>
                 </div>
@@ -805,7 +954,7 @@
                         <li><strong>// 注释内容</strong> - 添加规则注释（可选，最多60字符）</li>
                         <li><strong>集合定义</strong> - C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}</li>
                         <li><strong>!具体规则</strong> - 定义匹配模式</li>
-                        <li><strong>@显示规则</strong> - 定义排序方式</li>
+                        <li><strong>@排序规则</strong> - 定义排序方式</li>
                     </ul>
                     <h4>位置标志</h4>
                     <ul>
@@ -886,10 +1035,7 @@ ${setName}=={${setValues.join(',')}}`;
                     this.importRules();
                 });
 
-                // 返回主页
-                document.getElementById('backToMainBtn').addEventListener('click', () => {
-                    window.location.href = 'index.html';
-                });
+
 
                 // 保存规则
                 document.getElementById('saveRuleBtn').addEventListener('click', () => {
@@ -924,6 +1070,16 @@ ${setName}=={${setValues.join(',')}}`;
                 // 更新全局集合
                 document.getElementById('updateGlobalSetsBtn').addEventListener('click', () => {
                     this.updateGlobalSets();
+                });
+
+                // 全局集合区域的导出规则按钮
+                document.getElementById('exportRulesFromGlobalBtn').addEventListener('click', async () => {
+                    await this.exportRules();
+                });
+
+                // 全局集合区域的导入规则按钮
+                document.getElementById('importRulesFromGlobalBtn').addEventListener('click', () => {
+                    this.importRules();
                 });
 
                 // 详细帮助按钮
@@ -1181,6 +1337,30 @@ ${setName}=={${setValues.join(',')}}`;
                 }
             }
 
+            // 移动规则到最前
+            moveRuleToFirst(ruleName) {
+                // 从当前位置移除规则
+                this.ruleOrder = this.ruleOrder.filter(name => name !== ruleName);
+                // 添加到最前面
+                this.ruleOrder.unshift(ruleName);
+                // 保存顺序并重新加载
+                this.saveRuleOrder();
+                this.loadSavedRules();
+                this.showMessage(`规则 "${ruleName}" 已移动到最前`, 'success');
+            }
+
+            // 移动规则到最后
+            moveRuleToLast(ruleName) {
+                // 从当前位置移除规则
+                this.ruleOrder = this.ruleOrder.filter(name => name !== ruleName);
+                // 添加到最后面
+                this.ruleOrder.push(ruleName);
+                // 保存顺序并重新加载
+                this.saveRuleOrder();
+                this.loadSavedRules();
+                this.showMessage(`规则 "${ruleName}" 已移动到最后`, 'success');
+            }
+
             showMessage(message, type = 'info') {
                 const messageContainer = document.getElementById('messageContainer');
 
@@ -1210,11 +1390,13 @@ ${setName}=={${setValues.join(',')}}`;
                         <div class="rule-item-header" draggable="true" data-rule-name="${ruleName}" onclick="ruleManager.toggleRuleExpansion('${ruleName}')">
                             <div class="rule-item-main">
                                 <span class="drag-handle" onclick="event.stopPropagation()">⋮⋮</span>
-                                <span class="rule-item-expand-icon triangle-icon"></span>
                                 <span class="rule-item-name">${ruleName}</span>
                                 ${commentText ? `<span class="rule-item-comment">// ${commentText}</span>` : ''}
                             </div>
                             <div class="rule-item-actions" onclick="event.stopPropagation()">
+                                <span class="rule-item-expand-icon" onclick="ruleManager.toggleRuleExpansion('${ruleName}')"></span>
+                                <button class="btn-icon" onclick="ruleManager.moveRuleToFirst('${ruleName}')" title="移动到最前">⤴️</button>
+                                <button class="btn-icon" onclick="ruleManager.moveRuleToLast('${ruleName}')" title="移动到最后">⤵️</button>
                                 <button class="btn-icon" onclick="ruleManager.editRule('${ruleName}')" title="编辑规则">✏️</button>
                                 <button class="btn-icon" onclick="ruleManager.deleteRule('${ruleName}')" title="删除规则">🗑️</button>
                             </div>
@@ -1241,7 +1423,7 @@ ${setName}=={${setValues.join(',')}}`;
                     parts.push(rule.specificRule);
                 }
 
-                // 添加显示规则
+                // 添加排序规则
                 if (rule.displayRule) {
                     parts.push(rule.displayRule);
                 } else {
@@ -1280,9 +1462,9 @@ ${setName}=={${setValues.join(',')}}`;
                     lines.push(rule.specificRule);
                 }
 
-                // 显示规则
+                // 排序规则
                 lines.push('');
-                lines.push('# 显示规则:');
+                lines.push('# 排序规则:');
                 lines.push(rule.displayRule || '@');
 
                 return lines.join('\n');
@@ -1292,7 +1474,13 @@ ${setName}=={${setValues.join(',')}}`;
             toggleRuleExpansion(ruleName) {
                 const ruleItem = document.querySelector(`[data-rule-id="${ruleName}"]`);
                 if (ruleItem) {
-                    ruleItem.classList.toggle('collapsed');
+                    if (ruleItem.classList.contains('collapsed')) {
+                        ruleItem.classList.remove('collapsed');
+                        ruleItem.classList.add('expanded');
+                    } else {
+                        ruleItem.classList.remove('expanded');
+                        ruleItem.classList.add('collapsed');
+                    }
                     // 图标旋转由CSS控制，无需手动设置文本
 
                     // 保存展开/收缩状态
@@ -1317,9 +1505,11 @@ ${setName}=={${setValues.join(',')}}`;
                     const isCollapsed = savedRuleStates[ruleId];
                     if (isCollapsed !== undefined) {
                         if (isCollapsed) {
+                            item.classList.remove('expanded');
                             item.classList.add('collapsed');
                         } else {
                             item.classList.remove('collapsed');
+                            item.classList.add('expanded');
                         }
                         // 图标旋转由CSS控制，无需手动设置文本
                     }
@@ -1694,14 +1884,33 @@ ${setName}=={${setValues.join(',')}}`;
 
             // 显示详细帮助
             showDetailedHelp() {
-                const detailedHelpModal = document.getElementById('detailedHelpModal');
-                detailedHelpModal.style.display = 'flex';
+                window.open('syntax-help.html', '_blank');
             }
 
             // 获取所有全局集合
             getAllGlobalSets() {
                 // 直接从RuleEngine获取真正的全局集合
                 return this.ruleEngine.getGlobalSets();
+            }
+
+            // 刷新全局集合编辑器内容
+            refreshGlobalSetsEditor() {
+                const globalSetsEditor = document.getElementById('globalSetsEditor');
+                const savedGlobalSets = JSON.parse(localStorage.getItem('globalSets') || '{}');
+
+                let editorContent = '';
+                for (const [setName, setValues] of Object.entries(savedGlobalSets)) {
+                    if (Array.isArray(setValues)) {
+                        editorContent += `${setName}=={${setValues.join(',')}}\n`;
+                    }
+                }
+
+                // 如果没有保存的全局集合，使用默认值
+                if (!editorContent.trim()) {
+                    editorContent = 'C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}\nV=={a,e,i,o,u}\nL=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}';
+                }
+
+                globalSetsEditor.value = editorContent.trim();
             }
 
             /**
@@ -1711,7 +1920,15 @@ ${setName}=={${setValues.join(',')}}`;
                 try {
                     // 按照当前排序顺序获取规则
                     const orderedRules = this.getOrderedRulesForExport();
-                    const success = await this.ruleEngine.fileStorage.saveRulesToFile(orderedRules);
+                    // 临时保存当前规则到ruleEngine，以便导出时包含全局集合
+                    const originalRules = this.ruleEngine.rules;
+                    this.ruleEngine.rules = orderedRules;
+
+                    const success = await this.ruleEngine.exportRulesToFile();
+
+                    // 恢复原始规则
+                    this.ruleEngine.rules = originalRules;
+
                     if (success) {
                         this.showMessage('规则导出成功！', 'success');
                     }
@@ -1757,6 +1974,11 @@ ${setName}=={${setValues.join(',')}}`;
                         this.loadSavedRules();
                         this.showMessage('规则导入成功！', 'success');
                     }, { once: true });
+
+                    // 监听全局集合更新事件
+                    window.addEventListener('globalSetsUpdated', () => {
+                        this.refreshGlobalSetsEditor();
+                    }, { once: true });
                 } catch (error) {
                     console.error('导入规则失败:', error);
                     this.showMessage('导入规则失败: ' + error.message, 'error');
@@ -1785,13 +2007,17 @@ ${setName}=={${setValues.join(',')}}`;
             }, 500);
         });
 
-        // 处理响应式示例收缩
+        // 处理响应式示例收缩/展开
         function handleResponsiveExamples() {
             const currentIsNarrow = window.innerWidth <= 768;
 
-            // 只在从宽屏切换到窄屏时自动收缩
+            // 从宽屏切换到窄屏时自动收缩
             if (!isNarrowScreen && currentIsNarrow) {
                 collapseAllExamples();
+            }
+            // 从窄屏切换到宽屏时自动展开
+            else if (isNarrowScreen && !currentIsNarrow) {
+                expandAllExamples();
             }
 
             isNarrowScreen = currentIsNarrow;
@@ -1803,6 +2029,18 @@ ${setName}=={${setValues.join(',')}}`;
 
             exampleSections.forEach(section => {
                 section.classList.add('collapsed');
+            });
+
+            // 更新按钮文本
+            updateToggleAllButtonText();
+        }
+
+        // 展开所有示例（不保存状态）
+        function expandAllExamples() {
+            const exampleSections = document.querySelectorAll('.example-section');
+
+            exampleSections.forEach(section => {
+                section.classList.remove('collapsed');
             });
 
             // 更新按钮文本
@@ -1912,9 +2150,11 @@ ${setName}=={${setValues.join(',')}}`;
                 if (allCollapsed) {
                     // 展开全部
                     item.classList.remove('collapsed');
+                    item.classList.add('expanded');
                     savedRuleStates[ruleId] = false;
                 } else {
                     // 收缩全部
+                    item.classList.remove('expanded');
                     item.classList.add('collapsed');
                     savedRuleStates[ruleId] = true;
                 }
