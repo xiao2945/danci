@@ -441,10 +441,10 @@ class RuleEngine {
 
         for (const part of parts) {
             const trimmedPart = part.trim();
-            if (trimmedPart && !trimmedPart.startsWith(':')) {
+            if (trimmedPart && !trimmedPart.startsWith('~')) {
                 ruleNames.push(trimmedPart);
-            } else if (trimmedPart.startsWith(':') && !trimmedPart.startsWith('::')) {
-                // 处理否定形式 :RuleName
+            } else if (trimmedPart.startsWith('~')) {
+                // 处理否定形式 ~RuleName
                 ruleNames.push(trimmedPart.substring(1));
             }
         }
@@ -1153,12 +1153,6 @@ class RuleEngine {
                 tokens.push({ type: 'op', value: '||' });
                 i += 2;
             } else if (expr[i] === '!') {
-                // 检查前后是否有空格，禁止&&!写法
-                const prev = i > 0 ? expr[i - 1] : '';
-                const next = i < expr.length - 1 ? expr[i + 1] : '';
-                if ((prev && !/\s/.test(prev)) || (next && !/\s/.test(next))) {
-                    throw new Error('非模式!运算符必须作为二元运算符，且两侧有空格，如 A ! B');
-                }
                 tokens.push({ type: 'op', value: '!' });
                 i++;
             } else if (expr[i] === '(') {
@@ -1386,6 +1380,16 @@ class RuleEngine {
                 } else if (element.value === '\\e') {
                     // 单词结尾：必须在单词的结束位置
                     if (wordIndex !== word.length) {
+                        return false;
+                    }
+                } else if (element.value === '\\-b') {
+                    // 不在开头：不能在单词的开始位置
+                    if (wordIndex === 0) {
+                        return false;
+                    }
+                } else if (element.value === '\\-e') {
+                    // 不在结尾：不能在单词的结束位置
+                    if (wordIndex === word.length) {
                         return false;
                     }
                 }

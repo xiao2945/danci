@@ -186,6 +186,140 @@
             color: #2d3748;
         }
 
+        /* 表格包装器样式 */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 768px) {
+            .table-wrapper {
+                overflow-x: visible;
+                margin: 0 -10px;
+                padding: 0 10px;
+            }
+        }
+
+        /* 响应式表格样式 */
+        @media (max-width: 768px) {
+            .syntax-help-content table {
+                font-size: 14px;
+            }
+
+            /* 基本语法表格 */
+            .basic-syntax-table td:nth-child(1),
+            .basic-syntax-table td:nth-child(2) {
+                white-space: nowrap;
+            }
+
+            /* 集合运算符表格特殊处理 */
+            .operator-table {
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            .operator-table th,
+            .operator-table td {
+                padding: 8px 4px;
+                vertical-align: middle;
+            }
+
+            .operator-table th:nth-child(1),
+            .operator-table td:nth-child(1) {
+                width: 15%;
+                min-width: 36px;
+                max-width: 60px;
+                white-space: nowrap;
+                text-align: center;
+                font-size: 1em;
+            }
+
+            .operator-table th:nth-child(2),
+            .operator-table td:nth-child(2) {
+                width: 15%;
+                min-width: 36px;
+                word-break: break-word;
+                white-space: normal;
+                line-height: 1.3;
+            }
+
+            .operator-table th:nth-child(3),
+            .operator-table td:nth-child(3) {
+                width: 35%;
+                word-break: break-word;
+                white-space: normal;
+            }
+
+            .operator-table th:nth-child(4),
+            .operator-table td:nth-child(4) {
+                width: 35%;
+                word-break: break-word;
+                white-space: normal;
+            }
+
+            @media (max-width: 768px) {
+
+                .operator-table th,
+                .operator-table td {
+                    padding: 8px 4px;
+                    font-size: 14px;
+                }
+            }
+
+            @media (max-width: 480px) {
+
+                .operator-table th,
+                .operator-table td {
+                    padding: 4px 2px;
+                    font-size: 12px;
+                }
+
+                .operator-table th:nth-child(1),
+                .operator-table td:nth-child(1) {
+                    min-width: 24px;
+                    font-size: 11px;
+                }
+
+                .operator-table th:nth-child(2),
+                .operator-table td:nth-child(2) {
+                    min-width: 24px;
+                    font-size: 11px;
+                }
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .operator-table th,
+            .operator-table td {
+                padding: 6px 2px;
+                font-size: 13px;
+            }
+
+            .operator-table th:nth-child(1),
+            .operator-table td:nth-child(1) {
+                width: 28px;
+                min-width: 28px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 360px) {
+
+            .operator-table th,
+            .operator-table td {
+                font-size: 10px;
+                padding: 3px 1px;
+            }
+
+            .operator-table th:nth-child(1),
+            .operator-table td:nth-child(1) {
+                width: 18px;
+                min-width: 18px;
+                font-size: 9px;
+            }
+        }
+
         .back-btn {
             background: #667eea;
             color: white;
@@ -211,13 +345,44 @@
 
             <h2>1. 基本语法</h2>
 
-            <p><strong>1.1 规则名定义</strong>：<code>#规则名</code> - 定义规则名称（必须，以#开头）</p>
-            <p><strong>1.2 注释内容</strong>：<code>//注释内容</code> - 添加规则注释（可选，以//开头）</p>
-            <p><strong>1.3
-                    局部集合定义</strong>：<code>BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</code> -
-                局部集合定义</p>
-            <p><strong>1.4 匹配模式</strong>：<code>:具体规则</code> - 定义匹配模式（必须，以:开头）</p>
-            <p><strong>1.5 排序规则</strong>：<code>@排序规则</code> - 定义排序方式（可选，以@开头）</p>
+            <div style="overflow-x: auto;">
+                <table class="basic-syntax-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">默认顺序</th>
+                            <th style="width: 30%;">语法格式</th>
+                            <th style="width: 50%;">说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1. 规则名定义</strong></td>
+                            <td><code>#规则名</code></td>
+                            <td>定义规则名称（必须，以<code>#</code>开头）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>2. 注释内容</strong></td>
+                            <td><code>//注释内容</code></td>
+                            <td>添加规则注释（可选，以<code>//</code>开头）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3. 局部集合定义</strong></td>
+                            <td><code>集合名=={元素1,元素2,...}</code></td>
+                            <td>定义局部集合，示例：<code>BL=={bl,br,cl,cr...}</code>（可选）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>4. 匹配模式</strong></td>
+                            <td><code>:具体规则</code></td>
+                            <td>定义匹配模式（必须，以<code>:</code>开头）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>5. 排序规则</strong></td>
+                            <td><code>@排序规则</code></td>
+                            <td>定义排序方式（可选，以<code>@</code>开头）</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <h2>2. 集合相关</h2>
 
@@ -235,7 +400,7 @@
             <ul>
                 <li>集合元素大小写敏感</li>
                 <li>使用逗号<code>,</code>分隔集合中的元素</li>
-                <li>逗号前后的空位置表示空元素（如：<code>{,a}</code>、<code>{a,,b}</code>表示包含空元素）</li>
+                <li>逗号前的空位置表示空元素（如：<code>{,a}</code>、<code>{a,,b}</code>表示包含空元素）</li>
             </ul>
 
             <h3>2.2 集合分类</h3>
@@ -264,17 +429,39 @@
 
             <h3>2.3 集合运算符</h3>
 
-            <p><strong>2.3.1 别名定义</strong>：<code>==</code></p>
-            <p>给集合定义一个别名</p>
-            <p>示例：<code>X==V</code> （定义X为V的别名，即X=={a,e,i,o,u}）</p>
-
-            <p><strong>2.3.2 集合减法</strong>：<code>&gt;&gt;</code></p>
-            <p>从集合中去掉另一个集合的内容</p>
-            <p>示例：<code>Y==L&gt;&gt;C</code> （从L中去掉C的内容，结果Y=={a,e,i,o,u}）</p>
-
-            <p><strong>2.3.3 集合加法</strong>：<code>&lt;&lt;</code></p>
-            <p>向集合中加入另一个集合的内容</p>
-            <p>示例：<code>Z==C&lt;&lt;V</code> （向C中加入V的内容，结果Z=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}）</p>
+            <div class="table-wrapper">
+                <table class="operator-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 12%;">符号</th>
+                            <th style="width: 12%;">名称</th>
+                            <th style="width: 26%;">描述</th>
+                            <th style="width: 50%;">示例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>==</code></td>
+                            <td><strong>别名定义</strong></td>
+                            <td>给集合定义一个别名</td>
+                            <td><code>X==V</code>（定义X为V的别名，即X=={a,e,i,o,u}）</td>
+                        </tr>
+                        <tr>
+                            <td><code>&gt;&gt;</code></td>
+                            <td><strong>集合减法</strong></td>
+                            <td>从集合中去掉另一个集合的内容</td>
+                            <td><code>Y==L&gt;&gt;C</code>（从L中去掉C的内容，结果Y=={a,e,i,o,u}）</td>
+                        </tr>
+                        <tr>
+                            <td><code>&lt;&lt;</code></td>
+                            <td><strong>集合加法</strong></td>
+                            <td>向集合中加入另一个集合的内容</td>
+                            <td><code>Z==C&lt;&lt;V</code>（向C中加入V的内容，结果Z=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}）
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <h3>2.4 字面字符</h3>
 
@@ -288,7 +475,9 @@
 
             <h3>3.1 基础规则</h3>
 
-            <p><strong>格式</strong>：必须以<code>:</code>开头，由位置标志、集合组合而成。</p>
+            <p><strong>本质</strong>：基于规则拼接而成的用于匹配的字符串集合。</p>
+
+            <p><strong>格式</strong>：必须以<code>:</code>开头，由位置标志（锚点）、集合组合而成。</p>
 
             <p><strong>特殊情况</strong>：<code>:</code>后为空时表示匹配全部单词（但必须保留<code>:</code>符号）。</p>
 
@@ -298,7 +487,6 @@
             <ul>
                 <li><code>\b</code> - 单词开头</li>
                 <li><code>\e</code> - 单词结尾</li>
-                <li><code>\m</code> - 单词中间</li>
                 <li><code>\-b</code> - 不在开头</li>
                 <li><code>\-e</code> - 不在结尾</li>
             </ul>
@@ -311,24 +499,48 @@
             </ul>
 
             <div class="note">
-                <strong>注意</strong>：引用集合时大小写敏感，集合名必须与定义时完全一致。
+                <strong>注意</strong>：引用集合时大小写敏感；多字母集合名必须用<code>()</code>引用。
             </div>
 
             <h3>3.2 组合规则</h3>
 
             <p><strong>格式</strong>：以<code>::</code>开头，由基础规则（规则名）、逻辑操作符组合而成。</p>
 
-            <p><strong>限制</strong>：只能引用已有的基础规则。</p>
+            <p><strong>限制</strong>：只能引用已有的基础规则；规则名必须完全匹配。</p>
 
             <h4>3.2.1 支持的逻辑操作符</h4>
 
-            <ul>
-                <li><code>&amp;&amp;</code> - 逻辑与（同时满足两个条件）</li>
-                <li><code>||</code> - 逻辑或（满足任一条件）</li>
-                <li><code>!</code> - 非模式（满足前者但不满足后者，二元运算符，只能写A ! B，禁止&&!写法，支持括号优先级）</li>
-            </ul>
+            <div class="table-wrapper">
+                <table class="operator-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 18%;">符号</th>
+                            <th style="width: 22%;">名称</th>
+                            <th style="width: 60%;">描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>&amp;&amp;</code></td>
+                            <td>逻辑与</td>
+                            <td>同时满足两个条件</td>
+                        </tr>
+                        <tr>
+                            <td><code>||</code></td>
+                            <td>逻辑或</td>
+                            <td>满足任一条件</td>
+                        </tr>
+                        <tr>
+                            <td><code>!</code></td>
+                            <td>非模式</td>
+                            <td>满足前者但不满足后者，只能写<code>A!B</code>，禁止<code>&&!</code>写法</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="note">
-                <strong>注意：</strong>组合规则支持括号优先级，!只能作为二元运算符，不能写成&&!，如<code>A ! B</code>，<code>(A && B) ! C</code>，<code>(A ! B) || C</code>。
+                <strong>注意：</strong>组合规则支持括号优先级；<code>!</code>
+                只能作为二元运算符，如<code>A!B</code>，<code>(A&&B)!C</code>，<code>(A!B)||C</code>。
             </div>
 
             <h2>4. 排序规则</h2>
@@ -341,20 +553,20 @@
             <p><strong>排序方式</strong>：</p>
             <ul>
                 <li>按首字母分组</li>
-                <li>分组按字母正序（无<code>@</code>或<code>@</code>后为空）或逆序（<code>@-</code>）排列</li>
-                <li>组内按字母正序排列</li>
+                <li>分组按字母正序或逆序（<code>@-</code>）排列</li>
+                <li>组内按字母正序或逆序（<code>@-</code>）排列</li>
             </ul>
 
             <h3>4.2 位置匹配排序</h3>
 
-            <p><strong>核心概念</strong>：基于位置标识符的灵活排序策略，支持前缀、后缀、任意位置、严格中间等多种匹配方式。</p>
+            <p><strong>核心概念</strong>：基于位置匹配符的灵活排序策略，支持前缀、后缀、任意位置、严格中间等多种匹配方式。</p>
 
-            <h4>4.2.1 位置标识符</h4>
+            <h4>4.2.1 位置匹配符</h4>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <thead>
                     <tr style="background-color: #f8f9fa;">
-                        <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">标识符</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">符号</th>
                         <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">名称</th>
                         <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">描述</th>
                         <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">示例</th>
@@ -365,50 +577,50 @@
                         <td style="border: 1px solid #dee2e6; padding: 8px;"><code>^</code></td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">前缀匹配</td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">元素必须出现在单词开头</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V^</code> 匹配以元音开头</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V^</code>匹配以元音开头</td>
                     </tr>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 8px;"><code>$</code></td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">后缀匹配</td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">元素必须出现在单词结尾</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>C$</code> 匹配以辅音结尾</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>C$</code>匹配以辅音结尾</td>
                     </tr>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 8px;"><code>*</code></td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">任意位置</td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">元素可以出现在单词任意位置</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V*</code> 匹配包含元音</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V*</code>匹配包含元音</td>
                     </tr>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 8px;"><code>~</code></td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">严格中间</td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">元素必须出现在单词中间（不在首尾）</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V~</code> 匹配中间包含元音但首尾不是元音</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V~</code>匹配中间包含元音但首尾不是元音</td>
                     </tr>
                     <tr>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">无标识符</td>
                         <td style="border: 1px solid #dee2e6; padding: 8px;">默认前缀</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;">等同于 <code>^</code>，向后兼容</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V</code> 等同于 <code>V^</code></td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;">等同于<code>^</code></td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;"><code>V</code>等同于<code>V^</code></td>
                     </tr>
                 </tbody>
             </table>
 
             <h4>4.2.2 语法格式</h4>
 
-            <p><strong>基本语法</strong>：<code>@(集合名位置标识符)(集合名位置标识符)...</code></p>
+            <p><strong>基本语法</strong>：<code>@(集合名位置匹配符)(集合名位置匹配符)...</code></p>
 
             <p><strong>语法规则</strong>：</p>
             <ul>
-                <li>以 <code>@</code> 开头表示排序规则</li>
-                <li>每个排序元素由集合名和位置标识符组成</li>
+                <li>以<code>@</code>开头表示排序规则</li>
+                <li>每个排序元素由集合名和位置匹配符组成</li>
+                <li>单字母集合可以直接使用：<code>V^</code>或<code>(V^)</code></li>
                 <li>多字母集合名需要用括号包围：<code>(BL^)</code></li>
-                <li>单字母集合可以直接使用：<code>V^</code> 或 <code>(V^)</code></li>
-                <li>可选的逆序标志 <code>-</code> 放在集合名前：<code>(-V^)</code> 或 <code>-V^</code></li>
+                <li>可选的逆序标志<code>-</code>放在集合名前：<code>(-V^)</code>或<code>-V^</code></li>
                 <li>最多支持三级排序</li>
             </ul>
 
-            <h4>4.2.3 多级排序逻辑</h4>
+            <h4>4.2.3 多级排序</h4>
 
             <p><strong>顺序关系</strong>：多个排序元素之间隐含前后关系，前一个元素在后一个元素之前（不要求紧邻）</p>
 
@@ -427,103 +639,104 @@
             <p><strong>标签格式</strong>：</p>
             <ul>
                 <li><strong>单级</strong>：<code>集合元素</code> （如："a", "bl"）</li>
-                <li><strong>多级</strong>：<code>一级标签 > 二级标签</code> （如："bl > a"）</li>
+                <li><strong>两级</strong>：<code>一级标签 > 二级标签</code> （如："bl > a"）</li>
                 <li><strong>三级</strong>：<code>一级标签 > 二级标签 > 三级标签</code> （如："bl > a > t"）</li>
             </ul>
 
-            <p><strong>排序顺序</strong>：</p>
+            <p><strong>排序方式</strong>：</p>
             <ul>
-                <li>按集合中元素的定义顺序排列</li>
-                <li>逆序标志影响该级别的排序方向</li>
+                <li>分组按集合中元素正序或逆序（有逆序标志时）排列</li>
+                <li>逆序标志仅影响该级别分组</li>
                 <li>"其他"分组始终排在最后</li>
+                <li>组内按字母正序排列</li>
             </ul>
 
             <h2>5. 规则示例</h2>
 
             <h3>5.1 基础规则示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 定义全局集合 */</span>
-<span class="set-definition">C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}</span>
-<span class="set-definition">V=={a,e,i,o,u}</span>
-<span class="set-definition">L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}</span>
-<span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 长度要求 */</span>
+<span class="rule-name">#四字母以上</span>
+<span class="comment">//匹配四字母及以上的单词</span>
+<span class="rule-content">:LLLL</span>
+<span class="sort-rule">@</span></pre>
 
-<span class="comment">/* 传统排序示例 */</span>
-<span class="rule-name">#开头元音</span>
-<span class="comment">//匹配以元音开头的单词</span>
-<span class="rule-content">!\bV</span>
-<span class="sort-rule">@-</span>
-
-<span class="comment">/* CVC模式 */</span>
-<span class="rule-name">#CVC</span>
-<span class="comment">//匹配辅音-元音-辅音模式的单词</span>
-<span class="rule-content">!\bCVC\e</span>
-<span class="sort-rule">@</span>
-
-<span class="comment">/* CVCE模式 字面字符应用 */</span>
-<span class="rule-name">#CVCE</span>
-<span class="comment">//匹配辅音-元音-辅音-e模式的单词</span>
-<span class="rule-content">!\bCVC[e]\e</span>
-<span class="sort-rule">@V</span></pre>
-
-            <h3>5.2 位置匹配排序示例</h3>
-
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 前缀匹配 */</span>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 位置标志、字母逆序 */</span>
 <span class="rule-name">#元音开头</span>
-<span class="comment">//按开头元音分组</span>
-<span class="rule-content">!\bV</span>
-<span class="sort-rule">@V^</span>
+<span class="comment">//匹配以元音开头的单词</span>
+<span class="rule-content">:\bV</span>
+<span class="sort-rule">@-</span></pre>
 
-<span class="comment">/* 后缀匹配 */</span>
-<span class="rule-name">#辅音结尾</span>
-<span class="comment">//按结尾辅音分组</span>
-<span class="rule-content">!C\e</span>
-<span class="sort-rule">@C$</span>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 完全匹配 */</span>
+<span class="rule-name">#CVC</span>
+<span class="comment">//匹配辅音-元音-辅音模式的三字母单词</span>
+<span class="rule-content">:\bCVC\e</span>
+<span class="sort-rule">@</span></pre>
 
-<span class="comment">/* 任意位置匹配 */</span>
-<span class="rule-name">#包含元音</span>
-<span class="comment">//按包含的元音分组</span>
-<span class="rule-content">!V</span>
-<span class="sort-rule">@V*</span>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 字面字符、元音分组 */</span>
+<span class="rule-name">#CVCE</span>
+<span class="comment">//匹配辅音-元音-辅音-e模式的四字母单词</span>
+<span class="rule-content">:\bCVC"e"\e</span>
+<span class="sort-rule">@V*</span></pre>
 
-<span class="comment">/* 严格中间匹配 */</span>
-<span class="rule-name">#中间元音</span>
-<span class="comment">//按中间元音分组（首尾不是元音）</span>
-<span class="rule-content">!\bCV+C\e</span>
-<span class="sort-rule">@V~</span></pre>
-
-            <h3>5.3 组合规则示例</h3>
+            <h3>5.2 组合规则示例</h3>
 
             <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 组合规则：CVC或CVCE */</span>
 <span class="rule-name">#CVC或CVCE</span>
 <span class="comment">//匹配CVC模式或CVCE模式的单词</span>
-<span class="rule-content">::CVC模式 || CVCE模式</span>
-<span class="sort-rule">@</span>
+<span class="rule-content">::(CVC)||(CVCE)</span>
+<span class="sort-rule">@</span></pre>
 
-<span class="comment">/* 组合规则：有元音但不是CVC */</span>
-<span class="rule-name">#有元音非CVC</span>
-<span class="comment">//匹配包含元音但不是CVC模式的单词</span>
-<span class="rule-content">::开头元音 ! CVC</span>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 组合规则：四字母以上但不是CVC */</span>
+<span class="rule-name">#四字母非CVC</span>
+<span class="comment">//匹配四字母以上但不是CVC模式的单词</span>
+<span class="rule-content">::(四字母以上)!(CVC)</span>
 <span class="sort-rule">@V</span></pre>
+
+            <h3>5.3 匹配排序示例</h3>
+
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 前缀匹配 */</span>
+<span class="rule-name">#元音开头</span>
+<span class="comment">//按开头元音分组</span>
+<span class="rule-content">:\bV</span>
+<span class="sort-rule">@V^</span></pre>
+
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 后缀匹配 */</span>
+<span class="rule-name">#辅音结尾</span>
+<span class="comment">//按结尾辅音分组</span>
+<span class="rule-content">:C\e</span>
+<span class="sort-rule">@C$</span></pre>
+
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 任意位置匹配 */</span>
+<span class="rule-name">#包含元音</span>
+<span class="comment">//按包含的元音分组</span>
+<span class="rule-content">:V</span>
+<span class="sort-rule">@V*</span></pre>
+
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 严格中间匹配 */</span>
+<span class="rule-name">#中间元音</span>
+<span class="comment">//按中间元音分组（首尾不是元音）</span>
+<span class="rule-content">:\bCV+C\e</span>
+<span class="sort-rule">@V~</span></pre>
 
             <h3>5.4 多级排序示例</h3>
 
             <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 二级排序：辅音群开头 + 包含元音 */</span>
 <span class="rule-name">#复杂音韵结构</span>
 <span class="comment">//先按辅音群开头分组，再按包含元音分组</span>
-<span class="rule-content">!\b(BL)</span>
+<span class="rule-content">:\b(BL)</span>
 <span class="sort-rule">@(BL^)(V*)</span>
 
 <span class="comment">/* 三级排序：开头 + 中间 + 结尾 */</span>
 <span class="rule-name">#完整音韵分析</span>
 <span class="comment">//按开头辅音群、中间元音、结尾辅音三级分组</span>
-<span class="rule-content">!\b(BL)VC</span>
+<span class="rule-content">:\b(BL)VC</span>
 <span class="sort-rule">@(BL^)(V*)(C$)</span>
 
 <span class="comment">/* 逆序排序示例 */</span>
 <span class="rule-name">#逆序多级</span>
 <span class="comment">//第一级逆序，第二级正序</span>
-<span class="rule-content">!\b(BL)V</span>
+<span class="rule-content">:\b(BL)V</span>
 <span class="sort-rule">@(-BL^)(V*)</span></pre>
 
             <h3>5.5 集合运算示例</h3>
@@ -532,7 +745,7 @@
 <span class="rule-name">#特殊辅音组合</span>
 <span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
 <span class="set-definition">ShortV==V>>{u}</span>  <span class="comment">// 短元音（去掉u）</span>
-<span class="rule-content">!\b(BL)(ShortV)</span>
+<span class="rule-content">:\b(BL)(ShortV)</span>
 <span class="sort-rule">@(BL)</span></pre>
 
             <h2>6. 注意事项与常见错误</h2>
@@ -541,20 +754,20 @@
 
             <p><strong>6.1.1 位置标志错误</strong>：</p>
             <ul>
-                <li>❌ 错误：<code>!bVC</code> （缺少位置标志反斜杠）</li>
-                <li>✅ 正确：<code>!\bCVC\e</code> （正确使用位置标志）</li>
+                <li>❌ 错误：<code>:bVC</code> （缺少位置标志反斜杠）</li>
+                <li>✅ 正确：<code>:\bCVC\e</code> （正确使用位置标志）</li>
             </ul>
 
             <p><strong>6.1.2 集合引用错误</strong>：</p>
             <ul>
-                <li>❌ 错误：<code>!\bvc\e</code> （集合名大小写错误）</li>
-                <li>✅ 正确：<code>!\bCVC\e</code> （集合名必须大写）</li>
+                <li>❌ 错误：<code>:\bvc\e</code> （集合名大小写错误）</li>
+                <li>✅ 正确：<code>:\bCVC\e</code> （集合名必须大写）</li>
             </ul>
 
             <p><strong>6.1.3 多字母集合引用错误</strong>：</p>
             <ul>
-                <li>❌ 错误：<code>!BLV</code> （多字母集合未加括号）</li>
-                <li>✅ 正确：<code>!(BL)V</code> （多字母集合需要括号）</li>
+                <li>❌ 错误：<code>:BLV</code> （多字母集合未加括号）</li>
+                <li>✅ 正确：<code>:(BL)V</code> （多字母集合需要括号）</li>
             </ul>
 
             <p><strong>6.1.4 局部集合作用域错误</strong>：</p>
