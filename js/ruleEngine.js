@@ -115,8 +115,6 @@ class RuleEngine {
                 const commentIndex = line.indexOf('//');
                 if (commentIndex > 0) {
                     ruleName = line.substring(1, commentIndex).trim();
-                    // 如果规则名称行后面紧跟着的不是规则注释，那么行尾注释也作为普通注释处理，这里不保存
-                    // 但如果下一行是规则注释，则此处的行尾注释会被忽略
                 } else {
                     ruleName = line.substring(1).trim();
                 }
@@ -131,10 +129,10 @@ class RuleEngine {
                 const [setName] = line.split('==');
                 const cleanSetName = setName.trim();
                 this.originalSetDefinitions.set(cleanSetName, line);
-            } else if (line.startsWith('!') && !line.startsWith('!!')) {
+            } else if (line.startsWith(':') && !line.startsWith('::')) {
                 // 具体规则
                 specificRule = line;
-            } else if (line.startsWith('!!')) {
+            } else if (line.startsWith('::')) {
                 // 组合规则
                 specificRule = line;
             } else if (line.startsWith('@')) {
@@ -181,18 +179,18 @@ class RuleEngine {
         this.validateSetDefinitions(rule.localSets);
 
         // 2. 验证基础规则中的集合引用
-        if (!rule.specificRule.startsWith('!!')) {
+        if (!rule.specificRule.startsWith('::')) {
             this.validateBasicRuleReferences(rule.specificRule, rule.localSets);
         }
 
         // 3. 验证组合规则中的基础规则引用
-        if (rule.specificRule.startsWith('!!')) {
+        if (rule.specificRule.startsWith('::')) {
             this.validateCombinedRuleReferences(rule.specificRule);
         }
 
         // 4. 验证排序规则中的集合引用
         if (rule.displayRule) {
-            this.validateSortRuleReferences(rule.displayRule, rule.localSets, rule.specificRule.startsWith('!!'));
+            this.validateSortRuleReferences(rule.displayRule, rule.localSets, rule.specificRule.startsWith('::'));
         }
 
         // 5. 验证规则名称格式
@@ -287,7 +285,7 @@ class RuleEngine {
             }
 
             // 检查引用的规则是否也是组合规则（不允许组合规则引用组合规则）
-            if (referencedRule.specificRule.startsWith('!!')) {
+            if (referencedRule.specificRule.startsWith('::')) {
                 throw new Error(`组合规则不能引用其他组合规则 "${refRuleName}"`);
             }
         }
@@ -435,18 +433,18 @@ class RuleEngine {
     extractRuleReferences(combinedRule) {
         const ruleNames = [];
 
-        // 移除开头的 !!
+        // 移除开头的 ::
         const ruleContent = combinedRule.substring(2);
 
-        // 分割操作符 &&, ||, --
-        const parts = ruleContent.split(/\s*(?:&&|\|\||--)\s*/);
+        // 分割操作符 &&, ||, !
+        const parts = ruleContent.split(/\s*(?:&&|\|\||!)\s*/);
 
         for (const part of parts) {
             const trimmedPart = part.trim();
-            if (trimmedPart && !trimmedPart.startsWith('!')) {
+            if (trimmedPart && !trimmedPart.startsWith(':')) {
                 ruleNames.push(trimmedPart);
-            } else if (trimmedPart.startsWith('!') && !trimmedPart.startsWith('!!')) {
-                // 处理否定形式 !RuleName
+            } else if (trimmedPart.startsWith(':') && !trimmedPart.startsWith('::')) {
+                // 处理否定形式 :RuleName
                 ruleNames.push(trimmedPart.substring(1));
             }
         }
@@ -476,7 +474,7 @@ class RuleEngine {
         this.validateSetCircularReferences(rule.localSets);
 
         // 检查组合规则中的循环引用
-        if (rule.specificRule.startsWith('!!')) {
+        if (rule.specificRule.startsWith('::')) {
             this.validateRuleCircularReferences(rule.name, rule.specificRule, new Set());
         }
     }
@@ -533,7 +531,7 @@ class RuleEngine {
         const referencedRules = this.extractRuleReferences(combinedRule);
         for (const refRuleName of referencedRules) {
             const referencedRule = this.rules.get(refRuleName);
-            if (referencedRule && referencedRule.specificRule.startsWith('!!')) {
+            if (referencedRule && referencedRule.specificRule.startsWith('::')) {
                 this.validateRuleCircularReferences(refRuleName, referencedRule.specificRule, new Set(visited));
             }
         }
@@ -1029,7 +1027,7 @@ class RuleEngine {
     matchesRule(word, rule) {
         const lowerWord = word.toLowerCase();
 
-        if (rule.specificRule.startsWith('!!')) {
+        if (rule.specificRule.startsWith('::')) {
             // 组合规则
             return this.matchesCombinedRule(lowerWord, rule.specificRule, rule.localSets);
         } else {
@@ -1046,7 +1044,7 @@ class RuleEngine {
      * @returns {boolean} 是否匹配
      */
     matchesSpecificRule(word, specificRule, localSets) {
-        // 移除开头的 !
+        // 移除开头的 :
         const rulePattern = specificRule.substring(1);
 
         // 解析规则模式
@@ -1057,70 +1055,149 @@ class RuleEngine {
     }
 
     /**
-     * 检查单词是否匹配组合规则
+     * 检查单词是否匹配组合规则（支持括号、优先级，禁止&&!写法，只允许A ! B）
      * @param {string} word - 单词（小写）
      * @param {string} combinedRule - 组合规则
      * @param {Map} localSets - 本地集合映射
      * @returns {boolean} 是否匹配
      */
     matchesCombinedRule(word, combinedRule, localSets) {
-        // 移除开头的 !!
-        let ruleExpression = combinedRule.substring(2);
-
-        // 处理非操作符 "--"，转换为 "&& !"
-        ruleExpression = this.processNonOperator(ruleExpression);
-
-        // 简化处理：支持基本的 && 和 || 运算
-        if (ruleExpression.includes('&&')) {
-            const parts = ruleExpression.split('&&');
-            return parts.every(part => {
-                const trimmedPart = part.trim();
-
-                // 处理否定操作
-                if (trimmedPart.startsWith('!')) {
-                    const ruleName = trimmedPart.substring(1).trim();
-                    const referencedRule = this.getRule(ruleName);
-                    return referencedRule ? !this.matchesRule(word, referencedRule) : true;
-                } else {
-                    const ruleName = trimmedPart;
-                    const referencedRule = this.getRule(ruleName);
-                    return referencedRule && this.matchesRule(word, referencedRule);
-                }
-            });
-        } else if (ruleExpression.includes('||')) {
-            const parts = ruleExpression.split('||');
-            return parts.some(part => {
-                const trimmedPart = part.trim();
-
-                // 处理否定操作
-                if (trimmedPart.startsWith('!')) {
-                    const ruleName = trimmedPart.substring(1).trim();
-                    const referencedRule = this.getRule(ruleName);
-                    return referencedRule ? !this.matchesRule(word, referencedRule) : true;
-                } else {
-                    const ruleName = trimmedPart;
-                    const referencedRule = this.getRule(ruleName);
-                    return referencedRule && this.matchesRule(word, referencedRule);
-                }
-            });
-        }
-
-        return false;
+        // 移除开头的 ::
+        let ruleExpression = combinedRule.substring(2).trim();
+        // 解析表达式为AST
+        const ast = this.parseLogicExpression(ruleExpression);
+        // 递归计算AST
+        return this.evalLogicAST(word, ast, localSets);
     }
 
     /**
-     * 处理非操作符 "--"，转换为 "&& !"
-     * @param {string} expression - 规则表达式
-     * @returns {string} 处理后的表达式
+     * 解析逻辑表达式为AST（支持括号、优先级，!为二元运算符）
+     * @param {string} expr
+     * @returns {Object} AST
      */
-    processNonOperator(expression) {
-        // 使用正则表达式匹配 "--" 操作符
-        // 格式：condition1 -- condition2
-        // 转换为：condition1 && !condition2
-        return expression.replace(
-            /(.*?)\s*--\s*(.*)/g,
-            '$1 && !$2'
-        );
+    parseLogicExpression(expr) {
+        // 分词
+        const tokens = this.tokenizeLogic(expr);
+        // Shunting Yard算法转为逆波兰表达式
+        const output = [];
+        const ops = [];
+        const precedence = { '!': 3, '&&': 2, '||': 1 };
+        const associativity = { '!': 'left', '&&': 'left', '||': 'left' };
+        for (let i = 0; i < tokens.length; i++) {
+            const t = tokens[i];
+            if (t.type === 'rule') {
+                output.push({ type: 'rule', value: t.value });
+            } else if (t.type === 'op') {
+                while (
+                    ops.length &&
+                    ops[ops.length - 1].type === 'op' &&
+                    ((associativity[t.value] === 'left' && precedence[t.value] <= precedence[ops[ops.length - 1].value]) ||
+                        (associativity[t.value] === 'right' && precedence[t.value] < precedence[ops[ops.length - 1].value]))
+                ) {
+                    output.push(ops.pop());
+                }
+                ops.push(t);
+            } else if (t.type === 'lparen') {
+                ops.push(t);
+            } else if (t.type === 'rparen') {
+                while (ops.length && ops[ops.length - 1].type !== 'lparen') {
+                    output.push(ops.pop());
+                }
+                if (!ops.length) throw new Error('括号不匹配');
+                ops.pop(); // 弹出左括号
+            }
+        }
+        while (ops.length) {
+            if (ops[ops.length - 1].type === 'lparen' || ops[ops.length - 1].type === 'rparen') throw new Error('括号不匹配');
+            output.push(ops.pop());
+        }
+        // 逆波兰表达式转AST
+        const stack = [];
+        for (const token of output) {
+            if (token.type === 'rule') {
+                stack.push({ type: 'rule', value: token.value });
+            } else if (token.type === 'op') {
+                if (token.value === '!') {
+                    // 二元运算符
+                    if (stack.length < 2) throw new Error('非模式!运算符缺少操作数');
+                    const right = stack.pop();
+                    const left = stack.pop();
+                    stack.push({ type: 'not', left, right });
+                } else if (token.value === '&&' || token.value === '||') {
+                    if (stack.length < 2) throw new Error(token.value + ' 运算符缺少操作数');
+                    const right = stack.pop();
+                    const left = stack.pop();
+                    stack.push({ type: token.value === '&&' ? 'and' : 'or', left, right });
+                }
+            }
+        }
+        if (stack.length !== 1) throw new Error('表达式语法错误');
+        return stack[0];
+    }
+
+    /**
+     * 逻辑表达式分词
+     * @param {string} expr
+     * @returns {Array}
+     */
+    tokenizeLogic(expr) {
+        const tokens = [];
+        let i = 0;
+        while (i < expr.length) {
+            if (/\s/.test(expr[i])) {
+                i++;
+            } else if (expr.startsWith('&&', i)) {
+                tokens.push({ type: 'op', value: '&&' });
+                i += 2;
+            } else if (expr.startsWith('||', i)) {
+                tokens.push({ type: 'op', value: '||' });
+                i += 2;
+            } else if (expr[i] === '!') {
+                // 检查前后是否有空格，禁止&&!写法
+                const prev = i > 0 ? expr[i - 1] : '';
+                const next = i < expr.length - 1 ? expr[i + 1] : '';
+                if ((prev && !/\s/.test(prev)) || (next && !/\s/.test(next))) {
+                    throw new Error('非模式!运算符必须作为二元运算符，且两侧有空格，如 A ! B');
+                }
+                tokens.push({ type: 'op', value: '!' });
+                i++;
+            } else if (expr[i] === '(') {
+                tokens.push({ type: 'lparen' });
+                i++;
+            } else if (expr[i] === ')') {
+                tokens.push({ type: 'rparen' });
+                i++;
+            } else {
+                // 规则名（允许字母、数字、下划线）
+                let start = i;
+                while (i < expr.length && /[\w\d_]/.test(expr[i])) i++;
+                const name = expr.slice(start, i).trim();
+                if (!name) throw new Error('缺少规则名');
+                tokens.push({ type: 'rule', value: name });
+            }
+        }
+        return tokens;
+    }
+
+    /**
+     * 递归计算逻辑AST
+     */
+    evalLogicAST(word, node, localSets) {
+        if (node.type === 'rule') {
+            const referencedRule = this.getRule(node.value);
+            if (!referencedRule) throw new Error(`组合规则中引用的基础规则 "${node.value}" 不存在`);
+            if (referencedRule.specificRule.startsWith('::')) {
+                throw new Error(`组合规则不能引用其他组合规则 "${node.value}"`);
+            }
+            return this.matchesRule(word, referencedRule);
+        } else if (node.type === 'not') {
+            return this.evalLogicAST(word, node.left, localSets) && !this.evalLogicAST(word, node.right, localSets);
+        } else if (node.type === 'and') {
+            return this.evalLogicAST(word, node.left, localSets) && this.evalLogicAST(word, node.right, localSets);
+        } else if (node.type === 'or') {
+            return this.evalLogicAST(word, node.left, localSets) || this.evalLogicAST(word, node.right, localSets);
+        }
+        throw new Error('未知的逻辑节点类型');
     }
 
     /**
@@ -1139,13 +1216,13 @@ class RuleEngine {
                 const positionMarker = this.parsePositionMarker(rulePattern, i);
                 pattern.push(positionMarker);
                 i += positionMarker.length;
-            } else if (rulePattern[i] === '[') {
-                // 字面字符
-                const literalEnd = rulePattern.indexOf(']', i);
-                if (literalEnd !== -1) {
-                    const literal = rulePattern.substring(i + 1, literalEnd);
+            } else if (rulePattern[i] === '"') {
+                // 字面字符（新语法：用双引号包裹）
+                const end = rulePattern.indexOf('"', i + 1);
+                if (end !== -1) {
+                    const literal = rulePattern.substring(i + 1, end);
                     pattern.push({ type: 'literal', value: literal });
-                    i = literalEnd + 1;
+                    i = end + 1;
                 } else {
                     i++;
                 }
@@ -1697,20 +1774,6 @@ class RuleEngine {
 
         // 如果没有匹配的集合元素，返回null表示匹配失败
         return { element: null, startPosition: -1, endPosition: -1 };
-    }
-
-    /**
-     * 查找单词匹配的集合元素（兼容性方法）
-     * @param {string} word - 单词
-     * @param {string} setName - 集合名称
-     * @param {Map} localSets - 局部集合映射
-     * @param {string} positionFlag - 位置标识符 (^前缀, $后缀, *包含, ~严格中间)
-     * @returns {string} 匹配的集合元素或字母
-     */
-    findMatchingSetElement(word, setName, localSets = new Map(), positionFlag = '^') {
-        // 调用新的带位置约束的方法，保持向后兼容
-        const result = this.findMatchingSetElementWithPosition(word, setName, localSets, positionFlag, 0);
-        return result.element || word.charAt(0).toLowerCase();
     }
 
     /**

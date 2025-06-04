@@ -87,6 +87,8 @@
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 0.9em;
             color: #e53e3e;
+            word-break: break-all;
+            white-space: pre-wrap;
         }
 
         .syntax-help-content pre {
@@ -205,7 +207,7 @@
 <body>
     <div class="syntax-help-container">
         <div class="syntax-help-content">
-            <h1>规则语法详细帮助</h1>
+            <h1>详细语法帮助</h1>
 
             <h2>1. 基本语法</h2>
 
@@ -214,7 +216,7 @@
             <p><strong>1.3
                     局部集合定义</strong>：<code>BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</code> -
                 局部集合定义</p>
-            <p><strong>1.4 匹配模式</strong>：<code>!具体规则</code> - 定义匹配模式（必须，以!开头）</p>
+            <p><strong>1.4 匹配模式</strong>：<code>:具体规则</code> - 定义匹配模式（必须，以:开头）</p>
             <p><strong>1.5 排序规则</strong>：<code>@排序规则</code> - 定义排序方式（可选，以@开头）</p>
 
             <h2>2. 集合相关</h2>
@@ -276,7 +278,7 @@
 
             <h3>2.4 字面字符</h3>
 
-            <p>使用中括号<code>[ ]</code>表示字面字符，如<code>[e]</code>、<code>[tion]</code>。</p>
+            <p>使用双引号<code>" "</code>表示字面字符，如<code>"e"</code>、<code>"tion"</code>。</p>
             <ul>
                 <li>字面字符大小写敏感</li>
                 <li>用于匹配具体的字符或字符串</li>
@@ -286,9 +288,9 @@
 
             <h3>3.1 基础规则</h3>
 
-            <p><strong>格式</strong>：必须以<code>!</code>开头，由位置标志、集合组合而成。</p>
+            <p><strong>格式</strong>：必须以<code>:</code>开头，由位置标志、集合组合而成。</p>
 
-            <p><strong>特殊情况</strong>：<code>!</code>后为空时表示匹配全部单词（但必须保留<code>!</code>符号）。</p>
+            <p><strong>特殊情况</strong>：<code>:</code>后为空时表示匹配全部单词（但必须保留<code>:</code>符号）。</p>
 
             <h4>3.1.1 位置标志</h4>
             <p>用于指定匹配时的位置约束：</p>
@@ -305,7 +307,7 @@
             <ul>
                 <li>全局集合（如：C、V、L）</li>
                 <li>局部集合（当前规则中定义的）</li>
-                <li>字面字符（如：[e]、[tion]）</li>
+                <li>字面字符（如："e"、"tion"）</li>
             </ul>
 
             <div class="note">
@@ -314,7 +316,7 @@
 
             <h3>3.2 组合规则</h3>
 
-            <p><strong>格式</strong>：以<code>!!</code>开头，由基础规则（规则名）、逻辑操作符组合而成。</p>
+            <p><strong>格式</strong>：以<code>::</code>开头，由基础规则（规则名）、逻辑操作符组合而成。</p>
 
             <p><strong>限制</strong>：只能引用已有的基础规则。</p>
 
@@ -323,8 +325,11 @@
             <ul>
                 <li><code>&amp;&amp;</code> - 逻辑与（同时满足两个条件）</li>
                 <li><code>||</code> - 逻辑或（满足任一条件）</li>
-                <li><code>--</code> - 非模式（满足前者但不满足后者）</li>
+                <li><code>!</code> - 非模式（满足前者但不满足后者，二元运算符，只能写A ! B，禁止&&!写法，支持括号优先级）</li>
             </ul>
+            <div class="note">
+                <strong>注意：</strong>组合规则支持括号优先级，!只能作为二元运算符，不能写成&&!，如<code>A ! B</code>，<code>(A && B) ! C</code>，<code>(A ! B) || C</code>。
+            </div>
 
             <h2>4. 排序规则</h2>
 
@@ -492,13 +497,13 @@
             <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 组合规则：CVC或CVCE */</span>
 <span class="rule-name">#CVC或CVCE</span>
 <span class="comment">//匹配CVC模式或CVCE模式的单词</span>
-<span class="rule-content">!!CVC||CVCE</span>
+<span class="rule-content">::CVC模式 || CVCE模式</span>
 <span class="sort-rule">@</span>
 
 <span class="comment">/* 组合规则：有元音但不是CVC */</span>
 <span class="rule-name">#有元音非CVC</span>
 <span class="comment">//匹配包含元音但不是CVC模式的单词</span>
-<span class="rule-content">!!开头元音--CVC</span>
+<span class="rule-content">::开头元音 ! CVC</span>
 <span class="sort-rule">@V</span></pre>
 
             <h3>5.4 多级排序示例</h3>
@@ -506,19 +511,19 @@
             <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 二级排序：辅音群开头 + 包含元音 */</span>
 <span class="rule-name">#复杂音韵结构</span>
 <span class="comment">//先按辅音群开头分组，再按包含元音分组</span>
-<span class="rule-content">!(BL)V</span>
+<span class="rule-content">!\b(BL)</span>
 <span class="sort-rule">@(BL^)(V*)</span>
 
 <span class="comment">/* 三级排序：开头 + 中间 + 结尾 */</span>
 <span class="rule-name">#完整音韵分析</span>
 <span class="comment">//按开头辅音群、中间元音、结尾辅音三级分组</span>
-<span class="rule-content">!(BL)VC</span>
+<span class="rule-content">!\b(BL)VC</span>
 <span class="sort-rule">@(BL^)(V*)(C$)</span>
 
 <span class="comment">/* 逆序排序示例 */</span>
 <span class="rule-name">#逆序多级</span>
 <span class="comment">//第一级逆序，第二级正序</span>
-<span class="rule-content">!(BL)V</span>
+<span class="rule-content">!\b(BL)V</span>
 <span class="sort-rule">@(-BL^)(V*)</span></pre>
 
             <h3>5.5 集合运算示例</h3>
