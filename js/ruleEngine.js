@@ -38,8 +38,15 @@ class RuleEngine {
      * @param {Map} newGlobalSets - 新的全局集合
      */
     updateGlobalSets(newGlobalSets) {
-        // 保留默认集合，添加新的集合
-        this.loadDefaultSets();
+        // 清空当前全局集合
+        this.globalSets.clear();
+
+        // 重新加载默认集合
+        this.globalSets.set('C', new Set(['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']));
+        this.globalSets.set('V', new Set(['a', 'e', 'i', 'o', 'u']));
+        this.globalSets.set('L', new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']));
+
+        // 添加新的自定义集合
         for (const [setName, setValues] of newGlobalSets) {
             this.globalSets.set(setName, setValues);
         }
@@ -67,6 +74,9 @@ class RuleEngine {
         let specificRule = '';
         let displayRule = '';
 
+        // 初始化原始集合定义存储
+        this.originalSetDefinitions = new Map();
+
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
 
@@ -82,6 +92,11 @@ class RuleEngine {
             } else if (line.includes('==')) {
                 // 集合定义
                 this.parseSetDefinition(line, localSets);
+
+                // 存储原始集合定义
+                const [setName] = line.split('==');
+                const cleanSetName = setName.trim();
+                this.originalSetDefinitions.set(cleanSetName, line);
             } else if (line.startsWith('!') && !line.startsWith('!!')) {
                 // 具体规则
                 specificRule = line;
@@ -105,6 +120,15 @@ class RuleEngine {
             throw new Error('具体规则不能为空');
         }
 
+        // 执行有效性检查
+        this.validateRule({
+            name: ruleName,
+            comment: ruleComment,
+            localSets: localSets,
+            specificRule: specificRule,
+            displayRule: displayRule
+        });
+
         return {
             name: ruleName,
             comment: ruleComment,
@@ -112,6 +136,410 @@ class RuleEngine {
             specificRule: specificRule,
             displayRule: displayRule
         };
+    }
+
+    /**
+     * 验证规则的有效性
+     * @param {Object} rule - 规则对象
+     */
+    validateRule(rule) {
+        // 1. 验证集合定义中的集合运算引用
+        this.validateSetDefinitions(rule.localSets);
+
+        // 2. 验证基础规则中的集合引用
+        if (!rule.specificRule.startsWith('!!')) {
+            this.validateBasicRuleReferences(rule.specificRule, rule.localSets);
+        }
+
+        // 3. 验证组合规则中的基础规则引用
+        if (rule.specificRule.startsWith('!!')) {
+            this.validateCombinedRuleReferences(rule.specificRule);
+        }
+
+        // 4. 验证排序规则中的集合引用
+        if (rule.displayRule) {
+            this.validateSortRuleReferences(rule.displayRule, rule.localSets, rule.specificRule.startsWith('!!'));
+        }
+
+        // 5. 验证规则名称格式
+        this.validateRuleName(rule.name);
+
+        // 6. 验证注释长度
+        this.validateComment(rule.comment);
+
+        // 7. 验证集合名称冲突
+        this.validateSetNameConflicts(rule.localSets);
+
+        // 8. 验证循环引用
+        this.validateCircularReferences(rule);
+
+        // 9. 验证规则名称冲突
+        this.validateRuleNameConflict(rule.name);
+    }
+
+    /**
+     * 验证集合定义中的集合运算引用
+     * @param {Map} localSets - 本地集合映射
+     */
+    validateSetDefinitions(localSets) {
+        for (const [setName, setValues] of localSets) {
+            // 检查集合定义中是否包含集合运算
+            const setDefinition = this.getOriginalSetDefinition(setName, localSets);
+            if (setDefinition && (setDefinition.includes('>>') || setDefinition.includes('<<'))) {
+                this.validateSetOperationReferences(setDefinition, localSets);
+            }
+        }
+    }
+
+    /**
+     * 验证集合运算中的集合引用
+     * @param {string} setDefinition - 集合定义
+     * @param {Map} localSets - 本地集合映射
+     */
+    validateSetOperationReferences(setDefinition, localSets) {
+        // 从集合定义中提取右侧部分（去掉集合名称）
+        let rightSide = setDefinition;
+        if (setDefinition.includes('==')) {
+            rightSide = setDefinition.split('==')[1].trim();
+        }
+
+        // 提取集合运算中引用的集合名称
+        const referencedSets = this.extractSetReferences(rightSide);
+
+        for (const refSetName of referencedSets) {
+            // 检查是否是跨规则引用其他规则的局部集合
+            if (!this.globalSets.has(refSetName) && !localSets.has(refSetName)) {
+                // 检查是否是其他规则的局部集合
+                let foundInOtherRule = false;
+                for (const [ruleName, rule] of this.rules) {
+                    if (rule.localSets && rule.localSets.has(refSetName)) {
+                        throw new Error(`不允许跨规则引用局部集合 "${refSetName}"（来自规则 "${ruleName}"）`);
+                    }
+                }
+
+                // 如果不是其他规则的局部集合，则集合不存在
+                throw new Error(`集合运算中引用的集合 "${refSetName}" 不存在`);
+            }
+        }
+    }
+
+    /**
+     * 验证基础规则中的集合引用
+     * @param {string} specificRule - 具体规则
+     * @param {Map} localSets - 本地集合映射
+     */
+    validateBasicRuleReferences(specificRule, localSets) {
+        const referencedSets = this.extractSetReferences(specificRule);
+
+        for (const refSetName of referencedSets) {
+            if (!this.globalSets.has(refSetName) && !localSets.has(refSetName)) {
+                throw new Error(`基础规则中引用的集合 "${refSetName}" 不存在`);
+            }
+        }
+    }
+
+    /**
+     * 验证组合规则中的基础规则引用
+     * @param {string} combinedRule - 组合规则
+     */
+    validateCombinedRuleReferences(combinedRule) {
+        // 提取组合规则中引用的基础规则名称
+        const referencedRules = this.extractRuleReferences(combinedRule);
+
+        for (const refRuleName of referencedRules) {
+            const referencedRule = this.rules.get(refRuleName);
+            if (!referencedRule) {
+                throw new Error(`组合规则中引用的基础规则 "${refRuleName}" 不存在`);
+            }
+
+            // 检查引用的规则是否也是组合规则（不允许组合规则引用组合规则）
+            if (referencedRule.specificRule.startsWith('!!')) {
+                throw new Error(`组合规则不能引用其他组合规则 "${refRuleName}"`);
+            }
+        }
+    }
+
+    /**
+     * 验证排序规则中的集合引用
+     * @param {string} displayRule - 排序规则
+     * @param {Map} localSets - 本地集合映射
+     * @param {boolean} isCombinedRule - 是否为组合规则
+     */
+    validateSortRuleReferences(displayRule, localSets, isCombinedRule) {
+        if (!displayRule.startsWith('@')) {
+            return;
+        }
+
+        const sortRule = displayRule.substring(1);
+        if (sortRule === '' || sortRule === '-') {
+            return; // 基础字母排序，无需验证
+        }
+
+        // 解析排序规则
+        try {
+            const sortGroups = this.parseSortRule(sortRule);
+
+            // 检查排序层级（最多两级）
+            if (sortGroups.length > 2) {
+                throw new Error(`排序规则层数超过限制，最多允许两级排序，当前为 ${sortGroups.length} 级`);
+            }
+
+            // 验证每个排序组中引用的集合
+            for (const group of sortGroups) {
+                const setName = group.setName;
+
+                // 检查集合是否存在
+                if (!this.globalSets.has(setName) && !localSets.has(setName)) {
+                    // 如果是组合规则，还需要检查引用的基础规则中的局部集合
+                    if (isCombinedRule) {
+                        let foundInReferencedRule = false;
+                        const referencedRules = this.extractRuleReferences(displayRule);
+
+                        for (const refRuleName of referencedRules) {
+                            const referencedRule = this.rules.get(refRuleName);
+                            if (referencedRule && referencedRule.localSets && referencedRule.localSets.has(setName)) {
+                                foundInReferencedRule = true;
+                                break;
+                            }
+                        }
+
+                        if (!foundInReferencedRule) {
+                            throw new Error(`排序规则中引用的集合 "${setName}" 不存在`);
+                        }
+                    } else {
+                        throw new Error(`排序规则中引用的集合 "${setName}" 不存在`);
+                    }
+                }
+            }
+        } catch (error) {
+            throw new Error(`排序规则验证失败: ${error.message}`);
+        }
+    }
+
+    /**
+     * 验证规则名称格式
+     * @param {string} ruleName - 规则名称
+     */
+    validateRuleName(ruleName) {
+        if (!ruleName || ruleName.trim() === '') {
+            throw new Error('规则名称不能为空');
+        }
+
+        if (ruleName.length > 50) {
+            throw new Error('规则名称长度不能超过50个字符');
+        }
+
+        // 检查规则名称是否包含特殊字符
+        if (!/^[\u4e00-\u9fa5a-zA-Z0-9\s_-]+$/.test(ruleName)) {
+            throw new Error('规则名称只能包含中文、英文、数字、空格、下划线和连字符');
+        }
+    }
+
+    /**
+     * 验证注释长度
+     * @param {string} comment - 注释内容
+     */
+    validateComment(comment) {
+        if (comment && comment.length > 60) {
+            throw new Error('注释内容长度不能超过60个字符');
+        }
+    }
+
+    /**
+     * 提取文本中引用的集合名称
+     * @param {string} text - 文本内容
+     * @returns {Array} 集合名称数组
+     */
+    extractSetReferences(text) {
+        const setNames = [];
+
+        // 匹配括号中的集合名称 (SetName)
+        const bracketMatches = text.match(/\(([a-zA-Z][a-zA-Z0-9]*)\)/g);
+        if (bracketMatches) {
+            for (const match of bracketMatches) {
+                const setName = match.slice(1, -1); // 去掉括号
+                setNames.push(setName);
+            }
+        }
+
+        // 特殊处理集合运算：V>>U, V<<U (不包括 V>>{xxx} 这样的字面值运算)
+        const operationMatches = text.match(/([A-Z])\s*(>>|<<)\s*([A-Z])/g);
+        if (operationMatches) {
+            for (const match of operationMatches) {
+                const parts = match.match(/([A-Z])\s*(>>|<<)\s*([A-Z])/);
+                if (parts) {
+                    setNames.push(parts[1]); // 左侧集合
+                    setNames.push(parts[3]); // 右侧集合
+                }
+            }
+        }
+
+        // 匹配单字母集合名称，但排除特殊上下文
+        // 先移除已经处理过的内容，避免重复匹配
+        let textWithoutSpecial = text.replace(/\([a-zA-Z][a-zA-Z0-9]*\)/g, ''); // 移除括号集合
+        textWithoutSpecial = textWithoutSpecial.replace(/[A-Z]\s*(>>|<<)\s*([A-Z]|\{[^}]*\})/g, ''); // 移除集合运算
+        textWithoutSpecial = textWithoutSpecial.replace(/\\[a-zA-Z]/g, ''); // 移除 \b, \e 等转义序列
+        textWithoutSpecial = textWithoutSpecial.replace(/@\([^)]*\)/g, ''); // 移除 @(xxx) 排序规则
+        textWithoutSpecial = textWithoutSpecial.replace(/@[A-Z]/g, ''); // 移除 @X 单字母排序规则
+        textWithoutSpecial = textWithoutSpecial.replace(/\{[^}]*\}/g, ''); // 移除 {xxx} 内容
+
+        const singleLetterMatches = textWithoutSpecial.match(/[A-Z]/g);
+        if (singleLetterMatches) {
+            for (const match of singleLetterMatches) {
+                setNames.push(match);
+            }
+        }
+
+        return [...new Set(setNames)]; // 去重
+    }
+
+    /**
+     * 提取组合规则中引用的基础规则名称
+     * @param {string} combinedRule - 组合规则
+     * @returns {Array} 规则名称数组
+     */
+    extractRuleReferences(combinedRule) {
+        const ruleNames = [];
+
+        // 移除开头的 !!
+        const ruleContent = combinedRule.substring(2);
+
+        // 分割操作符 &&, ||, --
+        const parts = ruleContent.split(/\s*(?:&&|\|\||--)\s*/);
+
+        for (const part of parts) {
+            const trimmedPart = part.trim();
+            if (trimmedPart && !trimmedPart.startsWith('!')) {
+                ruleNames.push(trimmedPart);
+            } else if (trimmedPart.startsWith('!') && !trimmedPart.startsWith('!!')) {
+                // 处理否定形式 !RuleName
+                ruleNames.push(trimmedPart.substring(1));
+            }
+        }
+
+        return [...new Set(ruleNames)]; // 去重
+    }
+
+    /**
+     * 验证集合名称冲突
+     * @param {Map} localSets - 本地集合映射
+     */
+    validateSetNameConflicts(localSets) {
+        for (const setName of localSets.keys()) {
+            // 检查是否与全局集合冲突
+            if (this.globalSets.has(setName)) {
+                throw new Error(`局部集合名称 "${setName}" 与全局集合冲突`);
+            }
+        }
+    }
+
+    /**
+     * 验证循环引用
+     * @param {Object} rule - 规则对象
+     */
+    validateCircularReferences(rule) {
+        // 检查集合定义中的循环引用
+        this.validateSetCircularReferences(rule.localSets);
+
+        // 检查组合规则中的循环引用
+        if (rule.specificRule.startsWith('!!')) {
+            this.validateRuleCircularReferences(rule.name, rule.specificRule, new Set());
+        }
+    }
+
+    /**
+     * 验证集合循环引用
+     * @param {Map} localSets - 本地集合映射
+     */
+    validateSetCircularReferences(localSets) {
+        for (const [setName] of localSets) {
+            this.checkSetCircularReference(setName, localSets, new Set());
+        }
+    }
+
+    /**
+     * 检查单个集合的循环引用
+     * @param {string} setName - 集合名称
+     * @param {Map} localSets - 本地集合映射
+     * @param {Set} visited - 已访问的集合
+     */
+    checkSetCircularReference(setName, localSets, visited) {
+        if (visited.has(setName)) {
+            throw new Error(`检测到集合循环引用: ${Array.from(visited).join(' -> ')} -> ${setName}`);
+        }
+
+        visited.add(setName);
+
+        const setDefinition = this.getOriginalSetDefinition(setName, localSets);
+        if (setDefinition) {
+            const referencedSets = this.extractSetReferences(setDefinition);
+            for (const refSetName of referencedSets) {
+                if (localSets.has(refSetName)) {
+                    this.checkSetCircularReference(refSetName, localSets, new Set(visited));
+                }
+            }
+        }
+
+        visited.delete(setName);
+    }
+
+    /**
+     * 验证规则循环引用
+     * @param {string} ruleName - 规则名称
+     * @param {string} combinedRule - 组合规则
+     * @param {Set} visited - 已访问的规则
+     */
+    validateRuleCircularReferences(ruleName, combinedRule, visited) {
+        if (visited.has(ruleName)) {
+            throw new Error(`检测到规则循环引用: ${Array.from(visited).join(' -> ')} -> ${ruleName}`);
+        }
+
+        visited.add(ruleName);
+
+        const referencedRules = this.extractRuleReferences(combinedRule);
+        for (const refRuleName of referencedRules) {
+            const referencedRule = this.rules.get(refRuleName);
+            if (referencedRule && referencedRule.specificRule.startsWith('!!')) {
+                this.validateRuleCircularReferences(refRuleName, referencedRule.specificRule, new Set(visited));
+            }
+        }
+
+        visited.delete(ruleName);
+    }
+
+    /**
+     * 验证规则名称冲突
+     * @param {string} ruleName - 规则名称
+     */
+    validateRuleNameConflict(ruleName) {
+        // 检查是否与现有规则冲突（更新规则时允许同名）
+        const existingRule = this.rules.get(ruleName);
+        if (existingRule) {
+            console.warn(`规则 "${ruleName}" 已存在，将被覆盖`);
+        }
+
+        // 检查规则名称是否与保留关键字冲突
+        const reservedKeywords = ['C', 'V', 'L', 'true', 'false', 'null', 'undefined'];
+        if (reservedKeywords.includes(ruleName)) {
+            throw new Error(`规则名称 "${ruleName}" 是保留关键字，不能使用`);
+        }
+    }
+
+    /**
+     * 获取集合的原始定义（用于验证集合运算）
+     * @param {string} setName - 集合名称
+     * @param {Map} localSets - 本地集合映射
+     * @returns {string} 原始集合定义
+     */
+    getOriginalSetDefinition(setName, localSets) {
+        // 从存储的原始定义中获取
+        if (this.originalSetDefinitions && this.originalSetDefinitions.has(setName)) {
+            const fullDefinition = this.originalSetDefinitions.get(setName);
+            // 返回等号右边的部分
+            const parts = fullDefinition.split('==');
+            return parts.length > 1 ? parts[1].trim() : null;
+        }
+        return null;
     }
 
     /**
@@ -139,11 +567,9 @@ class RuleEngine {
             if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(setName)) {
                 throw new Error(`多字符集合名 "${setName}" 格式无效，必须以字母开头，只能包含字母和数字`);
             }
-            // 多字母集合名在引用时需要用括号
-            console.warn(`集合名称 "${setName}" 长度超过1个字符，在引用时请使用括号：(${setName})`);
         }
 
-        const resultSet = this.evaluateSetExpression(setDefinition, localSets);
+        const resultSet = this.evaluateSetExpression(setDefinition, localSets, false);
         localSets.set(setName, resultSet);
     }
 
@@ -151,19 +577,24 @@ class RuleEngine {
      * 计算集合表达式
      * @param {string} expression - 集合表达式
      * @param {Map} localSets - 本地集合映射
+     * @param {boolean} isFromBraces - 是否来自大括号内容
      * @returns {Set} 计算结果集合
      */
-    evaluateSetExpression(expression, localSets) {
-        // 移除外层大括号
-        if (expression.startsWith('{') && expression.endsWith('}')) {
-            expression = expression.slice(1, -1);
-        }
-
+    evaluateSetExpression(expression, localSets, isFromBraces = false) {
         const resultSet = new Set();
 
-        // 处理集合运算符
+        // 检查是否有大括号（在处理运算符之前）
+        const hasBraces = expression.startsWith('{') && expression.endsWith('}');
+
+        // 处理集合运算符（在移除大括号之前）
         if (expression.includes('>>') || expression.includes('<<')) {
             return this.evaluateSetOperation(expression, localSets);
+        }
+
+        // 移除外层大括号
+        if (hasBraces) {
+            expression = expression.slice(1, -1);
+            isFromBraces = true;
         }
 
         // 分割元素
@@ -173,11 +604,14 @@ class RuleEngine {
             const trimmedElement = element.trim();
             if (trimmedElement === '') {
                 resultSet.add('');
-            } else if (this.isSetName(trimmedElement)) {
-                // 引用其他集合
+            } else if (!isFromBraces && this.isSetName(trimmedElement)) {
+                // 只有不是来自大括号内容时才尝试作为集合引用
                 const referencedSet = this.getSet(trimmedElement, localSets);
                 if (referencedSet) {
                     referencedSet.forEach(item => resultSet.add(item));
+                } else {
+                    // 如果集合不存在，当作字面值处理
+                    resultSet.add(trimmedElement);
                 }
             } else {
                 // 直接字符或字符组合
@@ -201,10 +635,13 @@ class RuleEngine {
         // 处理 >> 运算符（集合减法）
         if (currentExpression.includes('>>')) {
             const parts = currentExpression.split('>>');
-            let result = this.evaluateSetExpression(parts[0], localSets);
+            let result = this.evaluateSetExpression(parts[0].trim(), localSets);
 
             for (let i = 1; i < parts.length; i++) {
-                const subtractSet = this.evaluateSetExpression(parts[i], localSets);
+                const partTrimmed = parts[i].trim();
+                // 检查是否是大括号表达式，如果是则直接处理为字面值
+                const isFromBraces = partTrimmed.startsWith('{') && partTrimmed.endsWith('}');
+                const subtractSet = this.evaluateSetExpression(partTrimmed, localSets, isFromBraces);
                 subtractSet.forEach(item => result.delete(item));
             }
 
@@ -217,7 +654,9 @@ class RuleEngine {
             const result = new Set();
 
             for (const part of parts) {
-                const partSet = this.evaluateSetExpression(part, localSets);
+                const partTrimmed = part.trim();
+                const isFromBraces = partTrimmed.startsWith('{') && partTrimmed.endsWith('}');
+                const partSet = this.evaluateSetExpression(partTrimmed, localSets, isFromBraces);
                 partSet.forEach(item => result.add(item));
             }
 

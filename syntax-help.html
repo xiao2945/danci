@@ -337,7 +337,7 @@
             <ul>
                 <li>按首字母分组</li>
                 <li>分组按字母正序（无<code>@</code>或<code>@</code>后为空）或逆序（<code>@-</code>）排列</li>
-                <li>组内按字母顺序排列</li>
+                <li>组内按字母正序或逆序排列</li>
             </ul>
 
             <h3>4.2 集合排序</h3>
@@ -348,6 +348,7 @@
             <ul>
                 <li>按指定集合的元素分组</li>
                 <li>分组按集合内元素的顺序正序（如<code>@V</code>）或逆序（如<code>@-V</code>）排列</li>
+                <li>组内按字母正序排列</li>
             </ul>
 
             <h4>4.2.1 多级集合排序</h4>
@@ -360,7 +361,7 @@
                 <li>在每个第一级分组内再按第二级分组</li>
                 <li>两级分组各按其集合内元素的顺序排列</li>
                 <li>逆序标志独立控制每一级（如<code>@-(BL)-V</code>：第一级逆序，第二级逆序；<code>@-(BL)V</code>：第一级逆序，第二级正序）</li>
-                <li>最终组内按字母顺序排列</li>
+                <li>组内按字母正序排列</li>
             </ol>
 
             <h2>5. 规则示例</h2>
@@ -411,7 +412,7 @@
 <span class="rule-name">#特殊辅音组合</span>
 <span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
 <span class="set-definition">ShortV==V>>{u}</span>  <span class="comment">// 短元音（去掉u）</span>
-<span class="rule-content">!\b(BL)ShortV\e</span>
+<span class="rule-content">!\b(BL)(ShortV)</span>
 <span class="sort-rule">@(BL)</span></pre>
 
             <h2>6. 注意事项与常见错误</h2>

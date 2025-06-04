@@ -709,10 +709,13 @@ class WordFilterApp {
                 exportedCount: activeWords.length
             };
 
+            // 获取分组信息
+            const groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
+
             if (format === 'txt') {
-                await this.fileUtils.exportToText(activeWords, `${filename}.txt`, exportInfo);
+                await this.fileUtils.exportToText(activeWords, `${filename}.txt`, exportInfo, groupedWords);
             } else if (format === 'excel') {
-                await this.fileUtils.exportToExcel(activeWords, `${filename}.xlsx`, exportInfo);
+                await this.fileUtils.exportToExcel(activeWords, `${filename}.xlsx`, exportInfo, groupedWords);
             }
 
             this.showMessage(`结果已导出为 ${format.toUpperCase()} 文件 (${activeWords.length}个单词)`, 'success');

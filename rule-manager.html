@@ -2214,8 +2214,10 @@ ${setName}=={${setValues.join(',')}}`;
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(textToCopy).then(() => {
                     button.textContent = '已复制';
+                    button.style.background = '#48bb78';
                     setTimeout(() => {
                         button.textContent = '复制';
+                        button.style.background = '#4a5568';
                     }, 2000);
                 }).catch(err => {
                     console.error('复制失败:', err);
@@ -2240,6 +2242,7 @@ ${setName}=={${setValues.join(',')}}`;
             try {
                 document.execCommand('copy');
                 button.textContent = '已复制';
+                button.style.background = '#48bb78';
             } catch (err) {
                 console.error('复制失败:', err);
                 button.textContent = '复制失败';
@@ -2248,6 +2251,7 @@ ${setName}=={${setValues.join(',')}}`;
             document.body.removeChild(textArea);
             setTimeout(() => {
                 button.textContent = '复制';
+                button.style.background = '#4a5568';
             }, 2000);
         }
     </script>
