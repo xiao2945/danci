@@ -618,29 +618,15 @@ class WordFilterApp {
             const lowerWord = word.toLowerCase();
             let matched = false;
 
-            // 根据集合类型选择匹配策略
-            if (primarySet.setName === 'V') {
-                // 对于元音集合，根据单词中包含的元音字母分组
-                // 优先匹配第一个出现的元音字母
-                for (let i = 0; i < lowerWord.length; i++) {
-                    const char = lowerWord[i];
-                    if (setElements.includes(char)) {
-                        groups[char].push(word);
-                        matched = true;
-                        break;
-                    }
-                }
-            } else {
-                // 对于其他集合，使用前缀匹配
-                // 创建按长度降序排列的元素副本，优先匹配较长的元素
-                const sortedElementsForMatching = [...setElements].sort((a, b) => b.length - a.length);
+            // 使用统一的匹配策略
+            // 创建按长度降序排列的元素副本，优先匹配较长的元素
+            const sortedElementsForMatching = [...setElements].sort((a, b) => b.length - a.length);
 
-                for (const element of sortedElementsForMatching) {
-                    if (lowerWord.startsWith(element.toLowerCase())) {
-                        groups[element].push(word);
-                        matched = true;
-                        break;
-                    }
+            for (const element of sortedElementsForMatching) {
+                if (lowerWord.startsWith(element.toLowerCase())) {
+                    groups[element].push(word);
+                    matched = true;
+                    break;
                 }
             }
 

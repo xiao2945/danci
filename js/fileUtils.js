@@ -526,7 +526,7 @@ class FileUtils {
                         }
                     }
                 } else {
-                    // 更深层级的递归处理（虽然当前限制最多两级）
+                    // 更深层级的递归处理（虽然当前限制最多三级）
                     this.addGroupedDataToExcel(data, groupContent, activeWords, level + 1, groupName, hasSecondLevel);
                 }
             }

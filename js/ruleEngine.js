@@ -11,6 +11,14 @@ class RuleEngine {
     }
 
     /**
+     * 获取内置集合名称列表
+     * @returns {Array} 内置集合名称数组
+     */
+    getBuiltinSetNames() {
+        return ['C', 'V', 'L'];
+    }
+
+    /**
      * 加载默认字符集
      */
     loadDefaultSets() {
@@ -77,15 +85,41 @@ class RuleEngine {
         // 初始化原始集合定义存储
         this.originalSetDefinitions = new Map();
 
+        let ruleNameLineIndex = -1; // 记录规则名称行的索引
+
         for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
+            let line = lines[i];
+
+            // 移除所有行尾注释，除非它是规则名称行尾的注释（这部分会在后面单独处理规则名时处理）
+            // 或者它是紧跟在规则名称行下面的第一条规则注释
+            if (line.startsWith('#')) {
+                ruleNameLineIndex = i;
+                // 对于规则名称行，暂时不移除行尾注释，后续解析规则名时再处理
+            } else if (ruleNameLineIndex !== -1 && i === ruleNameLineIndex + 1 && line.startsWith('//')) {
+                // 这是规则名称行下面的第一条注释，视为规则注释
+                ruleComment = line.substring(2).trim();
+                continue; // 处理完规则注释，跳到下一行
+            } else {
+                // 其他情况，移除所有行尾注释
+                line = line.replace(/\/\/.*$/, '').trim();
+            }
+
+            // 如果移除注释后行为空，则跳过
+            if (!line) {
+                continue;
+            }
 
             if (line.startsWith('#')) {
                 // 新格式：以#开头的规则名称
-                ruleName = line.substring(1).trim();
-            } else if (line.startsWith('//')) {
-                // 规则注释
-                ruleComment = line.substring(2).trim();
+                // 此时处理规则名称行尾的注释
+                const commentIndex = line.indexOf('//');
+                if (commentIndex > 0) {
+                    ruleName = line.substring(1, commentIndex).trim();
+                    // 如果规则名称行后面紧跟着的不是规则注释，那么行尾注释也作为普通注释处理，这里不保存
+                    // 但如果下一行是规则注释，则此处的行尾注释会被忽略
+                } else {
+                    ruleName = line.substring(1).trim();
+                }
             } else if (line.startsWith('规则名称:') || line.startsWith('name:')) {
                 // 兼容旧格式
                 ruleName = line.split(':')[1].trim();
@@ -279,9 +313,9 @@ class RuleEngine {
         try {
             const sortGroups = this.parseSortRule(sortRule);
 
-            // 检查排序层级（最多两级）
-            if (sortGroups.length > 2) {
-                throw new Error(`排序规则层数超过限制，最多允许两级排序，当前为 ${sortGroups.length} 级`);
+            // 检查排序层级（最多三级）
+            if (sortGroups.length > 3) {
+                throw new Error(`排序规则层数超过限制，最多允许三级排序，当前为 ${sortGroups.length} 级`);
             }
 
             // 验证每个排序组中引用的集合
@@ -362,7 +396,7 @@ class RuleEngine {
             }
         }
 
-        // 特殊处理集合运算：V>>U, V<<U (不包括 V>>{xxx} 这样的字面值运算)
+        // 处理集合运算：如 A>>B, A<<B (不包括 A>>{xxx} 这样的字面值运算)
         const operationMatches = text.match(/([A-Z])\s*(>>|<<)\s*([A-Z])/g);
         if (operationMatches) {
             for (const match of operationMatches) {
@@ -519,7 +553,7 @@ class RuleEngine {
         }
 
         // 检查规则名称是否与保留关键字冲突
-        const reservedKeywords = ['C', 'V', 'L', 'true', 'false', 'null', 'undefined'];
+        const reservedKeywords = [...this.getBuiltinSetNames(), 'true', 'false', 'null', 'undefined'];
         if (reservedKeywords.includes(ruleName)) {
             throw new Error(`规则名称 "${ruleName}" 是保留关键字，不能使用`);
         }
@@ -636,13 +670,25 @@ class RuleEngine {
         if (currentExpression.includes('>>')) {
             const parts = currentExpression.split('>>');
             let result = this.evaluateSetExpression(parts[0].trim(), localSets);
+            console.log('[evaluateSetOperation] Initial result for ' + parts[0].trim() + ':', new Set(result));
 
             for (let i = 1; i < parts.length; i++) {
-                const partTrimmed = parts[i].trim();
+                let partToEvaluate = parts[i].trim();
+                // 去除行尾注释
+                partToEvaluate = partToEvaluate.replace(/\s*\/\/.*$/, '').trim();
+                console.log('[evaluateSetOperation] Processing subtraction part (comment stripped): ' + partToEvaluate);
                 // 检查是否是大括号表达式，如果是则直接处理为字面值
-                const isFromBraces = partTrimmed.startsWith('{') && partTrimmed.endsWith('}');
-                const subtractSet = this.evaluateSetExpression(partTrimmed, localSets, isFromBraces);
-                subtractSet.forEach(item => result.delete(item));
+                const isFromBraces = partToEvaluate.startsWith('{') && partToEvaluate.endsWith('}');
+                console.log('[evaluateSetOperation] partToEvaluate: ' + partToEvaluate + ', isFromBraces: ' + isFromBraces);
+                const subtractSet = this.evaluateSetExpression(partToEvaluate, localSets, isFromBraces);
+                console.log('[evaluateSetOperation] SubtractSet for ' + partToEvaluate + ':', new Set(subtractSet));
+
+                subtractSet.forEach(item => {
+                    console.log('[evaluateSetOperation] Attempting to delete ' + item + ' (type: ' + typeof item + ') from result.');
+                    console.log('[evaluateSetOperation] Result before delete:', new Set(result));
+                    const deleteSuccess = result.delete(item);
+                    console.log('[evaluateSetOperation] Deleted ' + item + ', success: ' + deleteSuccess + '. Result after delete:', new Set(result));
+                });
             }
 
             return result;
@@ -654,9 +700,11 @@ class RuleEngine {
             const result = new Set();
 
             for (const part of parts) {
-                const partTrimmed = part.trim();
-                const isFromBraces = partTrimmed.startsWith('{') && partTrimmed.endsWith('}');
-                const partSet = this.evaluateSetExpression(partTrimmed, localSets, isFromBraces);
+                let partToEvaluate = part.trim();
+                // 去除行尾注释
+                partToEvaluate = partToEvaluate.replace(/\s*\/\/.*$/, '').trim();
+                const isFromBraces = partToEvaluate.startsWith('{') && partToEvaluate.endsWith('}');
+                const partSet = this.evaluateSetExpression(partToEvaluate, localSets, isFromBraces);
                 partSet.forEach(item => result.add(item));
             }
 
@@ -1410,11 +1458,18 @@ class RuleEngine {
         // 为每个单词计算分组键
         const wordsWithKeys = words.map(word => {
             const groupKeys = this.calculateGroupKeys(word, sortGroups, localSets);
-            return { word, groupKeys };
+            return { word, groupKeys, isValid: groupKeys !== null };
         });
 
-        // 按分组键排序
-        wordsWithKeys.sort((a, b) => {
+        // 将无法匹配的单词分离出来
+        const validWords = wordsWithKeys.filter(item => item.isValid);
+        const invalidWords = wordsWithKeys.filter(item => !item.isValid);
+
+        // 对无效单词按字母顺序排序
+        invalidWords.sort((a, b) => a.word.localeCompare(b.word));
+
+        // 按分组键排序（只对有效单词排序）
+        validWords.sort((a, b) => {
             for (let i = 0; i < sortGroups.length; i++) {
                 const keyA = a.groupKeys[i];
                 const keyB = b.groupKeys[i];
@@ -1429,7 +1484,11 @@ class RuleEngine {
             return this.compareWords(a.word, b.word);
         });
 
-        return wordsWithKeys.map(item => item.word);
+        // 合并有效单词和无效单词（无效单词排在最后）
+        const sortedValidWords = validWords.map(item => item.word);
+        const sortedInvalidWords = invalidWords.map(item => item.word);
+
+        return [...sortedValidWords, ...sortedInvalidWords];
     }
 
     /**
@@ -1453,6 +1512,7 @@ class RuleEngine {
             if (i >= sortRule.length) break;
 
             let setName = '';
+            let positionFlag = '^'; // 默认为前缀匹配，向后兼容
 
             // 检查是否是括号引用的集合
             if (sortRule[i] === '(') {
@@ -1460,25 +1520,61 @@ class RuleEngine {
                 if (closeIndex === -1) {
                     throw new Error(`排序规则中括号不匹配: ${sortRule}`);
                 }
-                setName = sortRule.substring(i + 1, closeIndex);
+                const content = sortRule.substring(i + 1, closeIndex);
+
+                // 解析集合名和位置标识符
+                const result = this.parseSetNameWithPosition(content);
+                setName = result.setName;
+                positionFlag = result.positionFlag;
+
                 i = closeIndex + 1;
             } else {
-                // 单字母集合
-                setName = sortRule[i];
-                i++;
+                // 单字母集合，可能带位置标识符
+                const result = this.parseSetNameWithPosition(sortRule.substring(i));
+                setName = result.setName;
+                positionFlag = result.positionFlag;
+                i += result.consumed;
             }
 
             if (setName) {
-                groups.push({ setName, descending });
+                groups.push({ setName, positionFlag, descending });
             }
         }
 
-        // 限制排序分级层数，最多允许两级
-        if (groups.length > 2) {
-            throw new Error(`排序规则层数超过限制，最多允许两级排序，当前为 ${groups.length} 级`);
+        // 限制排序分级层数，最多允许三级
+        if (groups.length > 3) {
+            throw new Error(`排序规则层数超过限制，最多允许三级排序，当前为 ${groups.length} 级`);
         }
 
         return groups;
+    }
+
+    /**
+     * 解析集合名和位置标识符
+     * @param {string} content - 内容字符串
+     * @returns {Object} 包含集合名、位置标识符和消费字符数的对象
+     */
+    parseSetNameWithPosition(content) {
+        let setName = '';
+        let positionFlag = '^'; // 默认前缀匹配
+        let consumed = 0;
+
+        // 提取集合名（字母开头，可包含数字）
+        let i = 0;
+        while (i < content.length && /[a-zA-Z0-9]/.test(content[i])) {
+            setName += content[i];
+            i++;
+        }
+
+        // 检查位置标识符
+        if (i < content.length && /[\^\$\*~]/.test(content[i])) {
+            positionFlag = content[i];
+            i++;
+        }
+
+        consumed = i;
+
+        return { setName, positionFlag, consumed };
     }
 
     /**
@@ -1490,45 +1586,131 @@ class RuleEngine {
      */
     calculateGroupKeys(word, sortGroups, localSets = new Map()) {
         const keys = [];
+        let lastMatchEnd = 0; // 记录上一个匹配的结束位置
 
         for (const group of sortGroups) {
-            const key = this.findMatchingSetElement(word, group.setName, localSets);
-            keys.push(key);
+            const result = this.findMatchingSetElementWithPosition(word, group.setName, localSets, group.positionFlag, lastMatchEnd);
+
+            if (result.element) {
+                keys.push(result.element);
+                lastMatchEnd = result.endPosition; // 更新下一次搜索的起始位置
+            } else {
+                // 如果某一级无法匹配，整个多级匹配失败
+                return null;
+            }
         }
 
         return keys;
     }
 
     /**
-     * 查找单词匹配的集合元素
+     * 查找单词匹配的集合元素（带位置约束的版本）
      * @param {string} word - 单词
      * @param {string} setName - 集合名称
      * @param {Map} localSets - 局部集合映射
-     * @returns {string} 匹配的集合元素或字母
+     * @param {string} positionFlag - 位置标识符 (^前缀, $后缀, *包含, ~严格中间)
+     * @param {number} startPosition - 开始搜索的位置（用于多级排序的顺序约束）
+     * @returns {Object} 包含匹配元素和位置信息的对象 {element, startPosition, endPosition}
      */
-    findMatchingSetElement(word, setName, localSets = new Map()) {
+    findMatchingSetElementWithPosition(word, setName, localSets = new Map(), positionFlag = '^', startPosition = 0) {
         // 获取集合（优先使用局部集合）
         const set = this.getSet(setName, localSets);
 
         if (!set) {
             // 如果集合不存在，按首字母分组
-            return word.charAt(0).toLowerCase();
+            return {
+                element: word.charAt(0).toLowerCase(),
+                startPosition: 0,
+                endPosition: 1
+            };
         }
 
-        // 查找单词开头匹配的集合元素
         const lowerWord = word.toLowerCase();
 
         // 按元素长度降序排列，优先匹配较长的元素
         const sortedElements = Array.from(set).sort((a, b) => b.length - a.length);
 
-        for (const element of sortedElements) {
-            if (lowerWord.startsWith(element.toLowerCase())) {
-                return element.toLowerCase();
-            }
+        // 根据位置标识符进行不同的匹配逻辑
+        switch (positionFlag) {
+            case '^': // 前缀匹配（默认）
+                // 对于前缀匹配，只有在startPosition为0时才有效
+                if (startPosition === 0) {
+                    for (const element of sortedElements) {
+                        const lowerElement = element.toLowerCase();
+                        if (lowerWord.startsWith(lowerElement)) {
+                            return {
+                                element: lowerElement,
+                                startPosition: 0,
+                                endPosition: lowerElement.length
+                            };
+                        }
+                    }
+                }
+                break;
+
+            case '$': // 后缀匹配
+                for (const element of sortedElements) {
+                    const lowerElement = element.toLowerCase();
+                    if (lowerWord.endsWith(lowerElement)) {
+                        const matchStart = lowerWord.length - lowerElement.length;
+                        // 检查匹配位置是否在startPosition之后
+                        if (matchStart >= startPosition) {
+                            return {
+                                element: lowerElement,
+                                startPosition: matchStart,
+                                endPosition: lowerWord.length
+                            };
+                        }
+                    }
+                }
+                break;
+
+            case '*': // 包含匹配
+                for (const element of sortedElements) {
+                    const lowerElement = element.toLowerCase();
+                    const index = lowerWord.indexOf(lowerElement, startPosition);
+                    if (index !== -1) {
+                        return {
+                            element: lowerElement,
+                            startPosition: index,
+                            endPosition: index + lowerElement.length
+                        };
+                    }
+                }
+                break;
+
+            case '~': // 严格中间匹配（元素必须出现在单词中间，不在首尾）
+                for (const element of sortedElements) {
+                    const lowerElement = element.toLowerCase();
+                    const index = lowerWord.indexOf(lowerElement, Math.max(1, startPosition));
+                    // 检查元素是否在中间位置（不在开头和结尾）且在startPosition之后
+                    if (index > 0 && index < lowerWord.length - lowerElement.length && index >= startPosition) {
+                        return {
+                            element: lowerElement,
+                            startPosition: index,
+                            endPosition: index + lowerElement.length
+                        };
+                    }
+                }
+                break;
         }
 
-        // 如果没有匹配的集合元素，返回首字母
-        return word.charAt(0).toLowerCase();
+        // 如果没有匹配的集合元素，返回null表示匹配失败
+        return { element: null, startPosition: -1, endPosition: -1 };
+    }
+
+    /**
+     * 查找单词匹配的集合元素（兼容性方法）
+     * @param {string} word - 单词
+     * @param {string} setName - 集合名称
+     * @param {Map} localSets - 局部集合映射
+     * @param {string} positionFlag - 位置标识符 (^前缀, $后缀, *包含, ~严格中间)
+     * @returns {string} 匹配的集合元素或字母
+     */
+    findMatchingSetElement(word, setName, localSets = new Map(), positionFlag = '^') {
+        // 调用新的带位置约束的方法，保持向后兼容
+        const result = this.findMatchingSetElementWithPosition(word, setName, localSets, positionFlag, 0);
+        return result.element || word.charAt(0).toLowerCase();
     }
 
     /**

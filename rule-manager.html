@@ -722,7 +722,9 @@
                                 <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配包含四个或更多连续字母的单词</div>
                                 <div style="margin-bottom: 8px;"><strong>语法：</strong>!LLLL（部分匹配模式）</div>
                                 <div style="margin-bottom: 8px;"><strong>集合：</strong>L（全局集合，包含所有字母a-z）</div>
-                                <div style="margin-bottom: 8px;"><strong>排序：</strong>@为空，则表示按字母顺序排序；@-，则表示按字母降序排列</div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>排序：</strong>@为空，则表示按字母顺序排序；@-，则表示按字母降序排列；支持位置标识符进行高级排序
+                                </div>
                                 <div style="margin-bottom: 8px;"><strong>示例：</strong>book, tree, jump, play, hello,
                                     world,
                                     beautiful, wonderful</div>
@@ -806,7 +808,7 @@
                                     tree,
                                     stop, swim</div>
                                 <div style="color: #666; font-size: 0.9em;">
-                                    注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序(BL)前添加-（如-(BL)）表示按集合BL内的元素逆序排列；最多可指定两级排序
+                                    注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序(BL)前添加-（如-(BL)）表示按集合BL内的元素逆序排列；最多可指定三级排序<br>3、支持位置标识符：^(前缀)、$(后缀)、*(任意位置)、~(严格中间)，如@V^、@C$、@V*、@V~
                                 </div>
                             </div>
                         </div>
@@ -1015,7 +1017,9 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
 
                 // 添加保存的自定义集合
                 for (const [setName, setValues] of Object.entries(savedGlobalSets)) {
-                    if (!['C', 'V', 'L'].includes(setName)) {
+                    // 检查是否为内置集合
+                    const builtinSets = ruleEngine.getBuiltinSetNames();
+                    if (!builtinSets.includes(setName)) {
                         defaultSets += `
 ${setName}=={${setValues.join(',')}}`;
                     }
