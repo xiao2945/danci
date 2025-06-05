@@ -436,16 +436,13 @@ class RuleEngine {
         // 移除开头的 ::
         const ruleContent = combinedRule.substring(2);
 
-        // 分割操作符 &&, ||, !
-        const parts = ruleContent.split(/\s*(?:&&|\|\||!)\s*/);
+        // 分割操作符 &&, ||, !, ~
+        const parts = ruleContent.split(/\s*(?:&&|\|\||!|~)\s*/);
 
         for (const part of parts) {
             const trimmedPart = part.trim();
-            if (trimmedPart && !trimmedPart.startsWith('~')) {
+            if (trimmedPart) {
                 ruleNames.push(trimmedPart);
-            } else if (trimmedPart.startsWith('~')) {
-                // 处理否定形式 ~RuleName
-                ruleNames.push(trimmedPart.substring(1));
             }
         }
 
@@ -1081,16 +1078,16 @@ class RuleEngine {
         // Shunting Yard算法转为逆波兰表达式
         const output = [];
         const ops = [];
-        const precedence = { '!': 3, '&&': 2, '||': 1 };
-        const associativity = { '!': 'left', '&&': 'left', '||': 'left' };
+        const precedence = { '!': 3, '&&': 2, '||': 1, '~': 4 }; // 添加~的优先级
+        const associativity = { '!': 'left', '&&': 'left', '||': 'left', '~': 'right' }; // 添加~的结合性
         for (let i = 0; i < tokens.length; i++) {
             const t = tokens[i];
             if (t.type === 'rule') {
                 output.push({ type: 'rule', value: t.value });
-            } else if (t.type === 'op') {
+            } else if (t.type === 'op' || t.type === 'neg') {
                 while (
                     ops.length &&
-                    ops[ops.length - 1].type === 'op' &&
+                    ops[ops.length - 1].type !== 'lparen' &&
                     ((associativity[t.value] === 'left' && precedence[t.value] <= precedence[ops[ops.length - 1].value]) ||
                         (associativity[t.value] === 'right' && precedence[t.value] < precedence[ops[ops.length - 1].value]))
                 ) {
@@ -1118,8 +1115,8 @@ class RuleEngine {
                 stack.push({ type: 'rule', value: token.value });
             } else if (token.type === 'op') {
                 if (token.value === '!') {
-                    // 二元运算符
-                    if (stack.length < 2) throw new Error('非模式!运算符缺少操作数');
+                    // 差集运算符
+                    if (stack.length < 2) throw new Error('差集运算符!缺少操作数');
                     const right = stack.pop();
                     const left = stack.pop();
                     stack.push({ type: 'not', left, right });
@@ -1129,6 +1126,11 @@ class RuleEngine {
                     const left = stack.pop();
                     stack.push({ type: token.value === '&&' ? 'and' : 'or', left, right });
                 }
+            } else if (token.type === 'neg') {
+                // 规则取反
+                if (stack.length < 1) throw new Error('规则取反运算符~缺少操作数');
+                const operand = stack.pop();
+                stack.push({ type: 'negate', operand });
             }
         }
         if (stack.length !== 1) throw new Error('表达式语法错误');
@@ -1154,6 +1156,9 @@ class RuleEngine {
                 i += 2;
             } else if (expr[i] === '!') {
                 tokens.push({ type: 'op', value: '!' });
+                i++;
+            } else if (expr[i] === '~') {
+                tokens.push({ type: 'neg', value: '~' });
                 i++;
             } else if (expr[i] === '(') {
                 tokens.push({ type: 'lparen' });
@@ -1184,6 +1189,8 @@ class RuleEngine {
                 throw new Error(`组合规则不能引用其他组合规则 "${node.value}"`);
             }
             return this.matchesRule(word, referencedRule);
+        } else if (node.type === 'negate') {
+            return !this.evalLogicAST(word, node.operand, localSets);
         } else if (node.type === 'not') {
             return this.evalLogicAST(word, node.left, localSets) && !this.evalLogicAST(word, node.right, localSets);
         } else if (node.type === 'and') {
