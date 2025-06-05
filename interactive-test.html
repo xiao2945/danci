@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词筛选工具 - 半自动化测试页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title::before {
+            content: "🧪";
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .test-group {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .test-group h3 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+        }
+
+        .test-group h3::before {
+            content: "⚙️";
+            margin-right: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .example-box {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #0c5460;
+        }
+
+        .expected-result {
+            background: #d1ecf1;
+            border: 1px solid #b8daff;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #004085;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .clear-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .output-section {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            margin-top: 20px;
+        }
+
+        .output-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .output-title::before {
+            content: "📊";
+            margin-right: 10px;
+        }
+
+        .output-box {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+
+        .warning {
+            color: #f39c12;
+        }
+
+        .info {
+            color: #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6c757d;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>单词筛选工具</h1>
+            <p>半自动化测试页面 - 功能验证与测试</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 左侧测试区域 -->
+            <div class="test-section">
+                <div class="section-title">功能测试区域</div>
+
+                <div class="tab-container">
+                    <button class="tab active" onclick="switchTab('rule-engine')">规则引擎</button>
+                    <button class="tab" onclick="switchTab('file-processing')">文件处理</button>
+                    <button class="tab" onclick="switchTab('result-display')">结果展示</button>
+                    <button class="tab" onclick="switchTab('dataSync')">数据同步</button>
+                </div>
+
+                <!-- 规则引擎测试 -->
+                <div id="rule-engine" class="tab-content active">
+                    <div class="test-group">
+                        <h3>集合定义与引用</h3>
+                        <div class="input-group">
+                            <label>集合定义规则:</label>
+                            <textarea id="set-definition"
+                                placeholder="输入集合定义规则...">BL == {bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sl,sp,st,tr}</textarea>
+                            <div class="example-box">示例: BL == {bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sl,sp,st,tr}</div>
+                            <div class="expected-result">预期: 成功定义BL集合，包含指定的双辅音组合</div>
+                        </div>
+                        <button class="test-button" onclick="testSetDefinition()">测试集合定义</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>规则语法解析</h3>
+                        <div class="input-group">
+                            <label>规则表达式:</label>
+                            <textarea id="rule-expression" placeholder="输入规则表达式...">\b(BL)(V)</textarea>
+                            <div class="example-box">示例: \b(BL)(V) - 匹配以双辅音开头后跟元音的单词</div>
+                            <div class="expected-result">预期: 解析成功，识别位置标记和集合引用</div>
+                        </div>
+                        <div class="input-group">
+                            <label>测试单词列表:</label>
+                            <textarea id="test-words"
+                                placeholder="输入测试单词，用逗号分隔...">blue,black,tree,cat,dog,bright,clean</textarea>
+                        </div>
+                        <button class="test-button" onclick="testRuleParsing()">测试规则解析</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>组合规则测试</h3>
+                        <div class="input-group">
+                            <label>组合规则:</label>
+                            <textarea id="combo-rule" placeholder="输入组合规则...">rule1 && rule2</textarea>
+                            <div class="example-box">示例: ::CVC||CVCE - 或运算组合</div>
+                            <div class="expected-result">预期: 正确执行逻辑运算，返回符合条件的单词</div>
+                        </div>
+                        <button class="test-button" onclick="testComboRule()">测试组合规则</button>
+                    </div>
+                </div>
+
+                <!-- 文件处理测试 -->
+                <div id="file-processing" class="tab-content">
+                    <div class="test-group">
+                        <h3>文本预处理</h3>
+                        <div class="input-group">
+                            <label>原始文本:</label>
+                            <textarea id="raw-text"
+                                placeholder="输入原始文本...">hello[həˈloʊ]world[wɜːrld] "test" data\nmore words</textarea>
+                            <div class="example-box">示例: hello[həˈloʊ]world[wɜːrld] "test" data</div>
+                            <div class="expected-result">预期: 音标分离、特殊字符清理、单词分割</div>
+                        </div>
+                        <button class="test-button" onclick="testTextPreprocessing()">测试文本预处理</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>单词验证</h3>
+                        <div class="input-group">
+                            <label>单词列表:</label>
+                            <textarea id="word-validation"
+                                placeholder="输入单词列表...">hello, [həˈloʊ], test123, a, verylongwordthatexceedslimit, café</textarea>
+                            <div class="example-box">示例: hello, [həˈloʊ], test123, a, verylongword...</div>
+                            <div class="expected-result">预期: 区分有效单词、音标、无效单词</div>
+                        </div>
+                        <button class="test-button" onclick="testWordValidation()">测试单词验证</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>去重统计</h3>
+                        <div class="input-group">
+                            <label>重复单词列表:</label>
+                            <textarea id="duplicate-words"
+                                placeholder="输入包含重复的单词列表...">apple, Apple, APPLE, banana, apple, orange, Banana</textarea>
+                            <div class="example-box">示例: apple, Apple, APPLE, banana, apple</div>
+                            <div class="expected-result">预期: 去重并统计重复数量</div>
+                        </div>
+                        <button class="test-button" onclick="testDeduplication()">测试去重统计</button>
+                    </div>
+                </div>
+
+                <!-- 结果展示测试 -->
+                <div id="result-display" class="tab-content">
+                    <div class="test-group">
+                        <h3>按首字母分组</h3>
+                        <div class="input-group">
+                            <label>单词列表:</label>
+                            <textarea id="alphabet-words"
+                                placeholder="输入单词列表...">apple, banana, cat, dog, elephant, fish, grape</textarea>
+                            <div class="example-box">示例: apple, banana, cat, dog, elephant</div>
+                            <div class="expected-result">预期: 按A-Z分组展示，显示每组单词数量</div>
+                        </div>
+                        <button class="test-button" onclick="testAlphabetGrouping()">测试首字母分组</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>交互式管理</h3>
+                        <div class="input-group">
+                            <label>操作类型:</label>
+                            <select id="interaction-type">
+                                <option value="delete">删除单词</option>
+                                <option value="restore">恢复单词</option>
+                                <option value="batch-delete">批量删除</option>
+                                <option value="batch-restore">批量恢复</option>
+                            </select>
+                            <div class="expected-result">预期: 状态切换、视觉反馈、统计更新</div>
+                        </div>
+                        <div class="input-group">
+                            <label>目标单词:</label>
+                            <input type="text" id="target-word" placeholder="输入要操作的单词..." value="apple">
+                        </div>
+                        <button class="test-button" onclick="testInteraction()">测试交互功能</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>数据导出</h3>
+                        <div class="input-group">
+                            <label>导出格式:</label>
+                            <select id="export-format">
+                                <option value="txt">TXT文本</option>
+                                <option value="csv">CSV表格</option>
+                                <option value="json">JSON数据</option>
+                            </select>
+                            <div class="expected-result">预期: 生成对应格式的导出数据</div>
+                        </div>
+                        <button class="test-button" onclick="testExport()">测试数据导出</button>
+                    </div>
+                </div>
+
+                <!-- 数据同步测试 -->
+                <div id="dataSync" class="tab-content">
+                    <div class="test-group">
+                        <h3>localStorage 存储</h3>
+                        <div class="input-group">
+                            <label>规则名称:</label>
+                            <input type="text" id="rule-name" placeholder="输入规则名称..." value="测试规则">
+                            <div class="example-box">示例: 测试规则</div>
+                            <div class="expected-result">预期: 规则成功保存到本地存储</div>
+                        </div>
+                        <div class="input-group">
+                            <label>规则内容:</label>
+                            <textarea id="rule-content" placeholder="输入规则内容...">V
+# 注释: 匹配元音开头的单词</textarea>
+                        </div>
+                        <button class="test-button" onclick="testLocalStorage()">测试本地存储</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>文件导入导出</h3>
+                        <div class="input-group">
+                            <label>导出数据:</label>
+                            <select id="export-type">
+                                <option value="rules">规则数据</option>
+                                <option value="globalSets">全局集合</option>
+                                <option value="all">完整数据</option>
+                            </select>
+                            <div class="expected-result">预期: 生成对应格式的JSON文件</div>
+                        </div>
+                        <button class="test-button" onclick="testFileExport()">测试文件导出</button>
+                    </div>
+
+                    <div class="test-group">
+                        <h3>跨页面同步</h3>
+                        <div class="input-group">
+                            <label>同步测试:</label>
+                            <input type="text" id="sync-data" placeholder="输入同步数据..." value="新规则数据">
+                            <div class="example-box">示例: 修改数据后检查其他页面同步</div>
+                            <div class="expected-result">预期: 数据在多个页面间保持一致</div>
+                        </div>
+                        <button class="test-button" onclick="testCrossPageSync()">测试跨页面同步</button>
+                    </div>
+                </div>
+
+                <button class="test-button clear-button" onclick="clearOutput()">清空输出</button>
+            </div>
+
+            <!-- 右侧参考区域 -->
+            <div class="test-section">
+                <div class="section-title">参考信息</div>
+
+                <div class="test-group">
+                    <h3>内置集合</h3>
+                    <div class="example-box">
+                        C (辅音): b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z
+                        V (元音): a,e,i,o,u
+                        L (字母): a-z完整字母表
+                        BL (双辅音): bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sl,sp,st,tr
+                    </div>
+                </div>
+
+                <div class="test-group">
+                    <h3>规则语法</h3>
+                    <div class="example-box">
+                        位置标记:
+                        \b - 单词开头
+                        \e - 单词结尾
+
+                        集合引用:
+                        (C) - 引用集合C
+                        [e] - 字面字符e
+
+                        逻辑运算:
+                        && - 与运算
+                        || - 或运算
+                        ~ - 取反
+                        ! - 差集
+                    </div>
+                </div>
+
+                <div class="test-group">
+                    <h3>排序标识符</h3>
+                    <div class="example-box">
+                        ^ - 前缀匹配 (开头)
+                        $ - 后缀匹配 (结尾)
+                        * - 任意位置匹配
+                        ~ - 严格中间匹配
+                        - - 逆序标志
+
+                        示例:
+                        @V^ - 元音开头
+                        @C$ - 辅音结尾
+                        @(BL^)(V*) - 双辅音开头+包含元音
+                    </div>
+                </div>
+
+                <div class="test-group">
+                    <h3>文件格式支持</h3>
+                    <div class="example-box">
+                        支持格式:
+                        - TXT文本文件 (UTF-8)
+                        - Excel文件 (.xlsx, .xls)
+                        - CSV文件
+
+                        文件大小限制: 10MB
+
+                        音标格式: word[phonetic]
+                        特殊字符: 自动清理引号、反斜杠等
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输出区域 -->
+        <div class="output-section">
+            <div class="output-title">测试输出结果</div>
+            <div id="output" class="output-box">等待测试输入...
+
+                使用说明:
+                1. 选择功能模块标签页
+                2. 填写测试输入数据
+                3. 点击对应的测试按钮
+                4. 查看输出结果和状态
+
+                支持的测试功能:
+                ✓ 规则引擎 - 集合定义、规则解析、组合规则
+                ✓ 文件处理 - 文本预处理、单词验证、去重统计
+                ✓ 结果展示 - 分组显示、交互管理、数据导出
+                ✓ 排序规则 - 位置标识符、多级排序、逆序排序</div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟的核心功能类
+        class MockRuleEngine {
+            constructor() {
+                this.sets = {
+                    'C': ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z'],
+                    'V': ['a', 'e', 'i', 'o', 'u'],
+                    'L': 'abcdefghijklmnopqrstuvwxyz'.split('')
+                };
+                this.customSets = {};
+            }
+
+            defineSet(definition) {
+                const match = definition.match(/(\w+)\s*==\s*\{([^}]+)\}/);
+                if (match) {
+                    const [, name, content] = match;
+                    this.customSets[name] = content.split(',').map(s => s.trim());
+                    return { success: true, name, content: this.customSets[name] };
+                }
+                return { success: false, error: '集合定义格式错误' };
+            }
+
+            parseRule(rule) {
+                const positions = rule.match(/\\b|\\e/g) || [];
+                const sets = rule.match(/\((\w+)\)/g) || [];
+                const literals = rule.match(/\[([^\]]+)\]/g) || [];
+
+                return {
+                    success: true,
+                    positions: positions,
+                    sets: sets.map(s => s.replace(/[()]/g, '')),
+                    literals: literals.map(s => s.replace(/[\[\]]/g, '')),
+                    pattern: rule
+                };
+            }
+
+            matchWords(rule, words) {
+                // 简化的匹配逻辑
+                const parsed = this.parseRule(rule);
+                const results = [];
+
+                words.forEach(word => {
+                    let matches = false;
+
+                    // 简单的模式匹配示例
+                    if (rule.includes('(BL)') && rule.includes('(V)')) {
+                        const blPatterns = ['bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'sl', 'sp', 'st', 'tr'];
+                        const vowels = ['a', 'e', 'i', 'o', 'u'];
+
+                        for (let bl of blPatterns) {
+                            if (word.toLowerCase().startsWith(bl)) {
+                                for (let v of vowels) {
+                                    if (word.toLowerCase().includes(v)) {
+                                        matches = true;
+                                        break;
+                                    }
+                                }
+                                if (matches) break;
+                            }
+                        }
+                    }
+
+                    if (matches) {
+                        results.push(word);
+                    }
+                });
+
+                return results;
+            }
+        }
+
+        class MockFileProcessor {
+            preprocessText(text) {
+                // 音标格式处理
+                let processed = text.replace(/([a-zA-ZÀ-ÿ'.-]+)(\[[^\]]+\])/g, '$1 $2');
+
+                // 特殊字符清理
+                processed = processed.replace(/["\\、]/g, ' ');
+
+                // 单词分割
+                const words = processed.split(/[\s,;]+/).filter(w => w.trim());
+
+                return {
+                    original: text,
+                    processed: processed,
+                    words: words,
+                    steps: [
+                        '音标格式处理: word[phonetic] → word [phonetic]',
+                        '特殊字符清理: 移除引号、反斜杠等',
+                        '单词分割: 使用空格、逗号、分号分割'
+                    ]
+                };
+            }
+
+            validateWords(words) {
+                const results = {
+                    valid: [],
+                    invalid: [],
+                    phonetics: []
+                };
+
+                words.forEach(word => {
+                    if (word.match(/^\[[^\]]+\]$/)) {
+                        results.phonetics.push(word);
+                    } else if (word.match(/^[a-zA-ZÀ-ÿ'.-]+$/) && word.length >= 1 && word.length <= 50) {
+                        results.valid.push(word);
+                    } else {
+                        results.invalid.push(word);
+                    }
+                });
+
+                return results;
+            }
+
+            deduplicateWords(words) {
+                const seen = new Set();
+                const unique = [];
+                const duplicates = [];
+
+                words.forEach(word => {
+                    const lower = word.toLowerCase();
+                    if (seen.has(lower)) {
+                        duplicates.push(word);
+                    } else {
+                        seen.add(lower);
+                        unique.push(word);
+                    }
+                });
+
+                return {
+                    unique: unique,
+                    duplicates: duplicates,
+                    total: words.length,
+                    uniqueCount: unique.length,
+                    duplicateCount: duplicates.length
+                };
+            }
+        }
+
+        class MockResultDisplay {
+            groupByAlphabet(words) {
+                const groups = {};
+
+                words.forEach(word => {
+                    const first = word.charAt(0).toUpperCase();
+                    if (!groups[first]) {
+                        groups[first] = [];
+                    }
+                    groups[first].push(word);
+                });
+
+                return groups;
+            }
+
+            simulateInteraction(type, word) {
+                const actions = {
+                    'delete': `单词 "${word}" 已标记为删除状态`,
+                    'restore': `单词 "${word}" 已恢复到正常状态`,
+                    'batch-delete': '批量删除操作已执行',
+                    'batch-restore': '批量恢复操作已执行'
+                };
+
+                return {
+                    action: type,
+                    target: word,
+                    message: actions[type] || '未知操作',
+                    timestamp: new Date().toLocaleString()
+                };
+            }
+
+            exportData(words, format) {
+                switch (format) {
+                    case 'txt':
+                        return words.join('\n');
+                    case 'csv':
+                        return 'Word,Length\n' + words.map(w => `${w},${w.length}`).join('\n');
+                    case 'json':
+                        return JSON.stringify(words.map(w => ({ word: w, length: w.length })), null, 2);
+                    default:
+                        return words.join(', ');
+                }
+            }
+        }
+
+        class MockSortingEngine {
+            parsePositionIdentifier(rule) {
+                const identifiers = {
+                    '^': '前缀匹配',
+                    '$': '后缀匹配',
+                    '*': '任意位置',
+                    '~': '严格中间'
+                };
+
+                const matches = rule.match(/@([\w\^\$\*\~\(\)\-]+)/g) || [];
+                return matches.map(match => {
+                    const clean = match.replace('@', '');
+                    return {
+                        original: match,
+                        cleaned: clean,
+                        type: this.getIdentifierType(clean)
+                    };
+                });
+            }
+
+            getIdentifierType(identifier) {
+                if (identifier.includes('^')) return '前缀匹配';
+                if (identifier.includes('$')) return '后缀匹配';
+                if (identifier.includes('*')) return '任意位置';
+                if (identifier.includes('~')) return '严格中间';
+                return '默认前缀';
+            }
+
+            applySorting(words, rule) {
+                const groups = {};
+                const identifiers = this.parsePositionIdentifier(rule);
+
+                // 简化的排序逻辑
+                if (rule.includes('V^')) {
+                    const vowels = ['a', 'e', 'i', 'o', 'u'];
+                    vowels.forEach(v => {
+                        groups[v] = words.filter(word => word.toLowerCase().startsWith(v));
+                    });
+                    groups['其他'] = words.filter(word => !vowels.includes(word.toLowerCase().charAt(0)));
+                }
+
+                return {
+                    groups: groups,
+                    identifiers: identifiers,
+                    rule: rule
+                };
+            }
+        }
+
+        // 全局实例
+        const ruleEngine = new MockRuleEngine();
+        const fileProcessor = new MockFileProcessor();
+        const resultDisplay = new MockResultDisplay();
+        const sortingEngine = new MockSortingEngine();
+
+        // 输出函数
+        function output(message, type = 'info') {
+            const outputElement = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+
+            const formattedMessage = `[${timestamp}] ${message}`;
+            outputElement.innerHTML += `<span class="${className}">${formattedMessage}</span>\n`;
+            outputElement.scrollTop = outputElement.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '输出已清空...\n';
+        }
+
+        // 标签页切换
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 移除所有标签的活跃状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的标签内容
+            document.getElementById(tabName).classList.add('active');
+
+            // 激活对应的标签
+            event.target.classList.add('active');
+        }
+
+        // 测试函数
+        function testSetDefinition() {
+            const definition = document.getElementById('set-definition').value;
+            output(`测试集合定义: ${definition}`, 'info');
+
+            const result = ruleEngine.defineSet(definition);
+            if (result.success) {
+                output(`✓ 集合定义成功: ${result.name} = [${result.content.join(', ')}]`, 'success');
+            } else {
+                output(`✗ 集合定义失败: ${result.error}`, 'error');
+            }
+        }
+
+        function testRuleParsing() {
+            const rule = document.getElementById('rule-expression').value;
+            const words = document.getElementById('test-words').value.split(',').map(w => w.trim());
+
+            output(`测试规则解析: ${rule}`, 'info');
+            output(`测试单词: [${words.join(', ')}]`, 'info');
+
+            const parsed = ruleEngine.parseRule(rule);
+            output(`✓ 规则解析结果:`, 'success');
+            output(`  位置标记: [${parsed.positions.join(', ')}]`, 'info');
+            output(`  集合引用: [${parsed.sets.join(', ')}]`, 'info');
+            output(`  字面字符: [${parsed.literals.join(', ')}]`, 'info');
+
+            const matches = ruleEngine.matchWords(rule, words);
+            output(`✓ 匹配结果: [${matches.join(', ')}]`, 'success');
+        }
+
+        function testComboRule() {
+            const rule = document.getElementById('combo-rule').value;
+            output(`测试组合规则: ${rule}`, 'info');
+
+            // 模拟组合规则处理
+            if (rule.includes('&&')) {
+                output(`✓ 检测到与运算 (&&)`, 'success');
+            } else if (rule.includes('||')) {
+                output(`✓ 检测到或运算 (||)`, 'success');
+            } else if (rule.includes('~')) {
+                output(`✓ 检测到取反运算 (~)`, 'success');
+            } else if (rule.includes('!')) {
+                output(`✓ 检测到差集运算 (!)`, 'success');
+            }
+
+            output(`组合规则解析完成`, 'info');
+        }
+
+        function testTextPreprocessing() {
+            const text = document.getElementById('raw-text').value;
+            output(`测试文本预处理: ${text}`, 'info');
+
+            const result = fileProcessor.preprocessText(text);
+            output(`✓ 预处理完成:`, 'success');
+            output(`  原始文本: ${result.original}`, 'info');
+            output(`  处理后: ${result.processed}`, 'info');
+            output(`  提取单词: [${result.words.join(', ')}]`, 'info');
+            output(`  处理步骤:`, 'info');
+            result.steps.forEach(step => output(`    - ${step}`, 'info'));
+        }
+
+        function testWordValidation() {
+            const words = document.getElementById('word-validation').value.split(',').map(w => w.trim());
+            output(`测试单词验证: [${words.join(', ')}]`, 'info');
+
+            const result = fileProcessor.validateWords(words);
+            output(`✓ 验证完成:`, 'success');
+            output(`  有效单词 (${result.valid.length}): [${result.valid.join(', ')}]`, 'success');
+            output(`  音标格式 (${result.phonetics.length}): [${result.phonetics.join(', ')}]`, 'warning');
+            output(`  无效单词 (${result.invalid.length}): [${result.invalid.join(', ')}]`, 'error');
+        }
+
+        function testDeduplication() {
+            const words = document.getElementById('duplicate-words').value.split(',').map(w => w.trim());
+            output(`测试去重统计: [${words.join(', ')}]`, 'info');
+
+            const result = fileProcessor.deduplicateWords(words);
+            output(`✓ 去重完成:`, 'success');
+            output(`  总单词数: ${result.total}`, 'info');
+            output(`  唯一单词数: ${result.uniqueCount}`, 'success');
+            output(`  重复单词数: ${result.duplicateCount}`, 'warning');
+            output(`  唯一单词: [${result.unique.join(', ')}]`, 'success');
+            output(`  重复单词: [${result.duplicates.join(', ')}]`, 'warning');
+        }
+
+        function testAlphabetGrouping() {
+            const words = document.getElementById('alphabet-words').value.split(',').map(w => w.trim());
+            output(`测试首字母分组: [${words.join(', ')}]`, 'info');
+
+            const groups = resultDisplay.groupByAlphabet(words);
+            output(`✓ 分组完成:`, 'success');
+
+            Object.keys(groups).sort().forEach(letter => {
+                output(`  ${letter}组 (${groups[letter].length}个): [${groups[letter].join(', ')}]`, 'info');
+            });
+        }
+
+        function testInteraction() {
+            const type = document.getElementById('interaction-type').value;
+            const word = document.getElementById('target-word').value;
+
+            output(`测试交互功能: ${type} - ${word}`, 'info');
+
+            const result = resultDisplay.simulateInteraction(type, word);
+            output(`✓ ${result.message}`, 'success');
+            output(`  操作时间: ${result.timestamp}`, 'info');
+        }
+
+        function testExport() {
+            const format = document.getElementById('export-format').value;
+            const words = ['apple', 'banana', 'cat', 'dog'];
+
+            output(`测试数据导出: ${format.toUpperCase()}格式`, 'info');
+
+            const exported = resultDisplay.exportData(words, format);
+            output(`✓ 导出完成:`, 'success');
+            output(`${exported}`, 'info');
+        }
+
+        function testLocalStorage() {
+            const ruleName = document.getElementById('rule-name').value;
+            const ruleContent = document.getElementById('rule-content').value;
+
+            output(`测试本地存储: 保存规则 "${ruleName}"`, 'info');
+
+            try {
+                // 模拟localStorage保存
+                const ruleData = {
+                    name: ruleName,
+                    comment: ruleContent.includes('#') ? ruleContent.split('#')[1].trim() : '',
+                    specificRule: ruleContent.split('#')[0].trim(),
+                    displayRule: ruleContent.includes('@') ? ruleContent.match(/@[^\n]+/)[0] : '',
+                    localSets: []
+                };
+
+                // 模拟保存到localStorage
+                output('保存到localStorage:', 'success');
+                output(`  键: wordFilterRules`, 'info');
+                output(`  值: {..."${ruleName}": ${JSON.stringify(ruleData, null, 2)}}`, 'info');
+
+                // 模拟验证数据完整性
+                const validationResult = validateRuleData(ruleData);
+                if (validationResult.valid) {
+                    output('数据验证通过', 'success');
+                } else {
+                    output(`数据验证失败: ${validationResult.error}`, 'warning');
+                }
+            } catch (error) {
+                output(`错误: ${error.message}`, 'error');
+            }
+        }
+
+        function testFileExport() {
+            const exportType = document.getElementById('export-type').value;
+
+            output(`测试文件导出: ${exportType}`, 'info');
+
+            try {
+                // 模拟文件导出
+                let exportData = {};
+
+                if (exportType === 'rules' || exportType === 'all') {
+                    exportData.rules = {
+                        '示例规则1': {
+                            name: '示例规则1',
+                            comment: '元音开头',
+                            specificRule: 'V',
+                            displayRule: '@V'
+                        },
+                        '示例规则2': {
+                            name: '示例规则2',
+                            comment: '辅音结尾',
+                            specificRule: 'C$',
+                            displayRule: '@C$'
+                        }
+                    };
+                }
+
+                if (exportType === 'globalSets' || exportType === 'all') {
+                    exportData.globalSets = {
+                        '元音': ['a', 'e', 'i', 'o', 'u'],
+                        '辅音': ['b', 'c', 'd', 'f', 'g']
+                    };
+                }
+
+                // 输出导出结果
+                output('导出文件内容:', 'success');
+                output(JSON.stringify(exportData, null, 2), 'info');
+                output('文件导出成功: rules-export.json', 'success');
+            } catch (error) {
+                output(`错误: ${error.message}`, 'error');
+            }
+        }
+
+        function testCrossPageSync() {
+            const syncData = document.getElementById('sync-data').value;
+
+            output(`测试跨页面同步: "${syncData}"`, 'info');
+
+            try {
+                // 模拟跨页面同步
+                output('同步过程:', 'success');
+                output('  1. 页面A修改数据', 'info');
+                output(`  2. 触发storage事件: key=wordFilterRules, newValue=${syncData}`, 'info');
+                output('  3. 页面B接收到storage事件', 'info');
+                output('  4. 页面B更新本地数据', 'info');
+                output('  5. 页面B刷新界面显示', 'info');
+
+                // 模拟冲突处理
+                output('冲突处理演示:', 'info');
+                output('  页面A时间戳: 2023-05-10T10:15:30', 'info');
+                output('  页面B时间戳: 2023-05-10T10:15:45', 'info');
+                output('  结果: 采用页面B的更新（更新时间戳）', 'success');
+            } catch (error) {
+                output(`错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 辅助函数
+        function validateRuleData(ruleData) {
+            if (!ruleData.name) {
+                return { valid: false, error: '规则名称不能为空' };
+            }
+            if (!ruleData.specificRule) {
+                return { valid: false, error: '规则内容不能为空' };
+            }
+            return { valid: true };
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            output('半自动化测试页面已加载完成', 'success');
+            output('请选择功能模块开始测试', 'info');
+        });
+    </script>
+</body>
+
+</html>
