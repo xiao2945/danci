@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.2.1';
-        this.releaseDate = '2025-06-05';
-        this.description = '排序功能重新设计：多级排序顺序约束、位置标识符完善、规则有效性检查增强';
+        this.version = 'v1.2.2';
+        this.releaseDate = '2025-06-06';
+        this.description = '整理功能和测试文档结构，完成主要页面基础文字检查，优化项目文件组织';
     }
 
     /**

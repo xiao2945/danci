@@ -416,7 +416,8 @@
 
         .syntax-help h4 {
             color: #c53030;
-            margin-bottom: 10px;
+            /* margin-bottom: 10px; */
+            align-items: baseline;
         }
 
         .syntax-list {
@@ -447,6 +448,10 @@
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 0;
+        }
+
+        .global-sets-editor h4 {
+            margin-bottom: 10px;
         }
 
         .global-sets-textarea {
@@ -630,7 +635,7 @@
             }
 
             .rule-textarea {
-                min-height: 216px !important;
+                min-height: 240px !important;
             }
 
             .global-sets-textarea {
@@ -925,11 +930,12 @@
                     <textarea id="ruleEditor" class="rule-textarea" placeholder="在此输入规则...
 
 注意：
-• 具体规则中可引用全局集合和局部集合
-  ◦ 局部集合必须在当前规则中定义才能引用
-  ◦ 多字母集合名必须使用 (集合名) 引用
-• 具体规则中可使用 \位置符号 强制位置匹配
-  ◦ \b - 单词开头，\e - 单词结尾，\m - 单词中间"></textarea>
+• 具体规则中可引用全局集合和局部集合。
+  ◦ 局部集合必须在当前规则中定义才能引用。
+  ◦ 多字母集合名必须使用 (集合名) 引用。
+• 具体规则中可使用 \位置标志 强制位置匹配。
+  ◦ \b - 单词开头，\e - 单词结尾
+  ◦ 更多参见详细语法帮助，"></textarea>
 
                     <div class="rule-actions">
                         <button id="saveRuleBtn" class="btn btn-primary">保存规则</button>
