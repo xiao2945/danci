@@ -10,23 +10,34 @@
         .rule-manager-container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
         }
 
         @media (max-width: 768px) {
             .rule-manager-container {
                 padding: 10px !important;
-                max-width: 100% !important;
+                /* max-width: 100% !important; */
             }
+        }
+
+        .rule-manager-header,
+        .rule-manager-header {
+            text-align: left !important;
+        }
+
+        .rule-manager-header h1 {
+            text-align: left !important;
         }
 
         .rule-manager-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+            align-items: flex-start;
+            margin: 20px;
             padding-bottom: 15px;
             border-bottom: 2px solid #e2e8f0;
+            /* gap: 15px; */
+            /* 强制左对齐，覆盖全局header */
         }
 
         .rule-manager-header h1 {
@@ -45,6 +56,9 @@
             display: flex;
             align-items: baseline;
             gap: 15px;
+            justify-content: flex-start;
+            flex: 0 1 auto;
+            min-width: 0;
         }
 
         .rule-manager-content {
@@ -230,7 +244,7 @@
             border-radius: 0 4px 4px 0;
         }
 
-        .copy-btn {
+        .example-code .copy-btn {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -241,12 +255,11 @@
             border-radius: 4px;
             font-size: 12px;
             cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
+            transition: background 0.3s ease;
         }
 
-        .copy-btn:hover {
-            opacity: 1;
+        .example-code .copy-btn:hover {
+            background: #667eea;
         }
 
         .rule-actions {
@@ -512,9 +525,15 @@
 
         @media (max-width: 768px) {
             .rule-manager-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
+                flex-direction: row;
+                /* gap: 15px; */
+                padding-bottom: 15px;
+                align-items: flex-start;
+            }
+
+            .rule-manager-header h1 {
+                font-size: 1.2rem;
+                margin-bottom: 0;
             }
 
             .rule-panels {
@@ -541,13 +560,14 @@
         @media (max-width: 768px) {
             .rule-manager-header {
                 padding-bottom: 15px !important;
+                margin: 10px !important;
                 flex-direction: column !important;
-                gap: 10px !important;
+                /* gap: 10px !important; */
             }
 
             .rule-manager-header h1 {
                 font-size: 1.5rem !important;
-                margin-bottom: 10px !important;
+                /* margin-bottom: 10px !important; */
             }
 
             .rule-actions {
@@ -719,71 +739,23 @@
                                 </div>
                             </div>
                             <div class="example-description">
-                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配包含四个或更多连续字母的单词</div>
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配包含四个或更多字母的单词。</div>
                                 <div style="margin-bottom: 8px;"><strong>语法：</strong>:LLLL（部分匹配模式）</div>
-                                <div style="margin-bottom: 8px;"><strong>集合：</strong>L（全局集合，包含所有字母a-z）</div>
+                                <div style="margin-bottom: 8px;"><strong>集合：</strong>L（全局集合，包含小写字母a-z）</div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong>排序：</strong>@为空，则表示按字母顺序排序；@-，则表示按字母降序排列；支持位置标识符进行高级排序
+                                    <strong>排序：</strong>@为空，则表示按字母顺序排序；@-，则表示按字母降序排序。
                                 </div>
                                 <div style="margin-bottom: 8px;"><strong>示例：</strong>book, tree, jump, play, hello,
                                     world,
                                     beautiful, wonderful</div>
-                                <div style="color: #666; font-size: 0.9em;">注：如需恰好四个字母，请使用<span
+                                <div style="color: #666; font-size: 0.9em;">注：如需恰好四个字母，语法请使用 :<span
                                         style="color: red;">\b</span>LLLL<span style="color: red;">\e</span></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="example-section">
-                        <div class="example-title" onclick="toggleExample(this)">基础CVC模式</div>
-                        <div class="example-content">
-                            <div class="example-code"
-                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
-                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
-                                <div style="line-height: 1.6;">
-                                    <div><span style="color: #68d391;">#CVC模式</span></div>
-                                    <div><span style="color: #63b3ed;">:\bCVC\e</span></div>
-                                    <div><span style="color: #f6e05e;">@</span></div>
-                                </div>
-                            </div>
-                            <div class="example-description">
-                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配辅音-元音-辅音结构的三字母单词</div>
-                                <div style="margin-bottom: 8px;"><strong>语法：</strong>:!\bCVC\e（完整匹配模式）</div>
-                                <div style="margin-bottom: 8px;"><strong>集合：</strong>C（辅音）、V（元音）</div>
-                                <div style="margin-bottom: 8px;"><strong>示例：</strong>cat, dog, run, big, hat, pen, sit,
-                                    cup
-                                </div>
-                                <div style="color: #666; font-size: 0.9em;">注：\b表示单词开头，\e表示单词结尾</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="example-section">
-                        <div class="example-title" onclick="toggleExample(this)">CVCE模式（魔法E）</div>
-                        <div class="example-content">
-                            <div class="example-code"
-                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
-                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
-                                <div style="line-height: 1.6;">
-                                    <div><span style="color: #68d391;">#CVCE模式</span></div>
-                                    <div><span style="color: #63b3ed;">:\bCVC"e"\e</span></div>
-                                    <div><span style="color: #f6e05e;">@</span></div>
-                                </div>
-                            </div>
-                            <div class="example-description">
-                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配辅音-元音-辅音-e结构的单词（魔法E模式）</div>
-                                <div style="margin-bottom: 8px;"><strong>语法：</strong>:!\bCVC"e"\e（完整匹配模式）</div>
-                                <div style="margin-bottom: 8px;"><strong>集合：</strong>C（辅音）、V（元音）、<span
-                                        style="color: red;">"e"表示字面字符e</span></div>
-                                <div style="margin-bottom: 8px;"><strong>示例：</strong>cake, make, bike, home, cute, hope,
-                                    time, name</div>
-                                <div style="color: #666; font-size: 0.9em;">注：当想使用字面字符时，需要用双引号""，如"e"、"tion"</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="example-section">
-                        <div class="example-title" onclick="toggleExample(this)">双辅音开头（部分匹配）</div>
+                        <div class="example-title" onclick="toggleExample(this)">双辅音开头</div>
                         <div class="example-content">
                             <div class="example-code"
                                 style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
@@ -798,18 +770,75 @@
                                 </div>
                             </div>
                             <div class="example-description">
-                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配以双辅音开头的单词</div>
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配以双辅音开头的单词。</div>
                                 <div style="margin-bottom: 8px;"><strong>语法：</strong>:\b(BL)（部分匹配模式）</div>
                                 <div style="margin-bottom: 8px;">
-                                    <strong>集合：</strong>BL（局部集合，包含bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw）
+                                    <strong>集合：</strong>BL（局部集合）
                                 </div>
-                                <div style="margin-bottom: 8px;"><strong>排序：</strong>按集合BL包含的元素排序</div>
+                                <div style="margin-bottom: 8px;"><strong>排序：</strong>按集合BL包含的元素分组排序。</div>
                                 <div style="margin-bottom: 8px;"><strong>示例：</strong>black, brown, class, green, play,
                                     tree,
                                     stop, swim</div>
                                 <div style="color: #666; font-size: 0.9em;">
-                                    注：1、两个字母以上的集合需用括号引用，如(BL)<br>2、可以在排序(BL)前添加-（如-(BL)）表示按集合BL内的元素逆序排列；最多可指定三级排序<br>3、支持位置标识符：^(前缀)、$(后缀)、*(任意位置)、~(严格中间)，如@V^、@C$、@V*、@V~
+                                    注：<br>1、\b表示单词开头。（更多位置标志参见详细语法帮助）<br>2、两个字母以上的集合需用括号引用。（如(BL)）<br>3、可以在排序(BL)前添加<span
+                                        class="syntax-code"
+                                        style="background-color: lightyellow;">-</span>表示按集合BL内的元素逆序分组。（如-(BL)）<br>4、排序支持多级排序和位置匹配符。（参见详细语法帮助）
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="example-section">
+                        <div class="example-title" onclick="toggleExample(this)">CVC模式</div>
+                        <div class="example-content">
+                            <div class="example-code"
+                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
+                                <div style="line-height: 1.6;">
+                                    <div><span style="color: #68d391;">#CVC</span></div>
+                                    <div><span style="color: #68d391;">//辅音-元音-辅音（去y）</span></div>
+                                    <div><span style="color: #ed64a6;">eC==C>>{y}</span></div>
+                                    <div><span style="color: #63b3ed;">:\bCV(eC)\e</span></div>
+                                    <div><span style="color: #f6e05e;">@</span></div>
+                                </div>
+                            </div>
+                            <div class="example-description">
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>完整匹配辅音-元音-辅音（去y）结构的三字母单词。</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>:\bCV(eC)\e（完整匹配模式）</div>
+                                <div style="margin-bottom: 8px;">
+                                    <strong>集合：</strong>C（全局集合，辅音字母集合）、V（全局集合，元音字母集合）、eC（局部集合，不含y的辅音字母集合）
+                                </div>
+                                <div style="margin-bottom: 8px;"><strong>示例：</strong>cat, dog, run, big, hat, pen, sit,
+                                    cup
+                                </div>
+                                <div style="color: #666; font-size: 0.9em;">
+                                    注：eC==C>>{y}表示从集合C中去掉y，得到新的局部集合eC。（更多集合运算符参见详细语法帮助）</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="example-section">
+                        <div class="example-title" onclick="toggleExample(this)">CVCE模式（魔法E）</div>
+                        <div class="example-content">
+                            <div class="example-code"
+                                style="background-color: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace;">
+                                <button class="copy-btn" onclick="copyExample(this)">复制</button>
+                                <div style="line-height: 1.6;">
+                                    <div><span style="color: #68d391;">#CVCE</span></div>
+                                    <div><span style="color: #68d391;">//辅音-元音-辅音-e</span></div>
+                                    <div><span style="color: #63b3ed;">:\bCVC"e"\e</span></div>
+                                    <div><span style="color: #f6e05e;">@</span></div>
+                                </div>
+                            </div>
+                            <div class="example-description">
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>完整匹配辅音-元音-辅音-e结构的四字母单词。</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>:!\bCVC"e"\e（完整匹配模式）</div>
+                                <div style="margin-bottom: 8px;"><strong>集合：</strong>C、V、"e"（字面字符）</div>
+                                <div style="margin-bottom: 8px;"><strong>示例：</strong>cake, make, bike, home, cute, hope,
+                                    time, name</div>
+                                <div style="color: #666; font-size: 0.9em;">注：使用双引号<span class="syntax-code"
+                                        style="background-color: lightyellow;">"
+                                        "</span>表示字面字符，用于匹配具体的字符或字符串。（如"e"、"tion"）</div>
                             </div>
                         </div>
                     </div>
@@ -823,30 +852,34 @@
                                 <button class="copy-btn" onclick="copyExample(this)">复制</button>
                                 <div style="line-height: 1.6;">
                                     <div><span style="color: #68d391;">#CVC或CVCE</span></div>
-                                    <div><span style="color: #63b3ed;">::CVC模式 || CVCE模式</span></div>
+                                    <div><span style="color: #63b3ed;">::CVC||CVCE</span></div>
                                     <div><span style="color: #f6e05e;">@</span></div>
                                 </div>
                             </div>
                             <div class="example-description">
-                                <div style="margin-bottom: 8px;"><strong>功能：</strong>组合多个规则，匹配满足CVC模式或CVCE模式的单词</div>
-                                <div style="margin-bottom: 8px;"><strong>语法：</strong>::CVC模式 || CVCE模式（规则组合模式）</div>
-                                <div style="margin-bottom: 8px;"><strong>集合：</strong>无（引用已定义的规则）</div>
+                                <div style="margin-bottom: 8px;"><strong>功能：</strong>匹配满足CVC模式或CVCE模式的单词。</div>
+                                <div style="margin-bottom: 8px;"><strong>语法：</strong>::CVC||CVCE（双冒号<span
+                                        class="syntax-code" style="background-color: lightyellow;">::</span>表示组合规则模式）
+                                </div>
+                                <div style="margin-bottom: 8px;"><strong>集合：</strong>无（组合规则必须引用已定义的规则名）</div>
                                 <div style="margin-bottom: 8px;"><strong>示例：</strong>cat, dog, run, big, cake, make,
                                     bike,
                                     home</div>
-                                <div style="margin-bottom: 12px; color: #666; font-size: 0.9em;">注：::表示引用已定义的规则</div>
                                 <div style="margin-bottom: 8px;"><strong><span
                                             style="color: red;">支持的操作符：</span></strong>
                                 </div>
                                 <div style="margin-left: 16px;">
                                     <div style="margin-bottom: 4px;">• <span class="syntax-code"
-                                            style="background-color: lightyellow;">&&</span> - 逻辑与（同时满足两个条件）</div>
+                                            style="background-color: lightyellow;">||</span> - 或（满足任一条件）</div>
                                     <div style="margin-bottom: 4px;">• <span class="syntax-code"
-                                            style="background-color: lightyellow;">||</span> - 逻辑或（满足任一条件）</div>
+                                            style="background-color: lightyellow;">&&</span> - 与（同时满足两个条件）</div>
                                     <div style="margin-bottom: 4px;">• <span class="syntax-code"
-                                            style="background-color: lightyellow;">!</span> - 非模式（满足前者但不满足后者，二元运算符，只能写A
-                                        ! B，禁止&&!写法，支持括号优先级）</div>
+                                            style="background-color: lightyellow;">!</span> - 差集（满足前者但不满足后者）</div>
+                                    <div style="margin-bottom: 4px;">• <span class="syntax-code"
+                                            style="background-color: lightyellow;">~</span> - 取反（对规则结果取反）</div>
                                 </div>
+                                <div style="margin-bottom: 12px; color: #666; font-size: 0.9em;">
+                                    注：更多组合规则说明参见详细语法帮助。</div>
                             </div>
                         </div>
                     </div>
@@ -1019,10 +1052,9 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
                 // 添加保存的自定义集合
                 for (const [setName, setValues] of Object.entries(savedGlobalSets)) {
                     // 检查是否为内置集合
-                    const builtinSets = ruleEngine.getBuiltinSetNames();
+                    const builtinSets = this.ruleEngine.getBuiltinSetNames();
                     if (!builtinSets.includes(setName)) {
-                        defaultSets += `
-${setName}=={${setValues.join(',')}}`;
+                        defaultSets += `\n${setName}=={${setValues.join(',')}}`;
                     }
                 }
 
