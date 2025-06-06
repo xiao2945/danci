@@ -357,8 +357,8 @@ class RuleEngine {
             throw new Error('规则名称不能为空');
         }
 
-        if (ruleName.length > 50) {
-            throw new Error('规则名称长度不能超过50个字符');
+        if (ruleName.length > 20) {
+            throw new Error('规则名称长度不能超过20个字符');
         }
 
         // 检查规则名称是否包含特殊字符
@@ -1800,7 +1800,7 @@ class RuleEngine {
 
         let preview = `规则名称: ${rule.name}`;
         if (rule.comment) {
-            preview += ` /* ${rule.comment} */`;
+            preview += `\n注释内容: ${rule.comment}`;
         }
         preview += '\n';
 

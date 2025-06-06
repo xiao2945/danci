@@ -136,6 +136,10 @@ section h2 {
 }
 
 .rule-select {
+    max-width: 100%;
+    width: 100%;
+    min-width: 200px;
+    box-sizing: border-box;
     flex: 1;
     padding: 12px 15px;
     border: 2px solid #e2e8f0;
@@ -149,6 +153,14 @@ section h2 {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.rule-select option {
+    max-width: 500px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
 }
 
 .rule-preview {
@@ -1105,6 +1117,7 @@ section h2 {
         flex-wrap: nowrap !important;
         justify-content: space-between !important;
         margin: 0px !important;
+        margin-top: 15px !important;
     }
 
     .action-buttons .btn {
@@ -1125,7 +1138,7 @@ section h2 {
 
     .rule-select {
         width: 100%;
-        margin-bottom: 15px;
+        /* margin-bottom: 15px; */
     }
 
     .rule-actions {

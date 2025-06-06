@@ -20,6 +20,7 @@ class WordFilterApp {
     initializeApp() {
         this.bindEvents();
         this.loadSavedRules();
+        this.ruleEngine.loadSavedRules(); // 确保规则引擎也加载了规则
         this.updateRuleSelector();
         this.setupRuleSyncListeners();
 
@@ -168,6 +169,14 @@ class WordFilterApp {
 
         // 键盘快捷键
         document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+
+        // 选中后 select 框显示的内容也做截断
+        ruleSelect.addEventListener('change', function () {
+            const selectedOption = ruleSelect.options[ruleSelect.selectedIndex];
+            if (selectedOption) {
+                ruleSelect.title = selectedOption.title; // 鼠标悬停显示完整内容
+            }
+        });
     }
 
     /**
@@ -196,7 +205,12 @@ class WordFilterApp {
 
             // 读取文件
             const fileResult = await this.fileUtils.readFile(file);
-            this.currentWords = fileResult.words || fileResult; // 兼容旧格式
+
+            // 调试信息
+            console.log('文件读取结果:', fileResult);
+
+            // 确保 currentWords 被正确设置
+            this.currentWords = Array.isArray(fileResult.words) ? fileResult.words : [];
             this.currentFile = file;
             this.fileStats = fileResult.invalidCount !== undefined ? fileResult : null;
 
@@ -216,6 +230,13 @@ class WordFilterApp {
             }
             this.showMessage(message, 'success');
 
+            // 调试信息
+            console.log('文件选择后的状态:', {
+                currentWords: this.currentWords,
+                currentFile: this.currentFile,
+                fileStats: this.fileStats
+            });
+
         } catch (error) {
             console.error('文件读取错误:', error);
             this.showMessage(`文件读取失败: ${error.message}`, 'error');
@@ -231,14 +252,36 @@ class WordFilterApp {
      */
     handleRuleChange(event) {
         const ruleName = event.target.value;
+
+        // 调试信息
+        console.log('规则选择变化:', ruleName);
+
         if (ruleName) {
-            this.showRulePreview(ruleName);
-            // 滚动到规则区域
-            document.querySelector('.rule-section').scrollIntoView({ behavior: 'smooth' });
+            // 确保规则存在
+            const rule = this.ruleEngine.getRule(ruleName);
+            if (rule) {
+                this.showRulePreview(ruleName);
+                // 滚动到规则区域
+                document.querySelector('.rule-section').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                this.hideRulePreview();
+                this.showMessage('规则不存在', 'error');
+                // 重置选择器
+                event.target.value = '';
+            }
         } else {
             this.hideRulePreview();
         }
+
+        // 更新生成按钮状态
         this.updateGenerateButton();
+
+        // 调试信息
+        console.log('规则选择变化后的按钮状态:', {
+            hasFile: this.currentWords && this.currentWords.length > 0,
+            ruleName: ruleName,
+            hasRule: ruleName && this.ruleEngine.getRule(ruleName)
+        });
     }
 
     /**
@@ -342,10 +385,19 @@ class WordFilterApp {
      */
     updateGenerateButton() {
         const generateBtn = document.getElementById('generateBtn');
-        const hasFile = this.currentWords.length > 0;
-        const hasRule = document.getElementById('ruleSelect').value;
+        const hasFile = this.currentWords && this.currentWords.length > 0;
+        const ruleName = document.getElementById('ruleSelect').value;
+        const hasRule = ruleName && this.ruleEngine.getRule(ruleName);
 
         generateBtn.disabled = !hasFile || !hasRule;
+
+        // 调试信息
+        console.log('更新生成按钮状态:', {
+            hasFile,
+            ruleName,
+            hasRule,
+            disabled: !hasFile || !hasRule
+        });
     }
 
     /**
@@ -751,6 +803,10 @@ class WordFilterApp {
      */
     loadSavedRules() {
         this.ruleEngine.loadSavedRules();
+        // 确保规则加载完成后再更新选择器
+        this.updateRuleSelector();
+        // 更新生成按钮状态
+        this.updateGenerateButton();
     }
 
     /**
@@ -779,22 +835,72 @@ class WordFilterApp {
             }
         });
 
+        // 动态截断函数
+        function getTruncatedText(text, maxWidth, font) {
+            if (!text) return '';
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.font = font || '16px Arial';
+            if (ctx.measureText(text).width <= maxWidth) return text;
+            let truncated = '';
+            for (let i = 0; i < text.length; i++) {
+                let test = truncated + text[i];
+                if (ctx.measureText(test + '...').width > maxWidth) break;
+                truncated = test;
+            }
+            return truncated + '...';
+        }
+
+        // 获取select宽度和字体
+        const selectWidth = ruleSelect.offsetWidth || 200;
+        const font = window.getComputedStyle(ruleSelect).font || '16px Arial';
+        // 名字和注释各占一半宽度
+        const nameWidth = selectWidth * 0.5;
+        const commentWidth = selectWidth * 0.5;
+
         // 添加规则选项
         orderedRules.forEach(name => {
             const rule = this.ruleEngine.getRule(name);
-            const option = document.createElement('option');
-            option.value = name;
+            if (rule) {
+                const option = document.createElement('option');
+                option.value = name;
 
-            // 显示规则名称和注释（如果有的话）
-            let displayText = name;
-            if (rule && rule.comment) {
-                const truncatedComment = rule.comment.length > 20 ? rule.comment.substring(0, 20) + '...' : rule.comment;
-                displayText += ` (${truncatedComment})`;
+                // 动态截断
+                let displayName = getTruncatedText(name, nameWidth, font);
+                let displayComment = '';
+                if (rule.comment) {
+                    displayComment = getTruncatedText(rule.comment, commentWidth, font);
+                }
+                let displayText = displayName;
+                if (displayComment) {
+                    displayText += ` (${displayComment})`;
+                }
+                option.textContent = displayText;
+                option.title = `${name}${rule.comment ? '（' + rule.comment + '）' : ''}`;
+                ruleSelect.appendChild(option);
             }
-
-            option.textContent = displayText;
-            ruleSelect.appendChild(option);
         });
+
+        // 选中后 select 框显示的内容也做截断，鼠标悬停显示完整内容
+        ruleSelect.addEventListener('change', function () {
+            const selectedOption = ruleSelect.options[ruleSelect.selectedIndex];
+            if (selectedOption) {
+                ruleSelect.title = selectedOption.title;
+            }
+        });
+        // 初始化时也设置一次 title
+        if (ruleSelect.selectedIndex >= 0) {
+            const selectedOption = ruleSelect.options[ruleSelect.selectedIndex];
+            if (selectedOption) {
+                ruleSelect.title = selectedOption.title;
+            }
+        }
+
+        // 响应式：窗口大小变化时重新渲染
+        if (!ruleSelect._resizeHandlerAdded) {
+            window.addEventListener('resize', () => this.updateRuleSelector());
+            ruleSelect._resizeHandlerAdded = true;
+        }
     }
 
     /**
