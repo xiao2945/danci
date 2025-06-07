@@ -191,6 +191,8 @@ class RuleEngine {
         // 4. 验证排序规则中的集合引用
         if (rule.displayRule) {
             this.validateSortRuleReferences(rule.displayRule, rule.localSets, rule.specificRule.startsWith('::'));
+            // 验证新的排序规则格式
+            this.validateNewSortRuleFormat(rule.displayRule);
         }
 
         // 5. 验证规则名称格式
@@ -309,7 +311,8 @@ class RuleEngine {
 
         // 解析排序规则
         try {
-            const sortGroups = this.parseSortRule(sortRule);
+            const parseResult = this.parseSortRule(sortRule);
+            const sortGroups = parseResult.groups;
 
             // 检查排序层级（最多三级）
             if (sortGroups.length > 3) {
@@ -1322,11 +1325,13 @@ class RuleEngine {
             const element = pattern[patternIndex];
 
             if (element.type === 'literal') {
-                // 字面字符匹配
-                if (wordIndex >= word.length || word[wordIndex] !== element.value) {
+                // 字面字符串匹配（支持多字符）
+                const literalLength = element.value.length;
+                if (wordIndex + literalLength > word.length || 
+                    word.substring(wordIndex, wordIndex + literalLength) !== element.value) {
                     return false;
                 }
-                wordIndex++;
+                wordIndex += literalLength;
             } else if (element.type === 'set') {
                 // 集合匹配 - 支持多字符字符串匹配
                 let matched = false;
@@ -1417,7 +1422,7 @@ class RuleEngine {
         let length = 0;
         for (const element of pattern) {
             if (element.type === 'literal') {
-                length++;
+                length += element.value.length;
             } else if (element.type === 'set') {
                 // 对于集合，找到最短的元素长度
                 let minElementLength = 1;
@@ -1448,13 +1453,10 @@ class RuleEngine {
         // 解析排序规则
         const sortRule = displayRule.substring(1); // 去掉@符号
 
-        // 处理@-的情况（倒序字母排序）
-        if (sortRule === '-' || sortRule === '') {
-            if (sortRule === '-') {
-                return this.sortByAlphabet(words, true); // 倒序
-            } else {
-                return this.sortByAlphabet(words); // 正序
-            }
+        // 处理基础字母排序和不分组排序
+        if (sortRule === '-' || sortRule === '' || sortRule === '!' || sortRule === '!-') {
+            const descending = sortRule === '-' || sortRule === '!-';
+            return this.sortByAlphabet(words, descending);
         }
 
         // 解析集合排序规则
@@ -1537,7 +1539,8 @@ class RuleEngine {
      */
     sortBySetGroups(words, sortRule, localSets = new Map()) {
         // 解析排序规则，提取集合名称和排序方向
-        const sortGroups = this.parseSortRule(sortRule);
+        const parseResult = this.parseSortRule(sortRule);
+        const { groups: sortGroups, isAdjacent, hasNonGrouping } = parseResult;
 
         if (sortGroups.length === 0) {
             return this.sortByAlphabet(words);
@@ -1545,7 +1548,7 @@ class RuleEngine {
 
         // 为每个单词计算分组键
         const wordsWithKeys = words.map(word => {
-            const groupKeys = this.calculateGroupKeys(word, sortGroups, localSets);
+            const groupKeys = this.calculateGroupKeys(word, sortGroups, localSets, isAdjacent, hasNonGrouping);
             return { word, groupKeys, isValid: groupKeys !== null };
         });
 
@@ -1558,9 +1561,19 @@ class RuleEngine {
 
         // 按分组键排序（只对有效单词排序）
         validWords.sort((a, b) => {
+            // 处理新的分组键结构
+            let keysA, keysB;
+            if (hasNonGrouping && typeof a.groupKeys === 'object' && a.groupKeys.allKeys) {
+                keysA = a.groupKeys.allKeys;
+                keysB = b.groupKeys.allKeys;
+            } else {
+                keysA = a.groupKeys;
+                keysB = b.groupKeys;
+            }
+
             for (let i = 0; i < sortGroups.length; i++) {
-                const keyA = a.groupKeys[i];
-                const keyB = b.groupKeys[i];
+                const keyA = keysA[i];
+                const keyB = keysB[i];
 
                 if (keyA !== keyB) {
                     const comparison = keyA.localeCompare(keyB);
@@ -1582,50 +1595,84 @@ class RuleEngine {
     /**
      * 解析排序规则
      * @param {string} sortRule - 排序规则字符串
-     * @returns {Array} 解析后的排序组
+     * @returns {Object} 解析后的排序组和相关标志
      */
     parseSortRule(sortRule) {
+        // 检查是否是有序紧邻模式（@@开头）
+        const isAdjacent = sortRule.startsWith('@@');
+        let actualRule = sortRule;
+        
+        if (isAdjacent) {
+            actualRule = sortRule.substring(2); // 移除@@前缀
+        }
+        
+        // 检查是否有!标志（不分组标志）
+        let nonGroupingFromIndex = -1;
+        if (actualRule.includes('!')) {
+            nonGroupingFromIndex = actualRule.indexOf('!');
+            actualRule = actualRule.replace('!', ''); // 移除!标志
+        }
+        
         const groups = [];
         let i = 0;
+        let currentGroupIndex = 0;
 
-        while (i < sortRule.length) {
+        while (i < actualRule.length) {
             let descending = false;
+            let nonGrouping = false;
 
             // 检查是否有负号
-            if (sortRule[i] === '-') {
+            if (actualRule[i] === '-') {
                 descending = true;
                 i++;
             }
 
-            if (i >= sortRule.length) break;
+            if (i >= actualRule.length) break;
+
+            // 检查当前集合是否应该不分组
+            if (nonGroupingFromIndex !== -1 && currentGroupIndex >= nonGroupingFromIndex) {
+                nonGrouping = true;
+            }
 
             let setName = '';
-            let positionFlag = '^'; // 默认为前缀匹配，向后兼容
+            let positionFlag = isAdjacent ? '*' : '^'; // @@模式默认为*，@模式默认为^
 
             // 检查是否是括号引用的集合
-            if (sortRule[i] === '(') {
-                const closeIndex = sortRule.indexOf(')', i);
+            if (actualRule[i] === '(') {
+                const closeIndex = actualRule.indexOf(')', i);
                 if (closeIndex === -1) {
                     throw new Error(`排序规则中括号不匹配: ${sortRule}`);
                 }
-                const content = sortRule.substring(i + 1, closeIndex);
+                const content = actualRule.substring(i + 1, closeIndex);
 
                 // 解析集合名和位置标识符
                 const result = this.parseSetNameWithPosition(content);
                 setName = result.setName;
-                positionFlag = result.positionFlag;
+                positionFlag = result.positionFlag || positionFlag; // 如果没有显式位置标识符，使用默认值
 
                 i = closeIndex + 1;
             } else {
                 // 单字母集合，可能带位置标识符
-                const result = this.parseSetNameWithPosition(sortRule.substring(i));
+                const result = this.parseSetNameWithPosition(actualRule.substring(i));
                 setName = result.setName;
-                positionFlag = result.positionFlag;
+                positionFlag = result.positionFlag || positionFlag; // 如果没有显式位置标识符，使用默认值
                 i += result.consumed;
+                
+                // 如果集合名长度大于1且没有位置标识符，可能是连续的单字母集合
+                if (setName.length > 1 && result.positionFlag === null && result.consumed === setName.length) {
+                    // 将多字母集合拆分为单个字母集合
+                    for (let j = 0; j < setName.length; j++) {
+                        const groupNonGrouping = nonGroupingFromIndex !== -1 && currentGroupIndex >= nonGroupingFromIndex;
+                        groups.push({ setName: setName[j], positionFlag: positionFlag, descending, nonGrouping: groupNonGrouping });
+                        currentGroupIndex++;
+                    }
+                    setName = ''; // 清空，避免重复添加
+                }
             }
 
             if (setName) {
-                groups.push({ setName, positionFlag, descending });
+                groups.push({ setName, positionFlag, descending, nonGrouping });
+                currentGroupIndex++;
             }
         }
 
@@ -1634,7 +1681,7 @@ class RuleEngine {
             throw new Error(`排序规则层数超过限制，最多允许三级排序，当前为 ${groups.length} 级`);
         }
 
-        return groups;
+        return { groups, isAdjacent, hasNonGrouping: nonGroupingFromIndex !== -1 };
     }
 
     /**
@@ -1644,7 +1691,7 @@ class RuleEngine {
      */
     parseSetNameWithPosition(content) {
         let setName = '';
-        let positionFlag = '^'; // 默认前缀匹配
+        let positionFlag = null; // 默认为null，表示没有显式位置标识符
         let consumed = 0;
 
         // 提取集合名（字母开头，可包含数字）
@@ -1670,9 +1717,34 @@ class RuleEngine {
      * @param {string} word - 单词
      * @param {Array} sortGroups - 排序组
      * @param {Map} localSets - 局部集合映射
+     * @param {boolean} isAdjacent - 是否为紧邻模式
+     * @param {boolean} hasNonGrouping - 是否有不分组标志
      * @returns {Array} 分组键数组
      */
-    calculateGroupKeys(word, sortGroups, localSets = new Map()) {
+    calculateGroupKeys(word, sortGroups, localSets = new Map(), isAdjacent = false, hasNonGrouping = false) {
+        if (isAdjacent && sortGroups.length === 2) {
+            // 有序紧邻模式：两个集合必须相邻匹配
+            const result = this.findAdjacentMatch(word, sortGroups, localSets);
+            if (result.success) {
+                // 根据!标志决定返回的分组键
+                if (hasNonGrouping) {
+                    // 如果有!标志，只返回用于排序的键，不用于分组
+                    const groupingKeys = [];
+                    const sortingKeys = [];
+                    for (let i = 0; i < sortGroups.length; i++) {
+                        if (sortGroups[i].nonGrouping) {
+                            sortingKeys.push(result.groupKeys[i]);
+                        } else {
+                            groupingKeys.push(result.groupKeys[i]);
+                        }
+                    }
+                    return { groupingKeys, sortingKeys, allKeys: result.groupKeys };
+                }
+                return result.groupKeys;
+            }
+            return null;
+        }
+
         const keys = [];
         let lastMatchEnd = 0; // 记录上一个匹配的结束位置
 
@@ -1688,7 +1760,205 @@ class RuleEngine {
             }
         }
 
+        // 根据!标志决定返回的分组键
+        if (hasNonGrouping) {
+            const groupingKeys = [];
+            const sortingKeys = [];
+            for (let i = 0; i < sortGroups.length; i++) {
+                if (sortGroups[i].nonGrouping) {
+                    sortingKeys.push(keys[i]);
+                } else {
+                    groupingKeys.push(keys[i]);
+                }
+            }
+            return { groupingKeys, sortingKeys, allKeys: keys };
+        }
+
         return keys;
+    }
+
+    /**
+     * 查找有序紧邻匹配
+     * @param {string} word - 单词
+     * @param {Array} sortGroups - 排序组（必须是两个）
+     * @param {Map} localSets - 局部集合映射
+     * @returns {Object} 包含成功标志和分组键的对象
+     */
+    findAdjacentMatch(word, sortGroups, localSets) {
+        if (sortGroups.length !== 2) {
+            return { success: false, groupKeys: null };
+        }
+
+        const [group1, group2] = sortGroups;
+        
+        // 检查无效的位置标志组合
+        if (group1.positionFlag === '$' || group2.positionFlag === '^') {
+            return { success: false, groupKeys: null }; // 不符合紧邻逻辑的组合
+        }
+        
+        const set1 = this.getSet(group1.setName, localSets);
+        const set2 = this.getSet(group2.setName, localSets);
+
+        if (!set1 || !set2) {
+            return { success: false, groupKeys: null };
+        }
+
+        // 遍历单词的每个位置，寻找相邻匹配
+        for (let i = 0; i < word.length - 1; i++) {
+            // 检查第一个集合的匹配
+            const match1 = this.findMatchAtPosition(word, set1, group1.positionFlag, i);
+            if (match1.found) {
+                // 检查第二个集合是否在紧邻位置匹配
+                const nextPos = match1.endPosition;
+                if (nextPos < word.length) {
+                    const match2 = this.findMatchAtPosition(word, set2, group2.positionFlag, nextPos);
+                    if (match2.found && match2.startPosition === nextPos) {
+                        return {
+                            success: true,
+                            groupKeys: [match1.element, match2.element]
+                        };
+                    }
+                }
+            }
+        }
+
+        return { success: false, groupKeys: null };
+    }
+
+    /**
+     * 在指定位置查找集合匹配
+     * @param {string} word - 单词
+     * @param {Set} set - 集合
+     * @param {string} positionFlag - 位置标识符
+     * @param {number} startPos - 起始位置
+     * @returns {Object} 匹配结果
+     */
+    findMatchAtPosition(word, set, positionFlag, startPos) {
+        for (const element of set) {
+            const elementLower = element.toLowerCase();
+            let found = false;
+            let actualStart = startPos;
+            let actualEnd = startPos;
+
+            switch (positionFlag) {
+                case '^': // 前缀匹配
+                    if (startPos === 0 && word.toLowerCase().startsWith(elementLower)) {
+                        found = true;
+                        actualEnd = elementLower.length;
+                    }
+                    break;
+                case '$': // 后缀匹配
+                    if (word.toLowerCase().endsWith(elementLower)) {
+                        const endPos = word.length - elementLower.length;
+                        if (endPos >= startPos) {
+                            found = true;
+                            actualStart = endPos;
+                            actualEnd = word.length;
+                        }
+                    }
+                    break;
+                case '*': // 包含匹配
+                    const index = word.toLowerCase().indexOf(elementLower, startPos);
+                    if (index >= startPos) {
+                        found = true;
+                        actualStart = index;
+                        actualEnd = index + elementLower.length;
+                    }
+                    break;
+                case '~': // 严格中间匹配
+                    const midIndex = word.toLowerCase().indexOf(elementLower, startPos);
+                    if (midIndex > 0 && midIndex + elementLower.length < word.length && midIndex >= startPos) {
+                        found = true;
+                        actualStart = midIndex;
+                        actualEnd = midIndex + elementLower.length;
+                    }
+                    break;
+            }
+
+            if (found) {
+                return {
+                    found: true,
+                    element: elementLower,
+                    startPosition: actualStart,
+                    endPosition: actualEnd
+                };
+            }
+        }
+
+        return { found: false, element: null, startPosition: -1, endPosition: -1 };
+    }
+
+    /**
+     * 验证新的排序规则格式
+     * @param {string} displayRule - 显示规则
+     */
+    validateNewSortRuleFormat(displayRule) {
+        if (!displayRule.startsWith('@')) {
+            return; // 非排序规则，无需验证
+        }
+
+        const sortRule = displayRule.substring(1);
+        if (sortRule === '' || sortRule === '-' || sortRule === '!' || sortRule === '!-') {
+            return; // 基础字母排序或不分组排序，无需验证
+        }
+
+        try {
+            const parseResult = this.parseSortRule(sortRule);
+            const { groups, isAdjacent } = parseResult;
+
+            if (isAdjacent) {
+                // 验证@@模式：必须是两个集合
+                if (groups.length !== 2) {
+                    throw new Error(`有序紧邻模式（@@）只支持两个集合，当前为 ${groups.length} 个集合`);
+                }
+                
+                // 验证@@模式中的位置标识符限制
+                const [group1, group2] = groups;
+                
+                // 硬性限制：第一个集合不能使用$
+                if (group1.positionFlag === '$') {
+                    throw new Error(`有序紧邻模式（@@）中第一个集合不能使用后缀匹配标识符（$）`);
+                }
+                
+                // 硬性限制：第二个集合不能使用^
+                if (group2.positionFlag === '^') {
+                    throw new Error(`有序紧邻模式（@@）中第二个集合不能使用前缀匹配标识符（^）`);
+                }
+            } else {
+                 // 验证@模式：强制要求位置标识符（除了单级排序）
+                 if (groups.length > 1) {
+                     for (const group of groups) {
+                         if (!this.hasExplicitPositionFlag(group.setName, sortRule)) {
+                             throw new Error(`多级有序宽松模式（@）中的集合 "${group.setName}" 必须包含位置标识符（^, $, *, ~）`);
+                         }
+                     }
+                 }
+             }
+        } catch (error) {
+            throw new Error(`排序规则格式错误: ${error.message}`);
+        }
+    }
+
+    /**
+     * 检查集合名是否有显式位置标识符
+     * @param {string} setName - 集合名
+     * @param {string} sortRule - 完整排序规则
+     * @returns {boolean} 是否有显式位置标识符
+     */
+    hasExplicitPositionFlag(setName, sortRule) {
+        // 检查括号形式：(setName^), (setName$), (setName*), (setName~)
+        const bracketPattern = new RegExp(`\\(${setName}[\^\$\*\~]\\)`);
+        if (bracketPattern.test(sortRule)) {
+            return true;
+        }
+        
+        // 检查单字母形式：setName^, setName$, setName*, setName~
+        const directPattern = new RegExp(`${setName}[\^\$\*\~]`);
+        if (directPattern.test(sortRule)) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
@@ -1798,9 +2068,14 @@ class RuleEngine {
             return '规则不存在';
         }
 
-        let preview = `规则名称: ${rule.name}`;
+        // 截断规则名称，最多显示20个字符
+        const truncatedName = rule.name.length > 20 ? rule.name.substring(0, 20) + '...' : rule.name;
+        let preview = `规则名称: ${truncatedName}`;
+
         if (rule.comment) {
-            preview += `\n注释内容: ${rule.comment}`;
+            // 截断注释内容，最多显示40个字符
+            const truncatedComment = rule.comment.length > 40 ? rule.comment.substring(0, 40) + '...' : rule.comment;
+            preview += `\n注释内容: ${truncatedComment}`;
         }
         preview += '\n';
 
@@ -1808,8 +2083,8 @@ class RuleEngine {
         if (this.globalSets.size > 0) {
             preview += '\n全局集合定义:\n';
             for (const [setName, setValues] of this.globalSets) {
-                const values = Array.from(setValues).slice(0, 10).join(', ');
-                const more = setValues.size > 10 ? '...' : '';
+                const values = Array.from(setValues).slice(0, 26).join(', ');
+                const more = setValues.size > 26 ? '...' : '';
                 preview += `${setName} == {${values}${more}}\n`;
             }
         }
@@ -1818,8 +2093,8 @@ class RuleEngine {
         if (rule.localSets.size > 0) {
             preview += '\n局部集合定义:\n';
             for (const [setName, setValues] of rule.localSets) {
-                const values = Array.from(setValues).slice(0, 10).join(', ');
-                const more = setValues.size > 10 ? '...' : '';
+                const values = Array.from(setValues).slice(0, 26).join(', ');
+                const more = setValues.size > 26 ? '...' : '';
                 preview += `${setName} == {${values}${more}}\n`;
             }
         }
@@ -1832,4 +2107,9 @@ class RuleEngine {
 
         return preview;
     }
+}
+
+// Node.js 模块导出
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = RuleEngine;
 }

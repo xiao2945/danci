@@ -282,8 +282,9 @@ class FileUtils {
      * @param {string} filename - 文件名
      * @param {Object} exportInfo - 导出信息（可选）
      * @param {Object} groupedWords - 分组信息（可选）
+     * @param {boolean} hasNonGrouping - 是否使用!标志（不分组）
      */
-    async exportToText(words, filename = 'filtered_words.txt', exportInfo = null, groupedWords = null) {
+    async exportToText(words, filename = 'filtered_words.txt', exportInfo = null, groupedWords = null, hasNonGrouping = false) {
         let content = '';
 
         // 添加头部信息
@@ -292,12 +293,17 @@ class FileUtils {
             content += '\n';
         }
 
-        // 如果有分组信息，按分组格式输出
-        if (groupedWords) {
-            content += this.generateGroupedContent(groupedWords, words);
-        } else {
-            // 添加单词列表
+        // 如果使用!标志，强制不分组显示
+        if (hasNonGrouping) {
             content += words.join('\n');
+        } else {
+            // 如果有分组信息，按分组格式输出
+            if (groupedWords) {
+                content += this.generateGroupedContent(groupedWords, words);
+            } else {
+                // 添加单词列表
+                content += words.join('\n');
+            }
         }
 
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -310,8 +316,9 @@ class FileUtils {
      * @param {string} filename - 文件名
      * @param {Object} exportInfo - 导出信息（可选）
      * @param {Object} groupedWords - 分组信息（可选）
+     * @param {boolean} hasNonGrouping - 是否使用!标志（不分组）
      */
-    async exportToExcel(words, filename = 'filtered_words.xlsx', exportInfo = null, groupedWords = null) {
+    async exportToExcel(words, filename = 'filtered_words.xlsx', exportInfo = null, groupedWords = null, hasNonGrouping = false) {
         // 创建工作簿
         const workbook = XLSX.utils.book_new();
 
@@ -329,33 +336,41 @@ class FileUtils {
             data.push(['']); // 空行分隔
         }
 
-        // 如果有分组信息，按分组格式输出
-        if (groupedWords) {
-            // 检查是否有二级分组
-            const hasSecondLevel = this.hasSecondLevelGroups(groupedWords);
-
-            // 添加表头
-            if (hasSecondLevel) {
-                data.push(['一级分组', '二级分组', '单词']);
-            } else {
-                data.push(['分组', '单词']);
-            }
-            this.addGroupedDataToExcel(data, groupedWords, words, 0, '', hasSecondLevel);
-        } else {
-            // 添加表头
+        // 如果使用!标志，强制不分组显示
+        if (hasNonGrouping) {
             data.push(['单词']);
-
-            // 添加单词数据
             words.forEach(word => {
                 data.push([word]);
             });
+        } else {
+            // 如果有分组信息，按分组格式输出
+            if (groupedWords) {
+                // 检查是否有二级分组
+                const hasSecondLevel = this.hasSecondLevelGroups(groupedWords);
+
+                // 添加表头
+                if (hasSecondLevel) {
+                    data.push(['一级分组', '二级分组', '单词']);
+                } else {
+                    data.push(['分组', '单词']);
+                }
+                this.addGroupedDataToExcel(data, groupedWords, words, 0, '', hasSecondLevel);
+            } else {
+                // 添加表头
+                data.push(['单词']);
+
+                // 添加单词数据
+                words.forEach(word => {
+                    data.push([word]);
+                });
+            }
         }
 
         // 创建工作表
         const worksheet = XLSX.utils.aoa_to_sheet(data);
 
         // 设置列宽
-        if (groupedWords) {
+        if (!hasNonGrouping && groupedWords) {
             const hasSecondLevel = this.hasSecondLevelGroups(groupedWords);
             if (hasSecondLevel) {
                 worksheet['!cols'] = [{ width: 10 }, { width: 10 }, { width: 50 }];

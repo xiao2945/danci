@@ -981,47 +981,6 @@
         <p>正在处理...</p>
     </div>
 
-    <!-- 详细帮助模态框 -->
-    <div id="detailedHelpModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>规则语法详细帮助</h3>
-                <span class="close">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="help-content">
-                    <h4>基本语法</h4>
-                    <ul>
-                        <li><strong>#规则名</strong> - 定义规则名称</li>
-                        <li><strong>// 注释内容</strong> - 添加规则注释（可选，最多60字符）</li>
-                        <li><strong>集合定义</strong> - C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}</li>
-                        <li><strong>:具体规则</strong> - 定义匹配模式</li>
-                        <li><strong>@排序规则</strong> - 定义排序方式</li>
-                    </ul>
-                    <h4>位置标志</h4>
-                    <ul>
-                        <li><strong>\b</strong> - 单词开头</li>
-                        <li><strong>\e</strong> - 单词结尾</li>
-                        <li><strong>\m</strong> - 单词中间</li>
-                        <li><strong>\-b</strong> - 不在开头</li>
-                        <li><strong>\-e</strong> - 不在结尾</li>
-                    </ul>
-                    <h4>示例规则</h4>
-                    <pre>C=={b,c,d,f,g,h,j,k,l,m,n,p,q,r,s,t,v,w,x,y,z}
-V=={a,e,i,o,u}
-
-#CVC
-:\bCVC\e
-@
-
-#CVCE
-:\bCVC"e"\e
-@</pre>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 引入外部库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -1130,20 +1089,6 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
                     this.showDetailedHelp();
                 });
 
-                // 详细帮助模态框关闭事件
-                const detailedHelpModal = document.getElementById('detailedHelpModal');
-                const closeBtn = detailedHelpModal.querySelector('.close');
-
-                closeBtn.addEventListener('click', () => {
-                    detailedHelpModal.style.display = 'none';
-                });
-
-                // 点击模态框外部关闭
-                window.addEventListener('click', (event) => {
-                    if (event.target === detailedHelpModal) {
-                        detailedHelpModal.style.display = 'none';
-                    }
-                });
             }
 
             saveRule() {

@@ -453,7 +453,37 @@ class WordFilterApp {
         const groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
 
         let html = '';
-        html += this.renderWordGroups(groupedWords, 0);
+        
+        if (groupedWords === null) {
+            // 不分组显示，直接列出所有单词
+            const activeWords = this.filteredWords.filter((word, index) => {
+                return !this.deletedWords.has(index);
+            });
+            
+            html += `
+                <div class="word-group">
+                    <div class="group-title level-0">
+                        单词列表 (${activeWords.length}/${this.filteredWords.length})
+                    </div>
+                    <div class="word-list">
+                        ${this.filteredWords.map((word, index) => {
+                            const isDeleted = this.deletedWords.has(index);
+                            return `
+                                <div class="word-item ${isDeleted ? 'deleted' : ''}" data-index="${index}">
+                                    <span class="word-text">${word}</span>
+                                    <button class="delete-btn" onclick="app.toggleWordDelete(${index})" title="${isDeleted ? '恢复' : '删除'}">
+                                        ${isDeleted ? '↶' : '×'}
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            // 分组显示
+            html += this.renderWordGroups(groupedWords, 0);
+        }
 
         container.innerHTML = html;
     }
@@ -632,7 +662,13 @@ class WordFilterApp {
         const groups = {};
 
         // 解析排序规则（如果传入的是字符串）
-        const sortGroups = Array.isArray(sortRule) ? sortRule : this.ruleEngine.parseSortRule(sortRule);
+        let sortGroups;
+        if (Array.isArray(sortRule)) {
+            sortGroups = sortRule;
+        } else {
+            const parseResult = this.ruleEngine.parseSortRule(sortRule);
+            sortGroups = parseResult.groups;
+        }
 
         if (sortGroups.length === 0) {
             return this.groupWordsByFirstLetter(words);
@@ -747,13 +783,23 @@ class WordFilterApp {
                 exportedCount: activeWords.length
             };
 
+            // 检测是否有!标志影响分组显示
+            let hasNonGrouping = false;
+            if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
+                const sortRule = rule.displayRule.substring(1);
+                // 检查是否包含!标志（但@-和@!-等基础排序除外）
+                if (sortRule.includes('!') && sortRule !== '!' && sortRule !== '!-') {
+                    hasNonGrouping = true;
+                }
+            }
+            
             // 获取分组信息
-            const groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
+            const groupedWords = hasNonGrouping ? null : this.groupWordsByFirstLetter(this.filteredWords);
 
             if (format === 'txt') {
-                await this.fileUtils.exportToText(activeWords, `${filename}.txt`, exportInfo, groupedWords);
+                await this.fileUtils.exportToText(activeWords, `${filename}.txt`, exportInfo, groupedWords, hasNonGrouping);
             } else if (format === 'excel') {
-                await this.fileUtils.exportToExcel(activeWords, `${filename}.xlsx`, exportInfo, groupedWords);
+                await this.fileUtils.exportToExcel(activeWords, `${filename}.xlsx`, exportInfo, groupedWords, hasNonGrouping);
             }
 
             this.showMessage(`结果已导出为 ${format.toUpperCase()} 文件 (${activeWords.length}个单词)`, 'success');
