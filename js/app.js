@@ -9,7 +9,11 @@ class WordFilterApp {
         this.currentWords = [];
         this.filteredWords = [];
         this.currentFile = null;
+        this.currentRule = null; // 当前活动规则
         this.deletedWords = new Set(); // 存储已删除单词的索引
+        this.searchTerm = '';
+        this.showDeleted = false;
+        this.searchHistory = [];
 
         this.initializeApp();
     }
@@ -136,6 +140,33 @@ class WordFilterApp {
             importRulesBtn2.addEventListener('click', () => this.importRules());
         }
 
+        // 绑定搜索框事件
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchTerm = e.target.value.toLowerCase();
+                this.displayWordList();
+                this.updateResultStats();
+            });
+            
+            // 添加搜索历史功能
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && this.searchTerm.trim()) {
+                    this.addToSearchHistory(this.searchTerm.trim());
+                }
+            });
+        }
+
+        // 绑定显示已删除单词复选框事件
+        const showDeletedCheckbox = document.getElementById('showDeletedCheckbox');
+        if (showDeletedCheckbox) {
+            showDeletedCheckbox.addEventListener('change', (e) => {
+                this.showDeleted = e.target.checked;
+                this.displayWordList();
+                this.updateResultStats();
+            });
+        }
+
         // 帮助按钮（如果存在）
         const helpBtn = document.getElementById('helpBtn');
         if (helpBtn) {
@@ -187,13 +218,17 @@ class WordFilterApp {
         const file = event.target.files[0];
         if (!file) {
             this.hideFileInfo();
+            this.hidePreprocessingInfo();
             return;
         }
 
         try {
+            // 在开始处理新文件前，先隐藏之前的预处理信息
+            this.hidePreprocessingInfo();
+
             // 验证文件格式
             if (!this.fileUtils.isSupportedFormat(file)) {
-                throw new Error('不支持的文件格式。请选择 .txt、.xlsx 或 .xls 文件。');
+                throw new Error('不支持的文件格式。请选择 .txt、.xlsx、.xls 或 .csv 文件。');
             }
 
             // 验证文件大小
@@ -213,6 +248,12 @@ class WordFilterApp {
             this.currentWords = Array.isArray(fileResult.words) ? fileResult.words : [];
             this.currentFile = file;
             this.fileStats = fileResult.invalidCount !== undefined ? fileResult : null;
+
+            // 加载删除状态
+            this.loadDeletedWordsState();
+            
+            // 加载搜索历史
+            this.loadSearchHistory();
 
             // 显示文件信息
             this.showFileInfo(file, this.currentWords.length);
@@ -241,6 +282,7 @@ class WordFilterApp {
             console.error('文件读取错误:', error);
             this.showMessage(`文件读取失败: ${error.message}`, 'error');
             this.hideFileInfo();
+            this.hidePreprocessingInfo();
         } finally {
             this.hideLoading();
         }
@@ -302,6 +344,9 @@ class WordFilterApp {
 
         try {
             this.showLoading('正在筛选单词...');
+
+            // 设置当前活动规则
+            this.currentRule = this.ruleEngine.getRule(ruleName);
 
             // 应用规则筛选
             this.filteredWords = this.ruleEngine.applyRule(this.currentWords, ruleName);
@@ -410,6 +455,9 @@ class WordFilterApp {
         // 显示单词列表
         this.displayWordList();
 
+        // 控制搜索框显示
+        this.toggleSearchControls();
+
         // 显示导出选项
         this.showExportOptions();
 
@@ -429,13 +477,62 @@ class WordFilterApp {
     updateResultStats() {
         const totalWords = this.currentWords.length;
         const filteredCount = this.filteredWords.length;
-        const deletedCount = this.deletedWords.size;
-        const activeCount = filteredCount - deletedCount;
+
+        // 应用搜索过滤
+        const searchFilteredWords = this.filterWords(this.filteredWords);
+        const searchFilteredCount = searchFilteredWords.length;
+
+        // 计算删除的单词数（在搜索结果中）
+        const deletedInSearchCount = searchFilteredWords.filter(word => {
+            const originalIndex = this.filteredWords.indexOf(word);
+            return this.deletedWords.has(originalIndex);
+        }).length;
+
+        const activeCount = searchFilteredCount - deletedInSearchCount;
         const filterRate = totalWords > 0 ? ((activeCount / totalWords) * 100).toFixed(1) : 0;
 
         document.getElementById('totalWords').textContent = totalWords;
-        document.getElementById('filteredWords').textContent = `${activeCount}${deletedCount > 0 ? ` (${deletedCount}已删除)` : ''}`;
+
+        if (this.searchTerm) {
+            document.getElementById('filteredWords').textContent = `${activeCount}${deletedInSearchCount > 0 ? ` (${deletedInSearchCount}已删除)` : ''} / 搜索结果: ${searchFilteredCount}`;
+        } else {
+            const totalDeletedCount = this.deletedWords.size;
+            document.getElementById('filteredWords').textContent = `${filteredCount - totalDeletedCount}${totalDeletedCount > 0 ? ` (${totalDeletedCount}已删除)` : ''}`;
+        }
+
         document.getElementById('filterRate').textContent = `${filterRate}%`;
+    }
+
+    /**
+     * 根据搜索词和显示设置过滤单词
+     * @param {Array} words - 要过滤的单词数组
+     * @returns {Array} 过滤后的单词数组
+     */
+    filterWords(words) {
+        let filtered = words;
+
+        // 根据搜索词过滤
+        if (this.searchTerm) {
+            filtered = filtered.filter(word =>
+                word.toLowerCase().includes(this.searchTerm)
+            );
+        }
+
+        return filtered;
+    }
+
+    /**
+     * 高亮搜索关键词
+     * @param {string} text - 要高亮的文本
+     * @returns {string} 高亮后的HTML
+     */
+    highlightSearchTerm(text) {
+        if (!this.searchTerm) {
+            return text;
+        }
+
+        const regex = new RegExp(`(${this.searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
     }
 
     /**
@@ -449,34 +546,45 @@ class WordFilterApp {
             return;
         }
 
+        // 应用搜索过滤
+        const searchFilteredWords = this.filterWords(this.filteredWords);
+
+        if (searchFilteredWords.length === 0) {
+            container.innerHTML = '<p class="no-results">没有找到匹配的单词</p>';
+            return;
+        }
+
         // 按首字母分组
-        const groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
+        const groupedWords = this.groupWordsByFirstLetter(searchFilteredWords);
 
         let html = '';
-        
+
         if (groupedWords === null) {
             // 不分组显示，直接列出所有单词
-            const activeWords = this.filteredWords.filter((word, index) => {
-                return !this.deletedWords.has(index);
-            });
-            
+            const displayWords = searchFilteredWords.map(word => {
+                const originalIndex = this.filteredWords.indexOf(word);
+                const isDeleted = this.deletedWords.has(originalIndex);
+                return { word, originalIndex, isDeleted };
+            }).filter(item => this.showDeleted || !item.isDeleted);
+
+            const activeWords = displayWords.filter(item => !item.isDeleted);
+
             html += `
                 <div class="word-group">
                     <div class="group-title level-0">
-                        单词列表 (${activeWords.length}/${this.filteredWords.length})
+                        单词列表 (${activeWords.length}/${displayWords.length})
                     </div>
                     <div class="word-list">
-                        ${this.filteredWords.map((word, index) => {
-                            const isDeleted = this.deletedWords.has(index);
-                            return `
-                                <div class="word-item ${isDeleted ? 'deleted' : ''}" data-index="${index}">
-                                    <span class="word-text">${word}</span>
-                                    <button class="delete-btn" onclick="app.toggleWordDelete(${index})" title="${isDeleted ? '恢复' : '删除'}">
-                                        ${isDeleted ? '↶' : '×'}
+                        ${displayWords.map(item => {
+                return `
+                                <div class="word-item ${item.isDeleted ? 'deleted' : ''}" data-index="${item.originalIndex}">
+                                    <span class="word-text">${this.highlightSearchTerm(item.word)}</span>
+                                    <button class="delete-btn" onclick="app.toggleWordDelete(${item.originalIndex})" title="${item.isDeleted ? '恢复' : '删除'}">
+                                        ${item.isDeleted ? '↶' : '×'}
                                     </button>
                                 </div>
                             `;
-                        }).join('')}
+            }).join('')}
                     </div>
                 </div>
             `;
@@ -486,6 +594,9 @@ class WordFilterApp {
         }
 
         container.innerHTML = html;
+        
+        // 加载折叠状态
+        this.loadCollapseStates();
     }
 
     /**
@@ -502,26 +613,27 @@ class WordFilterApp {
             // 检查content是否为数组（单词列表）还是对象（子分组）
             if (Array.isArray(content)) {
                 // 这是最终的单词列表
-                const activeWords = content.filter((word, index) => {
+                const displayWords = content.map(word => {
                     const globalIndex = this.filteredWords.indexOf(word);
-                    return !this.deletedWords.has(globalIndex);
-                });
+                    const isDeleted = this.deletedWords.has(globalIndex);
+                    return { word, globalIndex, isDeleted };
+                }).filter(item => this.showDeleted || !item.isDeleted);
+
+                const activeWords = displayWords.filter(item => !item.isDeleted);
 
                 const groupId = `group-${level}-${groupName.replace(/[^a-zA-Z0-9]/g, '')}-${Math.random().toString(36).substr(2, 9)}`;
                 html += `
-                    <div class="word-group" style="margin-left: ${level * 20}px;">
+                    <div class="word-group" style="margin-left: 0px;">
                         <div class="group-title level-${level} collapsible" onclick="app.toggleGroupCollapse('${groupId}')">
-                            ${groupName} (${activeWords.length}/${content.length})
+                            ${groupName} (${activeWords.length}/${displayWords.length})
                         </div>
                         <div class="word-list" id="${groupId}">
-                            ${content.map((word, index) => {
-                    const globalIndex = this.filteredWords.indexOf(word);
-                    const isDeleted = this.deletedWords.has(globalIndex);
+                            ${displayWords.map(item => {
                     return `
-                                    <div class="word-item ${isDeleted ? 'deleted' : ''}" data-index="${globalIndex}">
-                                        <span class="word-text">${word}</span>
-                                        <button class="delete-btn" onclick="app.toggleWordDelete(${globalIndex})" title="${isDeleted ? '恢复' : '删除'}">
-                                            ${isDeleted ? '↶' : '×'}
+                                    <div class="word-item ${item.isDeleted ? 'deleted' : ''}" data-index="${item.globalIndex}">
+                                        <span class="word-text">${this.highlightSearchTerm(item.word)}</span>
+                                        <button class="delete-btn" onclick="app.toggleWordDelete(${item.globalIndex})" title="${item.isDeleted ? '恢复' : '删除'}">
+                                            ${item.isDeleted ? '↶' : '×'}
                                         </button>
                                     </div>
                                 `;
@@ -536,7 +648,7 @@ class WordFilterApp {
 
                 const groupId = `group-${level}-${groupName.replace(/[^a-zA-Z0-9]/g, '')}-${Math.random().toString(36).substr(2, 9)}`;
                 html += `
-                    <div class="word-group" style="margin-left: ${level * 20}px;">
+                    <div class="word-group" style="margin-left: 0px;">
                         <div class="group-title level-${level} collapsible" onclick="app.toggleGroupCollapse('${groupId}')">
                             ${groupName} (${activeWords}/${totalWords})
                         </div>
@@ -792,7 +904,7 @@ class WordFilterApp {
                     hasNonGrouping = true;
                 }
             }
-            
+
             // 获取分组信息
             const groupedWords = hasNonGrouping ? null : this.groupWordsByFirstLetter(this.filteredWords);
 
@@ -964,6 +1076,14 @@ class WordFilterApp {
         return [];
     }
 
+    /**
+     * 保存规则排序到本地存储
+     * @param {Array} ruleOrder - 规则排序数组
+     */
+    saveRuleOrder(ruleOrder) {
+        localStorage.setItem('ruleOrder', JSON.stringify(ruleOrder));
+    }
+
     // 规则编辑和删除功能已移至独立页面
 
     /**
@@ -1053,6 +1173,16 @@ class WordFilterApp {
     }
 
     /**
+     * 隐藏文件预处理信息
+     */
+    hidePreprocessingInfo() {
+        const section = document.getElementById('preprocessingSection');
+        if (section) {
+            section.style.display = 'none';
+        }
+    }
+
+    /**
      * 切换单词删除状态
      * @param {number} index - 单词在filteredWords中的索引
      */
@@ -1063,13 +1193,90 @@ class WordFilterApp {
             this.deletedWords.add(index);
         }
 
+        // 保存删除状态到localStorage
+        this.saveDeletedWordsState();
+
         // 更新显示
         this.updateResultStats();
         this.displayWordList();
     }
 
     /**
-     * 切换分组折叠状态
+     * 保存删除状态到localStorage
+     */
+    saveDeletedWordsState() {
+        if (this.currentFile) {
+            const key = `deletedWords_${this.currentFile.name}`;
+            const deletedWordsArray = Array.from(this.deletedWords);
+            localStorage.setItem(key, JSON.stringify(deletedWordsArray));
+        }
+    }
+
+    /**
+     * 从localStorage加载删除状态
+     */
+    loadDeletedWordsState() {
+        if (this.currentFile) {
+            const key = `deletedWords_${this.currentFile.name}`;
+            const savedState = localStorage.getItem(key);
+            if (savedState) {
+                try {
+                    const deletedWordsArray = JSON.parse(savedState);
+                    this.deletedWords = new Set(deletedWordsArray);
+                } catch (error) {
+                    console.warn('加载删除状态失败:', error);
+                    this.deletedWords = new Set();
+                }
+            } else {
+                this.deletedWords = new Set();
+            }
+        }
+     }
+
+     /**
+      * 添加搜索词到搜索历史
+      * @param {string} searchTerm - 搜索词
+      */
+     addToSearchHistory(searchTerm) {
+         // 移除重复项
+         this.searchHistory = this.searchHistory.filter(term => term !== searchTerm);
+         
+         // 添加到开头
+         this.searchHistory.unshift(searchTerm);
+         
+         // 限制历史记录数量
+         if (this.searchHistory.length > 10) {
+             this.searchHistory = this.searchHistory.slice(0, 10);
+         }
+         
+         // 保存到localStorage
+         this.saveSearchHistory();
+     }
+
+     /**
+      * 保存搜索历史到localStorage
+      */
+     saveSearchHistory() {
+         localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
+     }
+
+     /**
+      * 从localStorage加载搜索历史
+      */
+     loadSearchHistory() {
+         try {
+             const saved = localStorage.getItem('searchHistory');
+             if (saved) {
+                 this.searchHistory = JSON.parse(saved);
+             }
+         } catch (error) {
+             console.warn('加载搜索历史失败:', error);
+             this.searchHistory = [];
+         }
+     }
+
+     /**
+      * 切换分组折叠状态
      * @param {string} groupId - 分组的ID
      */
     toggleGroupCollapse(groupId) {
@@ -1089,6 +1296,62 @@ class WordFilterApp {
                 groupContent.style.display = 'none';
                 groupTitle.classList.add('collapsed');
             }
+            
+            // 保存折叠状态
+            this.saveCollapseState(groupId, groupContent.style.display === 'none');
+        }
+    }
+
+    /**
+     * 保存折叠状态到localStorage
+     * @param {string} groupId - 分组ID
+     * @param {boolean} isCollapsed - 是否折叠
+     */
+    saveCollapseState(groupId, isCollapsed) {
+        if (this.currentFile) {
+            const key = `collapseState_${this.currentFile.name}`;
+            let collapseStates = {};
+            try {
+                const saved = localStorage.getItem(key);
+                if (saved) {
+                    collapseStates = JSON.parse(saved);
+                }
+            } catch (error) {
+                console.warn('加载折叠状态失败:', error);
+            }
+            
+            collapseStates[groupId] = isCollapsed;
+            localStorage.setItem(key, JSON.stringify(collapseStates));
+        }
+    }
+
+    /**
+     * 从localStorage加载折叠状态
+     */
+    loadCollapseStates() {
+        if (this.currentFile) {
+            const key = `collapseState_${this.currentFile.name}`;
+            try {
+                const saved = localStorage.getItem(key);
+                if (saved) {
+                    const collapseStates = JSON.parse(saved);
+                    
+                    // 应用保存的折叠状态
+                    setTimeout(() => {
+                        for (const [groupId, isCollapsed] of Object.entries(collapseStates)) {
+                            const groupContent = document.getElementById(groupId);
+                            const groupTitle = groupContent?.previousElementSibling;
+                            
+                            if (groupContent && groupTitle && isCollapsed) {
+                                groupContent.style.display = 'none';
+                                groupTitle.classList.add('collapsed');
+                            }
+                        }
+                    }, 100); // 延迟执行确保DOM已渲染
+                }
+            } catch (error) {
+                console.warn('加载折叠状态失败:', error);
+            }
         }
     }
 
@@ -1105,9 +1368,9 @@ class WordFilterApp {
         // 只有在有筛选结果时才显示批量操作按钮
         if (this.filteredWords.length > 0) {
             batchContainer.innerHTML = `
-                <button class="btn btn-danger" onclick="app.deleteAllWords()">全部删除</button>
-                <button class="btn btn-danger" onclick="app.restoreAllWords()">全部恢复</button>
-                <button class="btn btn-danger" onclick="app.clearDeleted()">清除已删除</button>
+                <button class="btn btn-danger" onclick="app.batchDeleteWords()">全部删除</button>
+                <button class="btn btn-danger" onclick="app.batchRestoreWords()">全部恢复</button>
+                <button class="btn btn-danger" onclick="app.batchClearWords()">清除已删除</button>
             `;
         }
     }
@@ -1121,21 +1384,25 @@ class WordFilterApp {
         batchDiv.className = 'batch-operations';
         batchDiv.innerHTML = `
             <div class="batch-buttons">
-                <button class="btn btn-danger" onclick="app.deleteAllWords()">全部删除</button>
-                <button class="btn btn-danger" onclick="app.restoreAllWords()">全部恢复</button>
-                <button class="btn btn-danger" onclick="app.clearDeleted()">清除已删除</button>
+                <button class="btn btn-danger" onclick="app.batchDeleteWords()">全部删除</button>
+                <button class="btn btn-danger" onclick="app.batchRestoreWords()">全部恢复</button>
+                <button class="btn btn-danger" onclick="app.batchClearWords()">清除已删除</button>
             </div>
         `;
         container.appendChild(batchDiv);
     }
 
     /**
-     * 删除所有单词
+     * 批量删除单词
      */
-    deleteAllWords() {
+    batchDeleteWords() {
         for (let i = 0; i < this.filteredWords.length; i++) {
             this.deletedWords.add(i);
         }
+
+        // 保存删除状态到localStorage
+        this.saveDeletedWordsState();
+
         this.updateResultStats();
         this.displayWordList();
         this.addBatchOperationButtonsInline(); // 更新按钮状态
@@ -1143,10 +1410,14 @@ class WordFilterApp {
     }
 
     /**
-     * 恢复所有单词
+     * 批量恢复单词
      */
-    restoreAllWords() {
+    batchRestoreWords() {
         this.deletedWords.clear();
+
+        // 保存删除状态到localStorage
+        this.saveDeletedWordsState();
+
         this.updateResultStats();
         this.displayWordList();
         this.addBatchOperationButtonsInline(); // 更新按钮状态
@@ -1154,9 +1425,9 @@ class WordFilterApp {
     }
 
     /**
-     * 清除已删除的单词（从列表中移除）
+     * 批量清除单词
      */
-    clearDeleted() {
+    batchClearWords() {
         if (this.deletedWords.size === 0) {
             this.showMessage('没有已删除的单词', 'warning');
             return;
@@ -1174,6 +1445,9 @@ class WordFilterApp {
 
         // 清空删除记录
         this.deletedWords.clear();
+
+        // 保存删除状态到localStorage
+        this.saveDeletedWordsState();
 
         // 更新显示
         this.updateResultStats();
@@ -1247,6 +1521,21 @@ class WordFilterApp {
         } catch (error) {
             console.error('导入规则失败:', error);
             this.showMessage('导入规则失败: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * 控制搜索框的显示和隐藏
+     */
+    toggleSearchControls() {
+        const resultControls = document.querySelector('.result-controls');
+        if (resultControls) {
+            // 只有当有筛选结果时才显示搜索框
+            if (this.filteredWords.length > 0) {
+                resultControls.style.display = 'block';
+            } else {
+                resultControls.style.display = 'none';
+            }
         }
     }
 }

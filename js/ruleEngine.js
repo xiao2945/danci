@@ -7,6 +7,11 @@ class RuleEngine {
         this.rules = new Map();
         this.globalSets = new Map();
         this.fileStorage = new FileStorageManager();
+        
+        // 内存缓存层：运行时缓存
+        this.compiledRules = new Map();
+        this.ruleCache = new Map();
+        
         this.loadDefaultSets();
     }
 
@@ -555,6 +560,38 @@ class RuleEngine {
         if (reservedKeywords.includes(ruleName)) {
             throw new Error(`规则名称 "${ruleName}" 是保留关键字，不能使用`);
         }
+    }
+
+    /**
+     * 实时预览规则效果
+     * @param {string} ruleName - 规则名称
+     * @returns {string} 规则预览内容
+     */
+    previewRule(ruleName) {
+        const rule = this.getRule(ruleName);
+        if (!rule) {
+            return '规则不存在';
+        }
+
+        let preview = `规则名称: ${rule.name}\n`;
+        if (rule.comment) {
+            preview += `注释: ${rule.comment}\n`;
+        }
+        
+        // 显示局部集合定义
+        if (rule.localSets.size > 0) {
+            preview += '\n局部集合:\n';
+            for (const [setName, setValues] of rule.localSets) {
+                preview += `  ${setName} = {${Array.from(setValues).join(', ')}}\n`;
+            }
+        }
+        
+        preview += `\n匹配规则: ${rule.specificRule}\n`;
+        if (rule.displayRule) {
+            preview += `排序规则: ${rule.displayRule}\n`;
+        }
+        
+        return preview;
     }
 
     /**
@@ -1327,7 +1364,7 @@ class RuleEngine {
             if (element.type === 'literal') {
                 // 字面字符串匹配（支持多字符）
                 const literalLength = element.value.length;
-                if (wordIndex + literalLength > word.length || 
+                if (wordIndex + literalLength > word.length ||
                     word.substring(wordIndex, wordIndex + literalLength) !== element.value) {
                     return false;
                 }
@@ -1601,38 +1638,45 @@ class RuleEngine {
         // 检查是否是有序紧邻模式（@@开头）
         const isAdjacent = sortRule.startsWith('@@');
         let actualRule = sortRule;
-        
+
         if (isAdjacent) {
             actualRule = sortRule.substring(2); // 移除@@前缀
         }
-        
+
         // 检查是否有!标志（不分组标志）
         let nonGroupingFromIndex = -1;
+        let nonGroupingPositions = [];
         if (actualRule.includes('!')) {
-            nonGroupingFromIndex = actualRule.indexOf('!');
-            actualRule = actualRule.replace('!', ''); // 移除!标志
+            // 记录所有!的位置
+            for (let pos = 0; pos < actualRule.length; pos++) {
+                if (actualRule[pos] === '!') {
+                    nonGroupingPositions.push(pos);
+                }
+            }
+            actualRule = actualRule.replace(/!/g, ''); // 移除所有!标志
         }
-        
+
         const groups = [];
         let i = 0;
         let currentGroupIndex = 0;
+        let originalPosition = 0; // 跟踪在原始字符串中的位置
 
         while (i < actualRule.length) {
             let descending = false;
             let nonGrouping = false;
+            let startI = i; // 记录循环开始时的位置
 
             // 检查是否有负号
             if (actualRule[i] === '-') {
                 descending = true;
                 i++;
+                originalPosition++;
             }
 
             if (i >= actualRule.length) break;
 
-            // 检查当前集合是否应该不分组
-            if (nonGroupingFromIndex !== -1 && currentGroupIndex >= nonGroupingFromIndex) {
-                nonGrouping = true;
-            }
+            // 检查当前位置是否有!标志（基于原始位置）
+            nonGrouping = nonGroupingPositions.some(pos => pos <= originalPosition);
 
             let setName = '';
             let positionFlag = isAdjacent ? '*' : '^'; // @@模式默认为*，@模式默认为^
@@ -1648,21 +1692,23 @@ class RuleEngine {
                 // 解析集合名和位置标识符
                 const result = this.parseSetNameWithPosition(content);
                 setName = result.setName;
-                positionFlag = result.positionFlag || positionFlag; // 如果没有显式位置标识符，使用默认值
+                positionFlag = result.positionFlag || positionFlag;
 
                 i = closeIndex + 1;
+                originalPosition = i;
             } else {
                 // 单字母集合，可能带位置标识符
                 const result = this.parseSetNameWithPosition(actualRule.substring(i));
                 setName = result.setName;
-                positionFlag = result.positionFlag || positionFlag; // 如果没有显式位置标识符，使用默认值
+                positionFlag = result.positionFlag || positionFlag;
                 i += result.consumed;
-                
+                originalPosition = i;
+
                 // 如果集合名长度大于1且没有位置标识符，可能是连续的单字母集合
                 if (setName.length > 1 && result.positionFlag === null && result.consumed === setName.length) {
                     // 将多字母集合拆分为单个字母集合
                     for (let j = 0; j < setName.length; j++) {
-                        const groupNonGrouping = nonGroupingFromIndex !== -1 && currentGroupIndex >= nonGroupingFromIndex;
+                        const groupNonGrouping = nonGroupingPositions.some(pos => pos <= originalPosition - setName.length + j);
                         groups.push({ setName: setName[j], positionFlag: positionFlag, descending, nonGrouping: groupNonGrouping });
                         currentGroupIndex++;
                     }
@@ -1674,6 +1720,13 @@ class RuleEngine {
                 groups.push({ setName, positionFlag, descending, nonGrouping });
                 currentGroupIndex++;
             }
+
+            // 防止死循环：如果位置没有前进，强制跳过当前字符
+            if (i === startI) {
+                console.warn(`解析排序规则时遇到无法识别的字符: '${actualRule[i]}' at position ${i}`);
+                i++; // 强制前进一位
+                originalPosition++;
+            }
         }
 
         // 限制排序分级层数，最多允许三级
@@ -1681,7 +1734,7 @@ class RuleEngine {
             throw new Error(`排序规则层数超过限制，最多允许三级排序，当前为 ${groups.length} 级`);
         }
 
-        return { groups, isAdjacent, hasNonGrouping: nonGroupingFromIndex !== -1 };
+        return { groups, isAdjacent, hasNonGrouping: nonGroupingPositions.length > 0 };
     }
 
     /**
@@ -1790,12 +1843,12 @@ class RuleEngine {
         }
 
         const [group1, group2] = sortGroups;
-        
+
         // 检查无效的位置标志组合
         if (group1.positionFlag === '$' || group2.positionFlag === '^') {
             return { success: false, groupKeys: null }; // 不符合紧邻逻辑的组合
         }
-        
+
         const set1 = this.getSet(group1.setName, localSets);
         const set2 = this.getSet(group2.setName, localSets);
 
@@ -1911,29 +1964,29 @@ class RuleEngine {
                 if (groups.length !== 2) {
                     throw new Error(`有序紧邻模式（@@）只支持两个集合，当前为 ${groups.length} 个集合`);
                 }
-                
+
                 // 验证@@模式中的位置标识符限制
                 const [group1, group2] = groups;
-                
+
                 // 硬性限制：第一个集合不能使用$
                 if (group1.positionFlag === '$') {
                     throw new Error(`有序紧邻模式（@@）中第一个集合不能使用后缀匹配标识符（$）`);
                 }
-                
+
                 // 硬性限制：第二个集合不能使用^
                 if (group2.positionFlag === '^') {
                     throw new Error(`有序紧邻模式（@@）中第二个集合不能使用前缀匹配标识符（^）`);
                 }
             } else {
-                 // 验证@模式：强制要求位置标识符（除了单级排序）
-                 if (groups.length > 1) {
-                     for (const group of groups) {
-                         if (!this.hasExplicitPositionFlag(group.setName, sortRule)) {
-                             throw new Error(`多级有序宽松模式（@）中的集合 "${group.setName}" 必须包含位置标识符（^, $, *, ~）`);
-                         }
-                     }
-                 }
-             }
+                // 验证@模式：强制要求位置标识符（除了单级排序）
+                if (groups.length > 1) {
+                    for (const group of groups) {
+                        if (!this.hasExplicitPositionFlag(group.setName, sortRule)) {
+                            throw new Error(`多级有序宽松模式（@）中的集合 "${group.setName}" 必须包含位置标识符（^, $, *, ~）`);
+                        }
+                    }
+                }
+            }
         } catch (error) {
             throw new Error(`排序规则格式错误: ${error.message}`);
         }
@@ -1945,19 +1998,28 @@ class RuleEngine {
      * @param {string} sortRule - 完整排序规则
      * @returns {boolean} 是否有显式位置标识符
      */
+
+    /*byR，2025-06-07，转义正则表达式中的特殊字符*/
+    escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     hasExplicitPositionFlag(setName, sortRule) {
+        const escapedSetName = this.escapeRegExp(setName);
+        
         // 检查括号形式：(setName^), (setName$), (setName*), (setName~)
-        const bracketPattern = new RegExp(`\\(${setName}[\^\$\*\~]\\)`);
+        const bracketPattern = new RegExp(`\\(${escapedSetName}[\\^\\$\\*\\~]\\)`);
         if (bracketPattern.test(sortRule)) {
             return true;
         }
-        
+
         // 检查单字母形式：setName^, setName$, setName*, setName~
-        const directPattern = new RegExp(`${setName}[\^\$\*\~]`);
+        // 使用单词边界确保精确匹配
+        const directPattern = new RegExp(`\\b${escapedSetName}[\\^\\$\\*\\~]`);
         if (directPattern.test(sortRule)) {
             return true;
         }
-        
+
         return false;
     }
 

@@ -4,7 +4,7 @@
  */
 class FileUtils {
     constructor() {
-        this.supportedFormats = ['xlsx', 'xls', 'txt'];
+        this.supportedFormats = ['xlsx', 'xls', 'txt', 'csv'];
     }
 
     /**
@@ -28,6 +28,8 @@ class FileUtils {
         try {
             if (extension === 'txt') {
                 return await this.readTextFile(file);
+            } else if (extension === 'csv') {
+                return await this.readCSVFile(file);
             } else if (extension === 'xlsx' || extension === 'xls') {
                 return await this.readExcelFile(file);
             } else {
@@ -57,6 +59,28 @@ class FileUtils {
                 }
             };
             reader.onerror = () => reject(new Error('文件读取失败'));
+            reader.readAsText(file, 'utf-8');
+        });
+    }
+
+    /**
+     * 读取CSV文件
+     * @param {File} file - 文件对象
+     * @returns {Promise<Object>} 包含单词数组和统计信息的对象
+     */
+    async readCSVFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const result = this.parseCSVContent(text);
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = () => reject(new Error('CSV文件读取失败'));
             reader.readAsText(file, 'utf-8');
         });
     }
@@ -159,6 +183,110 @@ class FileUtils {
             invalidWords: invalidWords.slice(0, 10), // 只保留前10个作为示例
             preprocessingSteps: preprocessingSteps.slice(0, 5) // 只保留前5个预处理步骤作为示例
         };
+    }
+
+    /**
+     * 解析CSV内容
+     * @param {string} text - CSV文本内容
+     * @returns {Object} 包含有效单词数组和统计信息的对象
+     */
+    parseCSVContent(text) {
+        const allWords = [];
+        const invalidWords = [];
+        const preprocessingSteps = [];
+
+        // 按行分割CSV内容
+        const lines = text.split(/\r?\n/)
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        for (const line of lines) {
+            // 简单的CSV解析：按逗号分割，处理引号包围的字段
+            const fields = this.parseCSVLine(line);
+            
+            for (const field of fields) {
+                if (field && typeof field === 'string' && field.trim().length > 0) {
+                    const cellContent = field.trim();
+                    
+                    // 第一步：预处理音标
+                    const phoneticProcessed = this.preprocessPhonetics(cellContent);
+                    if (phoneticProcessed !== cellContent) {
+                        preprocessingSteps.push(`音标分离: "${cellContent}" → "${phoneticProcessed}"`);
+                    }
+
+                    // 第二步：清理特殊字符
+                    const cleanedCell = this.cleanSpecialChars(phoneticProcessed);
+                    if (cleanedCell !== phoneticProcessed) {
+                        preprocessingSteps.push(`字符清理: "${phoneticProcessed}" → "${cleanedCell}"`);
+                    }
+
+                    // 第三步：分割单词（扩展分界符）
+                    const cellWords = cleanedCell.split(/[\s,;]+/)
+                        .map(word => word.trim())
+                        .filter(word => word.length > 0);
+
+                    // 分离有效和无效单词
+                    cellWords.forEach(word => {
+                        if (this.isValidWord(word)) {
+                            allWords.push(word);
+                        } else {
+                            invalidWords.push(word);
+                        }
+                    });
+                }
+            }
+        }
+
+        const validWords = this.removeDuplicates(allWords);
+        const duplicateCount = allWords.length - validWords.length;
+        const totalWords = allWords.length + invalidWords.length;
+        return {
+            words: validWords,
+            totalExtracted: totalWords,
+            validCount: validWords.length,
+            duplicateCount: duplicateCount,
+            invalidCount: invalidWords.length,
+            invalidWords: invalidWords.slice(0, 10),
+            preprocessingSteps: preprocessingSteps.slice(0, 5)
+        };
+    }
+
+    /**
+     * 解析CSV行，处理引号包围的字段
+     * @param {string} line - CSV行内容
+     * @returns {Array} 字段数组
+     */
+    parseCSVLine(line) {
+        const fields = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+            
+            if (char === '"') {
+                if (inQuotes && nextChar === '"') {
+                    // 转义的引号
+                    current += '"';
+                    i++; // 跳过下一个引号
+                } else {
+                    // 切换引号状态
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                // 字段分隔符
+                fields.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        
+        // 添加最后一个字段
+        fields.push(current);
+        
+        return fields;
     }
 
     /**

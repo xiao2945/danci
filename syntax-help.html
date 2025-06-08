@@ -459,8 +459,8 @@
 
             <h2>3. 具体规则</h2>
 
-            <p><strong>本质</strong>：基于<span style="color: red;">基础规则拼接</span>或<span
-                    style="color: red;">组合规则运算</span>得出的，用于匹配单词库内单词的<span style="color: red;">字符串集合</span>。</p>
+            <p><strong>本质</strong>：基于<span style="color: red;">基础规则</span>或<span
+                    style="color: red;">组合规则</span>得出的，用于匹配单词库内单词的<span style="color: red;">字符串集合</span>。</p>
             <h3>3.1 基础规则</h3>
 
             <p><strong>格式</strong>：以<code>:</code>开头，由位置标志（锚点）、集合组合而成。（如：<code>:\bLV</code>表示匹配前缀是任意字母+元音的单词）
@@ -505,12 +505,12 @@
 
             <h3>3.2 组合规则</h3>
 
-            <p><strong>格式</strong>：以<code>::</code>开头，由基础规则（规则名）、运算符组合而成。（如：<code>::A||B</code>表示匹配满足A规则或B规则的单词）
+            <p><strong>格式</strong>：以<code>::</code>开头，由规则名、运算符组合而成。（如：<code>::A||B</code>表示匹配满足A规则或B规则的单词）
             </p>
             <ul>
                 <li>规则名必须完全匹配。</li>
-                <li>只能引用已有的基础规则。</li>
-                <li>不允许引用已有的组合规则，即不允许嵌套。</li>
+                <li>只能引用已由基础规则创建的规则。</li>
+                <li>不允许引用由组合规则创建的规则，即不允许嵌套。</li>
                 <li>相关运算符只能用于组合规则，不能用于基础规则。</li>
             </ul>
 
@@ -795,8 +795,8 @@
 
             <h3>5.1 集合运算示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 局部集合定义 */</span>
-<span class="rule-name">#特殊辅音组合</span>
+            <p class="comment">/* 局部集合定义 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#特殊辅音组合</span>
 <span class="comment">//短元音（去掉u）</span>
 <span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
 <span class="set-definition">ShortV==V>>{u}</span>
@@ -805,83 +805,83 @@
 
             <h3>5.2 基础规则示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 位置标志 */</span>
-<span class="rule-name">#元音开头</span>
+            <p class="comment">/* 位置标志 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#元音开头</span>
 <span class="comment">//匹配以元音开头的单词</span>
 <span class="rule-content">:\bV</span>
 <span class="sort-rule">@</span></pre>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 完全匹配、字母逆序 */</span>
-<span class="rule-name">#CVC</span>
+            <p class="comment">/* 完全匹配、字母逆序 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#CVC</span>
 <span class="comment">//匹配辅音-元音-辅音模式的三字母单词</span>
 <span class="rule-content">:\bCVC\e</span>
 <span class="sort-rule">@-</span></pre>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 字面字符、元音分组 */</span>
-<span class="rule-name">#CVCE</span>
+            <p class="comment">/* 字面字符、元音分组 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#CVCE</span>
 <span class="comment">//匹配辅音-元音-辅音-e模式的四字母单词</span>
 <span class="rule-content">:\bCVC"e"\e</span>
 <span class="sort-rule">@V*</span></pre>
 
             <h3>5.3 组合规则示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 组合规则：CVC或CVCE */</span>
-<span class="rule-name">#CVC或CVCE</span>
+            <p class="comment">/* 组合规则：CVC或CVCE */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#CVC或CVCE</span>
 <span class="comment">//匹配CVC模式或CVCE模式的单词</span>
 <span class="rule-content">::CVC||CVCE</span>
 <span class="sort-rule">@</span></pre>
 
             <h3>5.4 基础排序示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 无分组排序 */</span>
-<span class="rule-name">#无分组正序</span>
+            <p class="comment">/* 无分组排序 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#无分组正序</span>
 <span class="comment">//匹配所有单词，按字母顺序排列但不分组</span>
 <span class="rule-content">:</span>
 <span class="sort-rule">@!</span></pre>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 无分组逆序 */</span>
-<span class="rule-name">#无分组逆序</span>
+            <p class="comment">/* 无分组逆序 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#无分组逆序</span>
 <span class="comment">//匹配所有单词，按字母逆序排列但不分组</span>
 <span class="rule-content">:</span>
 <span class="sort-rule">@!-</span></pre>
 
             <h3>5.5 单级排序示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 前缀匹配 */</span>
-<span class="rule-name">#元音开头</span>
+            <p class="comment">/* 前缀匹配 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#元音开头</span>
 <span class="comment">//按开头元音分组（无显式匹配符等同于^）</span>
 <span class="rule-content">:\bV</span>
 <span class="sort-rule">@V</span></pre>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 后缀匹配 */</span>
-<span class="rule-name">#辅音结尾</span>
+            <p class="comment">/* 后缀匹配 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#辅音结尾</span>
 <span class="comment">//按结尾辅音分组</span>
 <span class="rule-content">:C\e</span>
 <span class="sort-rule">@C$</span></pre>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 任意位置匹配 */</span>
-<span class="rule-name">#包含元音</span>
+            <p class="comment">/* 任意位置匹配 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#包含元音</span>
 <span class="comment">//按包含的元音分组</span>
 <span class="rule-content">:V</span>
 <span class="sort-rule">@V*</span></pre>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 严格中间匹配 */</span>
-<span class="rule-name">#中间元音</span>
+            <p class="comment">/* 严格中间匹配 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#中间元音</span>
 <span class="comment">//按中间元音分组（首尾不是元音）</span>
 <span class="rule-content">:\bCV+C\e</span>
 <span class="sort-rule">@V~</span></pre>
 
             <h3>5.6 多级排序示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 逆序排序示例 */</span>
-<span class="rule-name">#逆序多级</span>
+            <p class="comment">/* 逆序排序示例 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#逆序多级</span>
 <span class="comment">//第一级逆序，第二级正序</span>
 <span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
 <span class="rule-content">:\b(BL)V</span>
 <span class="sort-rule">@(-BL^)(V*)</span></pre>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 三级排序：开头 + 中间 + 结尾 */</span>
-<span class="rule-name">#完整音韵分析</span>
+            <p class="comment">/* 三级排序：开头 + 中间 + 结尾 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#完整音韵分析</span>
 <span class="comment">//按开头辅音群、中间元音、结尾辅音三级分组</span>
 <span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
 <span class="rule-content">:\b(BL)VC</span>
@@ -889,8 +889,8 @@
 
             <h3>5.7 严格排序示例</h3>
 
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="comment">/* 混合分组排序 */</span>
-<span class="rule-name">#混合分组</span>
+            <p class="comment">/* 混合分组排序 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#混合分组</span>
 <span class="comment">//只分组严格辅音-元音结构单词，按辅音开头分组，元音仅用于排序</span>
 <span class="rule-content">:\bCV</span>
 <span class="sort-rule">@@C^!V*</span></pre>
