@@ -7,11 +7,11 @@ class RuleEngine {
         this.rules = new Map();
         this.globalSets = new Map();
         this.fileStorage = new FileStorageManager();
-        
+
         // 内存缓存层：运行时缓存
         this.compiledRules = new Map();
         this.ruleCache = new Map();
-        
+
         this.loadDefaultSets();
     }
 
@@ -135,7 +135,7 @@ class RuleEngine {
                 const cleanSetName = setName.trim();
                 this.originalSetDefinitions.set(cleanSetName, line);
             } else if (line.startsWith(':') && !line.startsWith('::')) {
-                // 具体规则
+                // 普通规则
                 specificRule = line;
             } else if (line.startsWith('::')) {
                 // 组合规则
@@ -154,7 +154,7 @@ class RuleEngine {
         }
 
         if (!specificRule) {
-            throw new Error('具体规则不能为空');
+            throw new Error('筛选规则不能为空');
         }
 
         // 执行有效性检查
@@ -183,12 +183,12 @@ class RuleEngine {
         // 1. 验证集合定义中的集合运算引用
         this.validateSetDefinitions(rule.localSets);
 
-        // 2. 验证基础规则中的集合引用
+        // 2. 验证普通规则中的集合引用
         if (!rule.specificRule.startsWith('::')) {
             this.validateBasicRuleReferences(rule.specificRule, rule.localSets);
         }
 
-        // 3. 验证组合规则中的基础规则引用
+        // 3. 验证组合规则中的普通规则引用
         if (rule.specificRule.startsWith('::')) {
             this.validateCombinedRuleReferences(rule.specificRule);
         }
@@ -263,8 +263,8 @@ class RuleEngine {
     }
 
     /**
-     * 验证基础规则中的集合引用
-     * @param {string} specificRule - 具体规则
+     * 验证普通规则中的集合引用
+     * @param {string} specificRule - 普通规则
      * @param {Map} localSets - 本地集合映射
      */
     validateBasicRuleReferences(specificRule, localSets) {
@@ -272,23 +272,23 @@ class RuleEngine {
 
         for (const refSetName of referencedSets) {
             if (!this.globalSets.has(refSetName) && !localSets.has(refSetName)) {
-                throw new Error(`基础规则中引用的集合 "${refSetName}" 不存在`);
+                throw new Error(`普通规则中引用的集合 "${refSetName}" 不存在`);
             }
         }
     }
 
     /**
-     * 验证组合规则中的基础规则引用
+     * 验证组合规则中的普通规则引用
      * @param {string} combinedRule - 组合规则
      */
     validateCombinedRuleReferences(combinedRule) {
-        // 提取组合规则中引用的基础规则名称
+        // 提取组合规则中引用的普通规则名称
         const referencedRules = this.extractRuleReferences(combinedRule);
 
         for (const refRuleName of referencedRules) {
             const referencedRule = this.rules.get(refRuleName);
             if (!referencedRule) {
-                throw new Error(`组合规则中引用的基础规则 "${refRuleName}" 不存在`);
+                throw new Error(`组合规则中引用的普通规则 "${refRuleName}" 不存在`);
             }
 
             // 检查引用的规则是否也是组合规则（不允许组合规则引用组合规则）
@@ -330,7 +330,7 @@ class RuleEngine {
 
                 // 检查集合是否存在
                 if (!this.globalSets.has(setName) && !localSets.has(setName)) {
-                    // 如果是组合规则，还需要检查引用的基础规则中的局部集合
+                    // 如果是组合规则，还需要检查引用的普通规则中的局部集合
                     if (isCombinedRule) {
                         let foundInReferencedRule = false;
                         const referencedRules = this.extractRuleReferences(displayRule);
@@ -434,7 +434,7 @@ class RuleEngine {
     }
 
     /**
-     * 提取组合规则中引用的基础规则名称
+     * 提取组合规则中引用的普通规则名称
      * @param {string} combinedRule - 组合规则
      * @returns {Array} 规则名称数组
      */
@@ -577,7 +577,7 @@ class RuleEngine {
         if (rule.comment) {
             preview += `注释: ${rule.comment}\n`;
         }
-        
+
         // 显示局部集合定义
         if (rule.localSets.size > 0) {
             preview += '\n局部集合:\n';
@@ -585,12 +585,12 @@ class RuleEngine {
                 preview += `  ${setName} = {${Array.from(setValues).join(', ')}}\n`;
             }
         }
-        
+
         preview += `\n匹配规则: ${rule.specificRule}\n`;
         if (rule.displayRule) {
             preview += `排序规则: ${rule.displayRule}\n`;
         }
-        
+
         return preview;
     }
 
@@ -1074,9 +1074,9 @@ class RuleEngine {
     }
 
     /**
-     * 检查单词是否匹配具体规则
+     * 检查单词是否匹配普通规则
      * @param {string} word - 单词（小写）
-     * @param {string} specificRule - 具体规则
+     * @param {string} specificRule - 筛选规则
      * @param {Map} localSets - 本地集合映射
      * @returns {boolean} 是否匹配
      */
@@ -1224,7 +1224,7 @@ class RuleEngine {
     evalLogicAST(word, node, localSets) {
         if (node.type === 'rule') {
             const referencedRule = this.getRule(node.value);
-            if (!referencedRule) throw new Error(`组合规则中引用的基础规则 "${node.value}" 不存在`);
+            if (!referencedRule) throw new Error(`组合规则中引用的普通规则 "${node.value}" 不存在`);
             if (referencedRule.specificRule.startsWith('::')) {
                 throw new Error(`组合规则不能引用其他组合规则 "${node.value}"`);
             }
@@ -2006,7 +2006,7 @@ class RuleEngine {
 
     hasExplicitPositionFlag(setName, sortRule) {
         const escapedSetName = this.escapeRegExp(setName);
-        
+
         // 检查括号形式：(setName^), (setName$), (setName*), (setName~)
         const bracketPattern = new RegExp(`\\(${escapedSetName}[\\^\\$\\*\\~]\\)`);
         if (bracketPattern.test(sortRule)) {
@@ -2161,7 +2161,7 @@ class RuleEngine {
             }
         }
 
-        preview += `\n具体规则: ${rule.specificRule}\n`;
+        preview += `\n筛选规则: ${rule.specificRule}\n`;
 
         if (rule.displayRule) {
             preview += `排序规则: ${rule.displayRule}\n`;

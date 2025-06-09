@@ -924,7 +924,7 @@
                                     class="syntax-code">//</span>开头）</li>
                             <li><span class="syntax-code">集合名=={元素1,元素2,...}</span> - 定义局部集合（可选，单字母集合名必须大写，多字母集合名大小写敏感）
                             </li>
-                            <li><span class="syntax-code">:具体规则</span> - 定义匹配模式（必须，以<span
+                            <li><span class="syntax-code">:筛选规则</span> - 定义匹配模式（必须，以<span
                                     class="syntax-code">:</span>或<span class="syntax-code">::</span>开头）
                             </li>
                             <li><span class="syntax-code">@排序规则</span> - 定义排序方式（可选，以<span
@@ -953,10 +953,10 @@
                     <textarea id="ruleEditor" class="rule-textarea" placeholder="在此输入规则...
 
 注意：
-• 具体规则中可引用全局集合和局部集合。
+• 筛选规则中可引用全局集合和局部集合。
   ◦ 局部集合必须在当前规则中定义才能引用。
   ◦ 多字母集合名必须使用 (集合名) 引用。
-• 具体规则中可使用 \位置标志 强制位置匹配。
+• 筛选规则中可使用 \位置标志 强制位置匹配。
   ◦ \b - 单词开头，\e - 单词结尾
   ◦ 更多参见详细语法帮助，"></textarea>
 
@@ -1331,7 +1331,7 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
                 if (rule.comment) {
                     const lines = ruleText.split('\n');
                     // 在规则名称后插入注释行
-                    lines.splice(1, 0, `// ${rule.comment}`);
+                    lines.splice(1, 0, `//${rule.comment}`);
                     ruleText = lines.join('\n');
                 }
 
@@ -1429,7 +1429,7 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
                     }
                 }
 
-                // 添加具体规则
+                // 添加筛选规则
                 if (rule.specificRule) {
                     parts.push(rule.specificRule);
                 }
@@ -1466,10 +1466,10 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
                     }
                 }
 
-                // 具体规则
+                // 筛选规则
                 if (rule.specificRule) {
                     lines.push('');
-                    lines.push('# 具体规则:');
+                    lines.push('# 筛选规则:');
                     lines.push(rule.specificRule);
                 }
 

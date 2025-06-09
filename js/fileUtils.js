@@ -114,8 +114,10 @@ class FileUtils {
      * @returns {string} 处理后的文本
      */
     preprocessPhonetics(text) {
-        // 将 word[phonetic] 格式分割为 word [phonetic]
-        return text.replace(/([a-zA-ZÀ-ÿ'.-]+)(\[[^\]]+\])/g, '$1 $2');
+        // 将 word[phonetic] 和 word/phonetic/ 格式分割为 word [phonetic] 和 word /phonetic/
+        let result = text.replace(/([a-zA-ZÀ-ÿ'.-]+)(\[[^\]]+\])/g, '$1 $2'); // [音标]
+        result = result.replace(/([a-zA-ZÀ-ÿ'.-]+)(\/[^\/]+\/)/g, '$1 $2');   // /音标/
+        return result;
     }
 
     /**
@@ -124,8 +126,21 @@ class FileUtils {
      * @returns {string} 清理后的文本
      */
     cleanSpecialChars(text) {
-        // 将引号、反斜杠、中文顿号等替换为空格
-        return text.replace(/["\\、]/g, ' ');
+        // 英文符号：竖线、反斜杠、逗号、双引号、分号
+        // 中文符号：顿号、逗号、引号、分号
+        // 注意：单引号可能是所有格，只处理单词前后成对出现的单引号
+        let result = text;
+
+        // 处理英文符号
+        result = result.replace(/[|\\,";]/g, ' '); // 英文竖线、反斜杠、逗号、双引号、分号
+
+        // 处理中文符号
+        result = result.replace(/[、，“”；]/g, ' '); // 中文顿号、逗号、引号、分号
+
+        // 处理单引号 - 只替换单词边界的单引号，保留所有格单引号
+        result = result.replace(/(\s|^)'|'(\s|$)/g, ' '); // 单词前后的单引号替换为空格
+
+        return result;
     }
 
     /**
@@ -156,8 +171,8 @@ class FileUtils {
                 preprocessingSteps.push(`字符清理: "${phoneticProcessed}" → "${cleanedLine}"`);
             }
 
-            // 第三步：分割单词（扩展分界符：空格、制表符、逗号、分号等）
-            const lineWords = cleanedLine.split(/[\s,;]+/)
+            // 第三步：分割单词（仅使用空格、制表符等空白字符分割，逗号分号已在前面处理）
+            const lineWords = cleanedLine.split(/\s+/)
                 .map(word => word.trim())
                 .filter(word => word.length > 0);
 
@@ -203,11 +218,11 @@ class FileUtils {
         for (const line of lines) {
             // 简单的CSV解析：按逗号分割，处理引号包围的字段
             const fields = this.parseCSVLine(line);
-            
+
             for (const field of fields) {
                 if (field && typeof field === 'string' && field.trim().length > 0) {
                     const cellContent = field.trim();
-                    
+
                     // 第一步：预处理音标
                     const phoneticProcessed = this.preprocessPhonetics(cellContent);
                     if (phoneticProcessed !== cellContent) {
@@ -220,8 +235,8 @@ class FileUtils {
                         preprocessingSteps.push(`字符清理: "${phoneticProcessed}" → "${cleanedCell}"`);
                     }
 
-                    // 第三步：分割单词（扩展分界符）
-                    const cellWords = cleanedCell.split(/[\s,;]+/)
+                    // 第三步：分割单词（仅使用空格、制表符等空白字符分割，逗号分号已在前面处理）
+                    const cellWords = cleanedCell.split(/\s+/)
                         .map(word => word.trim())
                         .filter(word => word.length > 0);
 
@@ -260,11 +275,11 @@ class FileUtils {
         const fields = [];
         let current = '';
         let inQuotes = false;
-        
+
         for (let i = 0; i < line.length; i++) {
             const char = line[i];
             const nextChar = line[i + 1];
-            
+
             if (char === '"') {
                 if (inQuotes && nextChar === '"') {
                     // 转义的引号
@@ -282,10 +297,10 @@ class FileUtils {
                 current += char;
             }
         }
-        
+
         // 添加最后一个字段
         fields.push(current);
-        
+
         return fields;
     }
 
@@ -321,8 +336,8 @@ class FileUtils {
                                 preprocessingSteps.push(`字符清理: "${phoneticProcessed}" → "${cleanedCell}"`);
                             }
 
-                            // 第三步：分割单词（扩展分界符）
-                            const cellWords = cleanedCell.split(/[\s,;]+/)
+                            // 第三步：分割单词（仅使用空格、制表符等空白字符分割，逗号分号已在前面处理）
+                            const cellWords = cleanedCell.split(/\s+/)
                                 .map(word => word.trim())
                                 .filter(word => word.length > 0);
 
@@ -361,31 +376,104 @@ class FileUtils {
      */
     isValidWord(word) {
         // 基本长度检查
-        if (word.length < 1 || word.length > 50) {
+        if (word.length < 1 || word.length > 100) {
             return false;
         }
 
-        // 检查是否为音标格式 [音标内容]
-        // 扩展音标字符集以包含IPA符号：ˈ ˌ ː ə ɪ ɛ æ ʌ ɔ ʊ ɑ ɒ ɜ ɝ ɞ ɟ ɠ ɡ ɢ ɣ ɤ ɥ ɦ ɧ ɨ ɩ ɪ ɫ ɬ ɭ ɮ ɯ ɰ ɱ ɲ ɳ ɴ ɵ ɶ ɷ ɸ ɹ ɺ ɻ ɼ ɽ ɾ ɿ ʀ ʁ ʂ ʃ ʄ ʅ ʆ ʇ ʈ ʉ ʊ ʋ ʌ ʍ ʎ ʏ ʐ ʑ ʒ ʓ ʔ ʕ ʖ ʗ ʘ ʙ ʚ ʛ ʜ ʝ ʞ ʟ ʠ ʡ ʢ ʣ ʤ ʥ ʦ ʧ ʨ ʩ ʪ ʫ ʬ ʭ ʮ ʯ
-        const phoneticPattern = /^\[[a-zA-ZÀ-ÿˈˌːəɪɛæʌɔʊɑɒɜɝɞɟɠɡɢɣɤɥɦɧɨɩɫɬɭɮɯɰɱɲɳɴɵɶɷɸɹɺɻɼɽɾɿʀʁʂʃʄʅʆʇʈʉʋʍʎʏʐʑʒʓʔʕʖʗʘʙʚʛʜʝʞʟʠʡʢʣʤʥʦʧʨʩʪʫʬʭʮʯ\s'.-]+\]$/;
-        if (phoneticPattern.test(word)) {
+        // 检查是否为音标格式 [音标内容] 或 /音标内容/
+        // 严格的英语IPA音标字符集验证
+        if (this.isStrictPhonetic(word)) {
             return true;
         }
 
-        // 普通单词验证：只包含英文字母（含重音符号）、连字符、撇号和句点
-        // À-ÿ 涵盖大部分欧洲语言的重音字符（如 é, è, ê, ë, á, à, ñ, ü 等）
-        const validPattern = /^[a-zA-ZÀ-ÿ'.-]+$/;
+        // 普通单词验证：严格限制字符集
+        // 1. 26个大写字母：A-Z
+        // 2. 26个小写字母：a-z
+        // 3. 连字符、缩写点、所有格：- . '
+        // 4. 指定的变音符号：é ü ñ ç à è ì ò ù â ê î ô û ä ë ï ö ü ÿ æ œ ø
+        const allowedDiacritics = 'éüñçàèìòùâêîôûäëïöüÿæœø';
+        const validPattern = new RegExp(`^[a-zA-Z${allowedDiacritics}'.-]+$`);
         if (!validPattern.test(word)) {
             return false;
         }
 
+        // 禁止开头的连字符、缩写点、所有格
+        if (/^[-.']/.test(word)) {
+            return false;
+        }
+
+        // 禁止结尾的连字符
+        if (/[-]$/.test(word)) {
+            return false;
+        }
+
         // 确保单词至少包含一个字母，不能只由标点符号组成
-        const hasLetter = /[a-zA-ZÀ-ÿ]/.test(word);
+        const hasLetter = new RegExp(`[a-zA-Z${allowedDiacritics}]`).test(word);
         return hasLetter;
     }
 
     /**
-     * 去除重复单词
+     * 严格的音标验证
+     * @param {string} word - 单词或音标
+     * @returns {boolean} 是否为有效的严格音标
+     */
+    isStrictPhonetic(word) {
+        // 检查是否为音标格式 [音标内容] 或 /音标内容/
+        if (!/^\[.+\]$/.test(word) && !/^\/.*\/$/.test(word)) {
+            return false;
+        }
+
+        // 提取音标内容（去掉外层的[]或//）
+        const content = word.slice(1, -1);
+
+        // 定义严格的IPA字符集
+        // 1. 英语IPA元音和辅音
+        const ipaVowels = 'iɪeɛæaɑɔoʊuʌəɜɝɒ';
+        const ipaConsonants = 'pbtdkɡfvθðszʃʒhmnŋlrjw';
+
+        // 2. 超音段符号
+        const suprasegmentals = 'ˈˌː.‿';
+
+        // 3. 结构符号（圆括号）
+        const structural = '()';
+
+        // 4. 特殊放宽字符
+        const relaxedChars = 'grtʃdʒ:\'a';
+
+        // 合并所有允许的字符
+        const allowedChars = ipaVowels + ipaConsonants + suprasegmentals + structural + relaxedChars;
+
+        // 检查是否只包含允许的字符
+        for (let char of content) {
+            if (!allowedChars.includes(char)) {
+                return false;
+            }
+        }
+
+        // 5. 检查ː和:不能混用
+        if (content.includes('ː') && content.includes(':')) {
+            return false;
+        }
+
+        // 6. 检查ˈ和'不能混用
+        if (content.includes('ˈ') && content.includes('\'')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 检查是否为音标格式
+     * @param {string} word - 单词或音标
+     * @returns {boolean} 是否为音标
+     */
+    isPhonetic(word) {
+        return /^\[.+\]$/.test(word) || /^\/.*\/$/.test(word);
+    }
+
+    /**
+     * 去除重复单词（不区分大小写，音标不参与去重）
      * @param {Array} words - 单词数组
      * @returns {Array} 去重后的单词数组
      */
@@ -394,10 +482,16 @@ class FileUtils {
         const result = [];
 
         words.forEach(word => {
-            const lowerWord = word.toLowerCase();
-            if (!uniqueWords.has(lowerWord)) {
-                uniqueWords.add(lowerWord);
+            // 音标不参与去重，直接保留
+            if (this.isPhonetic(word)) {
                 result.push(word);
+            } else {
+                // 只对普通单词进行去重
+                const lowerWord = word.toLowerCase();
+                if (!uniqueWords.has(lowerWord)) {
+                    uniqueWords.add(lowerWord);
+                    result.push(word);
+                }
             }
         });
 

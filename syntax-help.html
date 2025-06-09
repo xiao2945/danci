@@ -354,7 +354,7 @@
                         </tr>
                         <tr>
                             <td><strong>4. 匹配模式</strong></td>
-                            <td><code>:具体规则</code></td>
+                            <td><code>:筛选规则</code></td>
                             <td>定义匹配模式（必须，以<code>:</code>或<code>::</code>开头）</td>
                         </tr>
                         <tr>
@@ -387,7 +387,7 @@
 
             <h3>2.2 全局集合</h3>
 
-            <p>可以在具体规则中直接引用，无需另行定义。</p>
+            <p>可以在筛选规则中直接引用，无需另行定义。</p>
 
             <h4>2.2.1 默认全局集合（无法删除）</h4>
             <ul>
@@ -453,15 +453,15 @@
 
             <p>使用双引号<code>" "</code>表示字面字符，用于表示具体的字符或字符串。（如<code>"e"</code>、<code>"tion"</code>）</p>
             <ul>
-                <li>只能用于基础规则匹配，等同于单元素集合。</li>
+                <li>只能用于普通规则匹配，等同于单元素集合。</li>
                 <li>字面字符大小写敏感。</li>
             </ul>
 
-            <h2>3. 具体规则</h2>
+            <h2>3. 筛选规则</h2>
 
-            <p><strong>本质</strong>：基于<span style="color: red;">基础规则</span>或<span
+            <p><strong>本质</strong>：基于<span style="color: red;">普通规则</span>或<span
                     style="color: red;">组合规则</span>得出的，用于匹配单词库内单词的<span style="color: red;">字符串集合</span>。</p>
-            <h3>3.1 基础规则</h3>
+            <h3>3.1 普通规则</h3>
 
             <p><strong>格式</strong>：以<code>:</code>开头，由位置标志（锚点）、集合组合而成。（如：<code>:\bLV</code>表示匹配前缀是任意字母+元音的单词）
             </p>
@@ -509,9 +509,9 @@
             </p>
             <ul>
                 <li>规则名必须完全匹配。</li>
-                <li>只能引用已由基础规则创建的规则。</li>
+                <li>只能引用已由普通规则创建的规则。</li>
                 <li>不允许引用由组合规则创建的规则，即不允许嵌套。</li>
-                <li>相关运算符只能用于组合规则，不能用于基础规则。</li>
+                <li>相关运算符只能用于组合规则，不能用于普通规则。</li>
             </ul>
 
             <h4>3.2.1 运算符</h4>
@@ -803,32 +803,31 @@
 <span class="rule-content">:\b(BL)(ShortV)</span>
 <span class="sort-rule">@(BL)</span></pre>
 
-            <h3>5.2 基础规则示例</h3>
+            <h3>5.2 普通规则示例</h3>
 
-            <p class="comment">/* 位置标志 */</p>
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#元音开头</span>
-<span class="comment">//匹配以元音开头的单词</span>
-<span class="rule-content">:\bV</span>
+            <p class="comment">/* 最简写法 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#All单词音标</span>
+<span class="rule-content">:</span></pre>
+
+            <p class="comment">/* 位置标志、所有单词 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#All单词</span>
+<span class="comment">//所有单词</span>
+<span class="rule-content">:\bL</span>
 <span class="sort-rule">@</span></pre>
 
-            <p class="comment">/* 完全匹配、字母逆序 */</p>
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#CVC</span>
-<span class="comment">//匹配辅音-元音-辅音模式的三字母单词</span>
-<span class="rule-content">:\bCVC\e</span>
-<span class="sort-rule">@-</span></pre>
-
-            <p class="comment">/* 字面字符、元音分组 */</p>
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#CVCE</span>
-<span class="comment">//匹配辅音-元音-辅音-e模式的四字母单词</span>
-<span class="rule-content">:\bCVC"e"\e</span>
-<span class="sort-rule">@V*</span></pre>
+            <p class="comment">/* 前缀+字面后缀 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#前缀匹配</span>
+<span class="comment">//匹配前缀+tion后缀单词</span>
+<span class="set-definition">PRE=={a,ab,ac,ad,ag,al,ambl,auto,bene,cata,col,com,con,contra,dia,dif,dis,ef,em,en,entra,fore,inter,micro,mis,ob,oc,post,pre,semi,sub,un,with}</span>
+<span class="rule-content">:\b(PRE)L+"tion"\e</span>
+<span class="sort-rule">@(PRE)</span></pre>
 
             <h3>5.3 组合规则示例</h3>
 
-            <p class="comment">/* 组合规则：CVC或CVCE */</p>
-            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#CVC或CVCE</span>
-<span class="comment">//匹配CVC模式或CVCE模式的单词</span>
-<span class="rule-content">::CVC||CVCE</span>
+            <p class="comment">/* 组合规则：元音开头且辅音结尾 */</p>
+            <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#元音开头且辅音结尾</span>
+<span class="comment">//匹配元音开头且辅音结尾的单词</span>
+<span class="rule-content">::元音开头&&辅音结尾</span>
 <span class="sort-rule">@</span></pre>
 
             <h3>5.4 基础排序示例</h3>
