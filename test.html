@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词筛选系统 - 半自动化测试页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            min-width: 600px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-height: 80vh;
+        }
+
+        .left-panel {
+            flex: 1 1 0%;
+            padding-right: 20px;
+            border-right: 2px solid #e0e0e0;
+        }
+
+        .right-panel {
+            flex: 1 1 0%;
+            /* padding-left: 20px; */
+        }
+
+        .module {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .module h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        input[type="file"],
+        textarea,
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .textarea-large {
+            min-height: 120px;
+        }
+
+        .textarea-large#set-definitions {
+            white-space: nowrap;
+            overflow-x: auto;
+            resize: vertical;
+        }
+
+        /* no-wrap */
+        /* white-space: nowrap; */
+        /* 禁止换行 */
+        /* overflow-x: auto; */
+        /* 水平滚动条（内容溢出时显示） */
+        /* resize: vertical; */
+        /* 可选：限制只能垂直调整大小 */
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #4c51bf;
+        }
+
+        button.secondary {
+            background: #6b7280;
+        }
+
+        button.secondary:hover {
+            background: #4b5563;
+        }
+
+        button.danger {
+            background: #dc2626;
+        }
+
+        button.danger:hover {
+            background: #b91c1c;
+        }
+
+        .message-area {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .message-area h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border-left: 4px solid #ef4444;
+        }
+
+        .message.warning {
+            background: #fef3c7;
+            color: #d97706;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .result-display {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .word-item {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .rule-textarea-container {
+            position: relative;
+        }
+
+        .rule-textarea {
+            margin-bottom: 10px;
+            min-height: 120px;
+            white-space: pre;
+            overflow-x: auto;
+            resize: vertical;
+        }
+
+        .remove-textarea {
+            position: absolute;
+            top: 10px;
+            right: 5px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            box-sizing: border-box;
+            width: 15px;
+            height: 15px;
+            /* 与高度相同 */
+            line-height: 15px;
+            /* 清除内边距 */
+            padding: 0 !important;
+            /* margin-left: 0px; */
+            display: none;
+            /* display: flex; */
+            cursor: pointer;
+            font-size: 10px;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            /* 防止伪元素影响 */
+            overflow: hidden;
+        }
+
+        .rule-textarea-container:hover .remove-textarea {
+            display: block;
+        }
+
+        .table-display {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .table-display th,
+        .table-display td {
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .table-display th {
+            background: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .clear-btn {
+            float: right;
+            background: #6b7280;
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>单词筛选系统 - 半自动化测试页面</h1>
+            <p>测试现有逻辑的功能模块</p>
+        </header>
+
+        <div class="main-layout">
+            <div class="left-panel">
+                <!-- 模块1: 文本预处理测试 -->
+                <div class="module">
+                    <h3>模块1: 文本预处理测试</h3>
+                    <div class="form-group">
+                        <label for="file-input">选择文件:</label>
+                        <input type="file" id="file-input" accept=".txt,.csv,.xlsx,.xls">
+                    </div>
+                    <div class="form-group">
+                        <label for="text-input">或直接输入文本:</label>
+                        <textarea id="text-input" class="textarea-large"></textarea>
+                    </div>
+                    <button onclick="processText()">全文检查</button>
+                    <button onclick="clearModule1()" class="secondary">清空</button>
+
+                    <div class="result-display" id="text-result">
+                        <strong>处理结果将显示在这里</strong>
+                    </div>
+                </div>
+
+                <!-- 模块2: 集合定义检查 -->
+                <div class="module">
+                    <h3>模块2: 集合定义检查</h3>
+                    <div class="form-group">
+                        <label for="set-definitions">集合定义 (每行一个):</label>
+                        <textarea id="set-definitions" class="textarea-large"
+                            placeholder="A=={a,b,c}&#10;B=={d,e,f}"></textarea>
+                    </div>
+                    <button onclick="checkSetDefinitions()">逐行检查</button>
+                    <button onclick="clearModule2()" class="secondary">清空</button>
+
+                    <div class="result-display" id="set-result">
+                        <strong>检查结果将显示在这里</strong>
+                    </div>
+                </div>
+
+                <!-- 模块3: 规则检查（普通规则和组合规则） -->
+                <div class="module">
+                    <h3>模块3: 规则检查（普通规则和组合规则）</h3>
+                    <div class="form-group">
+                        <label>规则输入框:</label>
+                        <div id="rule-textareas">
+                            <div class="rule-textarea-container">
+                                <textarea class="rule-textarea"
+                                    placeholder="#完整音韵分析&#10;//开头辅音群、中间元音、结尾辅音&#10;BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}&#10;:\b(BL)VC&#10;@(BL^)(V*)(C$)"></textarea>
+                                <button class="remove-textarea" onclick="removeTextarea(this)">X</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="addRuleTextarea()">新增规则框</button>
+                    <button onclick="checkRules()">检查规则</button>
+                    <button onclick="clearModule3()" class="secondary">清空</button>
+
+                    <div class="result-display" id="rule-result">
+                        <strong>规则检查结果将显示在这里</strong>
+                    </div>
+                </div>
+
+                <!-- 模块4: 排序规则检查 -->
+                <div class="module">
+                    <h3>模块4: 排序规则检查</h3>
+                    <div class="form-group">
+                        <label for="sort-rule">排序规则:</label>
+                        <textarea id="sort-rule" placeholder="@(BL^)(V*)(C$) 或 @@(V*)(C*)"></textarea>
+                    </div>
+                    <button onclick="checkSortRule()">检查排序</button>
+                    <button onclick="clearModule4()" class="secondary">清空</button>
+
+                    <div class="result-display" id="sort-rule-result">
+                        <strong>排序结果将显示在这里</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="message-area">
+                    <h3>消息区域 <button class="clear-btn" onclick="clearMessages()">清空</button></h3>
+                    <div id="message-container">
+                        <div class="message info">
+                            <strong>系统就绪</strong><br>
+                            半自动化测试页面已加载，可以开始测试各个模块功能。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入现有的JavaScript模块 -->
+    <script src="js/fileUtils.js"></script>
+    <script src="js/fileStorage.js"></script>
+    <script src="js/ruleEngine.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        // 全局变量 - 测试页面独立实例，不影响其他页面
+        let fileUtils = new FileUtils();
+        let testRuleEngine = new RuleEngine(); // 独立的规则引擎实例
+        let currentWords = []; // 存储当前的单词列表
+        let testGlobalSets = new Map(); // 测试页面的全局集合
+        let testRules = new Map(); // 测试页面的规则存储
+
+        // 初始化测试环境的默认集合
+        function initTestEnvironment() {
+            testGlobalSets.set('C', new Set(['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z']));
+            testGlobalSets.set('V', new Set(['a', 'e', 'i', 'o', 'u']));
+            testGlobalSets.set('L', new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']));
+        }
+
+        // 消息显示函数
+        function addMessage(text, type = 'info') {
+            const container = document.getElementById('message-container');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong><br>${text}`;
+            container.appendChild(message);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearMessages() {
+            const container = document.getElementById('message-container');
+            container.innerHTML = '<div class="message info"><strong>消息已清空</strong><br>可以继续测试功能。</div>';
+        }
+
+        // 模块1: 文本预处理测试
+        async function processText() {
+            try {
+                const fileInput = document.getElementById('file-input');
+                const textInput = document.getElementById('text-input');
+                const resultDiv = document.getElementById('text-result');
+
+                let result;
+                if (fileInput.files.length > 0) {
+                    addMessage('开始处理文件...', 'info');
+                    result = await fileUtils.readFile(fileInput.files[0]);
+                    addMessage(`文件处理完成，提取到 ${result.validCount} 个有效单词`, 'success');
+
+                    // 将文件处理结果显示到文本框，如果超过100个则随机选取
+                    let displayWords = result.words;
+                    if (displayWords.length > 100) {
+                        // 随机选取100个单词
+                        const shuffled = [...displayWords].sort(() => 0.5 - Math.random());
+                        displayWords = shuffled.slice(0, 100);
+                        addMessage(`单词过多，已随机选取100个显示到文本框`, 'info');
+                    }
+                    textInput.value = displayWords.join(' ');
+                } else if (textInput.value.trim()) {
+                    addMessage('开始处理文本...', 'info');
+                    result = fileUtils.parseTextContent(textInput.value);
+                    addMessage(`文本处理完成，提取到 ${result.validCount} 个有效单词`, 'success');
+                } else {
+                    addMessage('请选择文件或输入文本', 'warning');
+                    return;
+                }
+
+                // 保存单词列表供其他模块使用
+                currentWords = result.words;
+
+                // 复用主应用的预处理信息展示格式
+                let html = `
+                    <h4>预处理统计:</h4>
+                    <div class="preprocessing-stats" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 10px 0;">
+                        <div style="padding: 8px; background: #f0f9ff; border-radius: 4px;">总提取: <strong>${result.totalExtracted}</strong></div>
+                        <div style="padding: 8px; background: #f0fdf4; border-radius: 4px;">有效: <strong>${result.validCount}</strong></div>
+                        <div style="padding: 8px; background: #fefce8; border-radius: 4px;">重复: <strong>${result.duplicateCount}</strong></div>
+                        <div style="padding: 8px; background: #fef2f2; border-radius: 4px;">无效: <strong>${result.invalidCount}</strong></div>
+                    </div>
+                `;
+
+                if (result.preprocessingSteps && result.preprocessingSteps.length > 0) {
+                    html += '<h4>预处理步骤示例:</h4>';
+                    result.preprocessingSteps.forEach(step => {
+                        html += `<p style="font-size: 12px; color: #666;">${step}</p>`;
+                    });
+                }
+
+                // 复用主应用的无效单词展示逻辑
+                if (result.invalidWords && result.invalidWords.length > 0) {
+                    html += '<h4>无效单词示例:</h4>';
+                    html += '<div class="word-list">';
+                    // 最多显示20个无效单词示例
+                    const displayInvalidWords = result.invalidWords.slice(0, 20);
+                    displayInvalidWords.forEach(word => {
+                        html += `<span class="word-item" style="background: #fee2e2; color: #dc2626;">${word}</span>`;
+                    });
+                    if (result.invalidWords.length > 20) {
+                        html += `<span class="word-item" style="background: #f3f4f6; color: #6b7280;">...还有 ${result.invalidWords.length - 20} 个无效单词</span>`;
+                    }
+                    html += '</div>';
+                }
+
+                // 复用主应用的单词列表展示逻辑
+                html += '<h4>有效单词列表:</h4>';
+                if (result.words.length <= 100) {
+                    // 少于100个单词，直接显示
+                    html += '<div class="word-list">';
+                    result.words.forEach(word => {
+                        html += `<span class="word-item">${word}</span>`;
+                    });
+                    html += '</div>';
+                } else {
+                    // 超过100个单词，显示前50个和后50个，中间显示省略信息
+                    html += '<div class="word-list">';
+                    result.words.slice(0, 50).forEach(word => {
+                        html += `<span class="word-item">${word}</span>`;
+                    });
+                    html += `<span class="word-item" style="background: #f3f4f6; color: #6b7280;">...省略 ${result.words.length - 100} 个单词...</span>`;
+                    result.words.slice(-50).forEach(word => {
+                        html += `<span class="word-item">${word}</span>`;
+                    });
+                    html += '</div>';
+                }
+
+                resultDiv.innerHTML = html;
+
+            } catch (error) {
+                addMessage(`处理失败: ${error.message}`, 'error');
+                console.error('处理错误:', error);
+            }
+        }
+
+        function clearModule1() {
+            document.getElementById('file-input').value = '';
+            document.getElementById('text-input').value = '';
+            document.getElementById('text-result').innerHTML = '<strong>处理结果将显示在这里</strong>';
+            addMessage('模块1已清空', 'info');
+        }
+
+        // 模块2: 集合定义检查
+        function checkSetDefinitions() {
+            try {
+                const textarea = document.getElementById('set-definitions');
+                const resultDiv = document.getElementById('set-result');
+                const lines = textarea.value.split('\n').filter(line => line.trim());
+
+                if (lines.length === 0) {
+                    addMessage('请输入集合定义', 'warning');
+                    return;
+                }
+
+                const validLines = [];
+                const errors = [];
+                const localSets = new Map();
+
+                addMessage(`开始检查 ${lines.length} 行集合定义...`, 'info');
+
+                // 创建临时规则引擎实例，使用当前测试环境的全局集合
+                const tempRuleEngine = new RuleEngine();
+                tempRuleEngine.globalSets = new Map(testGlobalSets);
+
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    try {
+                        // 检查是否包含双等号
+                        if (!trimmedLine.includes('==')) {
+                            throw new Error('缺少双等号 "=="');
+                        }
+
+                        // 使用临时规则引擎解析集合定义
+                        tempRuleEngine.parseSetDefinition(trimmedLine, localSets);
+                        validLines.push(trimmedLine);
+                        addMessage(`第 ${index + 1} 行: 格式正确`, 'success');
+                    } catch (error) {
+                        errors.push(`第 ${index + 1} 行: ${error.message}`);
+                        addMessage(`第 ${index + 1} 行错误: ${error.message}`, 'error');
+                    }
+                });
+
+                // 验证集合定义（如果RuleEngine有验证方法）
+                try {
+                    if (typeof tempRuleEngine.validateSetDefinitions === 'function') {
+                        tempRuleEngine.validateSetDefinitions(localSets);
+                        addMessage('所有集合定义验证通过', 'success');
+                    }
+                } catch (error) {
+                    addMessage(`集合定义验证失败: ${error.message}`, 'error');
+                    errors.push(`整体验证: ${error.message}`);
+                }
+
+                // 将有效的集合定义保存到测试环境的全局集合中
+                for (const [setName, setValues] of localSets) {
+                    testGlobalSets.set(setName, setValues);
+                    addMessage(`集合 ${setName} 已添加到测试环境`, 'success');
+                }
+
+                // 更新textarea，只保留有效的行
+                textarea.value = validLines.join('\n');
+
+                // 复用主应用的结果展示格式
+                let html = `
+                    <h4>集合定义检查结果:</h4>
+                    <div class="check-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0;">
+                        <div style="padding: 8px; background: #f0fdf4; border-radius: 4px; text-align: center;">有效: <strong style="color: #166534;">${validLines.length}</strong></div>
+                        <div style="padding: 8px; background: #fef2f2; border-radius: 4px; text-align: center;">错误: <strong style="color: #dc2626;">${errors.length}</strong></div>
+                        <div style="padding: 8px; background: #f0f9ff; border-radius: 4px; text-align: center;">已添加: <strong style="color: #1e40af;">${localSets.size}</strong></div>
+                    </div>
+                `;
+
+                if (validLines.length > 0) {
+                    html += '<h4>有效的集合定义:</h4>';
+                    validLines.forEach(line => {
+                        html += `<p style="color: #166534; font-size: 12px;">${line}</p>`;
+                    });
+                }
+
+                if (errors.length > 0) {
+                    html += '<h4>错误信息:</h4>';
+                    errors.forEach(error => {
+                        html += `<p style="color: #dc2626; font-size: 12px;">${error}</p>`;
+                    });
+                }
+
+                // 显示当前测试环境中的所有集合
+                html += '<h4>测试环境中的所有集合:</h4>';
+                html += '<div class="set-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 4px; padding: 10px;">';
+                for (const [setName, setValues] of testGlobalSets) {
+                    const valuesList = Array.from(setValues).slice(0, 8).join(', ');
+                    const moreCount = setValues.size > 8 ? ` ...等${setValues.size}个` : '';
+                    html += `<div style="margin-bottom: 8px; padding: 6px; background: #f9fafb; border-radius: 3px; font-size: 12px;">`;
+                    html += `<strong style="color: #374151;">${setName}</strong> (${setValues.size}个): `;
+                    html += `<span style="color: #6b7280;">{${valuesList}${moreCount}}</span>`;
+                    html += `</div>`;
+                }
+                html += '</div>';
+
+                resultDiv.innerHTML = html;
+                addMessage(`集合定义检查完成，${validLines.length} 个有效，${errors.length} 个错误`, 'info');
+
+            } catch (error) {
+                addMessage(`检查失败: ${error.message}`, 'error');
+                console.error('集合定义检查错误:', error);
+            }
+        }
+
+        function clearModule2() {
+            document.getElementById('set-definitions').value = '';
+            document.getElementById('set-result').innerHTML = '<strong>检查结果将显示在这里</strong>';
+            addMessage('模块2已清空', 'info');
+        }
+
+        // 模块3: 规则检查（普通规则和组合规则）
+        function checkRules() {
+            try {
+                const textareas = document.querySelectorAll('.rule-textarea');
+                const resultDiv = document.getElementById('rule-result');
+
+                if (textareas.length === 0) {
+                    addMessage('没有规则输入框', 'error');
+                    return;
+                }
+
+                const ruleTexts = Array.from(textareas).map(ta => ta.value.trim()).filter(text => text);
+
+                if (ruleTexts.length === 0) {
+                    addMessage('请至少输入一个规则', 'warning');
+                    return;
+                }
+
+                let html = '';
+
+                if (ruleTexts.length === 1) {
+                    // 只有一个规则框，测试普通规则
+                    addMessage('检测到1个规则，进行普通规则测试...', 'info');
+
+                    try {
+                        // 创建临时规则引擎实例，使用测试环境的全局集合
+                        const tempRuleEngine = new RuleEngine();
+                        tempRuleEngine.globalSets = new Map(testGlobalSets);
+
+                        const parsedRule = tempRuleEngine.parseRule(ruleTexts[0]);
+
+                        // 检查是否为组合规则
+                        if (parsedRule.specificRule && parsedRule.specificRule.startsWith('::')) {
+                            addMessage('只有1个规则框时不能测试组合规则', 'error');
+                            html = '<h4>错误:</h4><p style="color: #dc2626;">只有1个规则框时不能测试组合规则，请添加更多规则框或修改为普通规则</p>';
+                        } else {
+                            addMessage('普通规则解析成功', 'success');
+
+                            // 使用ruleEngine的getRuleName方法获取规则显示名称
+                            const displayName = tempRuleEngine.getRuleName ? tempRuleEngine.getRuleName(parsedRule.ruleName) : (parsedRule.name || parsedRule.ruleName);
+
+                            html = `
+                                <h4>普通规则解析结果:</h4>
+                                <p><strong>规则名称:</strong> ${displayName}</p>
+                            `;
+
+                            if (parsedRule.comment) {
+                                html += `<p><strong>规则注释:</strong> ${parsedRule.comment}</p>`;
+                            }
+
+                            if (parsedRule.localSets && parsedRule.localSets.size > 0) {
+                                html += '<h4>局部集合:</h4>';
+                                for (const [setName, setValues] of parsedRule.localSets) {
+                                    html += `<p><strong>${setName}:</strong> {${Array.from(setValues).join(', ')}}</p>`;
+                                }
+                            }
+
+                            html += `<p><strong>具体规则:</strong> ${parsedRule.specificRule}</p>`;
+
+                            if (parsedRule.displayRule) {
+                                html += `<p><strong>排序规则:</strong> ${parsedRule.displayRule}</p>`;
+                            }
+                        }
+                    } catch (error) {
+                        addMessage(`普通规则解析失败: ${error.message}`, 'error');
+                        html = `<h4>解析错误:</h4><p style="color: #dc2626;">${error.message}</p>`;
+                    }
+                } else {
+                    // 多个规则框，前面测试普通规则，最后一个测试组合规则
+                    addMessage(`检测到${ruleTexts.length}个规则，进行普通规则+组合规则测试...`, 'info');
+
+                    const normalRules = ruleTexts.slice(0, -1);
+                    const lastRule = ruleTexts[ruleTexts.length - 1];
+
+                    // 清空测试规则存储
+                    testRules.clear();
+
+                    html += '<h4>普通规则解析结果:</h4>';
+
+                    // 解析前面的普通规则
+                    let validNormalRules = 0;
+                    normalRules.forEach((ruleText, index) => {
+                        try {
+                            const tempRuleEngine = new RuleEngine();
+                            tempRuleEngine.globalSets = new Map(testGlobalSets);
+
+                            const parsedRule = tempRuleEngine.parseRule(ruleText);
+
+                            if (parsedRule.specificRule && parsedRule.specificRule.startsWith('::')) {
+                                addMessage(`第${index + 1}个规则不能是组合规则`, 'error');
+                                html += `<p style="color: #dc2626;">第${index + 1}个规则: 不能是组合规则</p>`;
+                            } else {
+                                testRules.set(parsedRule.name, parsedRule);
+                                validNormalRules++;
+                                addMessage(`第${index + 1}个普通规则"${parsedRule.name}"解析成功`, 'success');
+                                html += `<p style="color: #166534;">第${index + 1}个规则"${parsedRule.name}": 解析成功</p>`;
+                            }
+                        } catch (error) {
+                            addMessage(`第${index + 1}个规则解析失败: ${error.message}`, 'error');
+                            html += `<p style="color: #dc2626;">第${index + 1}个规则: ${error.message}</p>`;
+                        }
+                    });
+
+                    // 测试最后一个规则（应该是组合规则）
+                    html += '<h4>组合规则测试结果:</h4>';
+
+                    try {
+                        const tempRuleEngine = new RuleEngine();
+                        tempRuleEngine.globalSets = new Map(testGlobalSets);
+                        tempRuleEngine.rules = new Map(testRules);
+
+                        const lastParsedRule = tempRuleEngine.parseRule(lastRule);
+
+                        if (!lastParsedRule.specificRule || !lastParsedRule.specificRule.startsWith('::')) {
+                            addMessage('最后一个规则框应该用于组合规则测试', 'error');
+                            html += '<p style="color: #dc2626;">最后一个规则应该是组合规则（以::开头）</p>';
+                        } else {
+                            addMessage('组合规则解析成功', 'success');
+
+                            if (currentWords.length > 0) {
+                                // 执行筛选
+                                const filteredWords = tempRuleEngine.filterWords(currentWords, lastParsedRule);
+                                addMessage(`组合规则筛选完成，匹配 ${filteredWords.length} 个单词`, 'success');
+
+                                html += `
+                                    <p><strong>组合规则名称:</strong> ${lastParsedRule.name}</p>
+                                    <p><strong>使用的普通规则:</strong> ${Array.from(testRules.keys()).join(', ')}</p>
+                                    <p><strong>输入单词数:</strong> ${currentWords.length}</p>
+                                    <p><strong>筛选结果数:</strong> ${filteredWords.length}</p>
+                                    <h4>匹配的单词:</h4>
+                                    <div class="word-list">
+                                `;
+
+                                // 复用主应用的单词列表展示逻辑
+                                if (filteredWords.length <= 100) {
+                                    // 少于等于100个单词，直接显示
+                                    filteredWords.forEach(word => {
+                                        html += `<span class="word-item">${word}</span>`;
+                                    });
+                                } else {
+                                    // 超过100个单词，显示前50个和后50个
+                                    filteredWords.slice(0, 50).forEach(word => {
+                                        html += `<span class="word-item">${word}</span>`;
+                                    });
+                                    html += `<span class="word-item" style="background: #f3f4f6; color: #6b7280;">...省略 ${filteredWords.length - 100} 个单词...</span>`;
+                                    filteredWords.slice(-50).forEach(word => {
+                                        html += `<span class="word-item">${word}</span>`;
+                                    });
+                                }
+
+                                html += '</div>';
+                            } else {
+                                html += '<p style="color: #d97706;">请先在模块1中处理文本以获取单词列表</p>';
+                            }
+                        }
+                    } catch (error) {
+                        addMessage(`组合规则测试失败: ${error.message}`, 'error');
+                        html += `<p style="color: #dc2626;">组合规则错误: ${error.message}</p>`;
+                    }
+                }
+
+                resultDiv.innerHTML = html;
+                addMessage('规则检查完成', 'info');
+
+            } catch (error) {
+                addMessage(`规则检查失败: ${error.message}`, 'error');
+                console.error('规则检查错误:', error);
+            }
+        }
+
+        function clearModule3() {
+            // 只清空所有textarea的内容，不删除textarea
+            const textareas = document.querySelectorAll('#rule-textareas .rule-textarea');
+            textareas.forEach(textarea => {
+                textarea.value = '';
+            });
+            document.getElementById('rule-result').innerHTML = '<strong>规则检查结果将显示在这里</strong>';
+            testRules.clear();
+            addMessage('模块3已清空', 'info');
+        }
+
+        // 模块4: 组合规则检查
+        function addRuleTextarea() {
+            const container = document.getElementById('rule-textareas');
+            const newContainer = document.createElement('div');
+            newContainer.className = 'rule-textarea-container';
+            newContainer.innerHTML = `
+                <textarea class="rule-textarea"></textarea>
+                <button class="remove-textarea" onclick="removeTextarea(this)">X</button>
+            `;
+            container.appendChild(newContainer);
+            addMessage('已添加新的规则输入框', 'info');
+        }
+
+        function removeTextarea(button) {
+            const container = button.parentElement;
+            const allContainers = document.querySelectorAll('.rule-textarea-container');
+
+            if (allContainers.length > 1) {
+                container.remove();
+                addMessage('已删除规则输入框', 'info');
+            } else {
+                addMessage('至少需要保留一个规则输入框', 'warning');
+            }
+        }
+
+        function checkCombinedRule() {
+            try {
+                const textareas = document.querySelectorAll('.rule-textarea');
+                const resultDiv = document.getElementById('combined-rule-result');
+
+                if (currentWords.length === 0) {
+                    addMessage('请先在模块1中处理文本以获取单词列表', 'warning');
+                    return;
+                }
+
+                const rules = [];
+                const ruleNames = [];
+
+                // 解析所有规则
+                textareas.forEach((textarea, index) => {
+                    const ruleText = textarea.value.trim();
+                    if (ruleText) {
+                        try {
+                            const parsedRule = ruleEngine.parseRule(ruleText);
+                            rules.push(parsedRule);
+                            ruleNames.push(parsedRule.name);
+                            addMessage(`规则 ${index + 1} "${parsedRule.name}" 解析成功`, 'success');
+                        } catch (error) {
+                            addMessage(`规则 ${index + 1} 解析失败: ${error.message}`, 'error');
+                        }
+                    }
+                });
+
+                if (rules.length === 0) {
+                    addMessage('没有有效的规则可以执行', 'warning');
+                    return;
+                }
+
+                // 构建组合规则
+                const combinedRuleText = `#组合规则测试\n::${ruleNames.join('|')}`;
+                addMessage('开始执行组合规则筛选...', 'info');
+
+                // 临时添加规则到引擎
+                rules.forEach(rule => {
+                    ruleEngine.rules.set(rule.name, rule);
+                });
+
+                // 解析组合规则
+                const combinedRule = ruleEngine.parseRule(combinedRuleText);
+
+                // 执行筛选
+                const filteredWords = ruleEngine.filterWords(currentWords, combinedRule);
+
+                addMessage(`组合规则筛选完成，匹配 ${filteredWords.length} 个单词`, 'success');
+
+                // 显示结果
+                let html = `
+                    <h4>组合规则筛选结果:</h4>
+                    <p><strong>使用规则:</strong> ${ruleNames.join(', ')}</p>
+                    <p><strong>输入单词数:</strong> ${currentWords.length}</p>
+                    <p><strong>筛选结果数:</strong> ${filteredWords.length}</p>
+                    <h4>匹配的单词:</h4>
+                    <div class="word-list">
+                `;
+
+                // 复用主应用的单词列表展示逻辑
+                if (filteredWords.length <= 100) {
+                    // 少于等于100个单词，直接显示
+                    filteredWords.forEach(word => {
+                        html += `<span class="word-item">${word}</span>`;
+                    });
+                } else {
+                    // 超过100个单词，显示前50个和后50个
+                    filteredWords.slice(0, 50).forEach(word => {
+                        html += `<span class="word-item">${word}</span>`;
+                    });
+                    html += `<span class="word-item" style="background: #f3f4f6; color: #6b7280;">...省略 ${filteredWords.length - 100} 个单词...</span>`;
+                    filteredWords.slice(-50).forEach(word => {
+                        html += `<span class="word-item">${word}</span>`;
+                    });
+                }
+
+                html += '</div>';
+                resultDiv.innerHTML = html;
+
+            } catch (error) {
+                addMessage(`组合规则检查失败: ${error.message}`, 'error');
+                console.error('组合规则检查错误:', error);
+            }
+        }
+
+        function clearModule4() {
+            const container = document.getElementById('rule-textareas');
+            container.innerHTML = `
+                <div class="rule-textarea-container">
+                    <textarea class="rule-textarea"></textarea>
+                    <button class="remove-textarea" onclick="removeTextarea(this)">X</button>
+                </div>
+            `;
+            document.getElementById('combined-rule-result').innerHTML = '<strong>组合规则结果将显示在这里</strong>';
+            addMessage('模块4已清空', 'info');
+        }
+
+        // 模块4: 排序规则检查
+        function checkSortRule() {
+            try {
+                const textarea = document.getElementById('sort-rule');
+                const resultDiv = document.getElementById('sort-rule-result');
+                const sortRuleText = textarea.value.trim();
+
+                if (!sortRuleText) {
+                    addMessage('请输入排序规则', 'warning');
+                    return;
+                }
+
+                if (currentWords.length === 0) {
+                    addMessage('请先在模块1中处理文本以获取单词列表', 'warning');
+                    return;
+                }
+
+                addMessage('开始检查排序规则...', 'info');
+
+                // 创建临时规则引擎实例，使用测试环境的全局集合
+                const tempRuleEngine = new RuleEngine();
+                tempRuleEngine.globalSets = new Map(testGlobalSets);
+
+                // 使用ruleEngine解析排序规则，获取完整的解析信息
+                const parsedSortRule = tempRuleEngine.parseSortRule(sortRuleText);
+
+                // 创建临时规则用于排序
+                const tempRule = {
+                    ruleName: 'temp_sort_rule',
+                    sortGroups: parsedSortRule.groups,
+                    isAdjacent: parsedSortRule.isAdjacent,
+                    hasNonGroupingFlag: parsedSortRule.hasNonGroupingFlag
+                };
+
+                // 应用排序规则
+                const sortedResult = tempRuleEngine.applySortRule(currentWords, tempRule);
+
+                // 从parsedSortRule中获取截断信息（如果ruleEngine提供的话）
+                const isTruncated = parsedSortRule.hasNonGroupingFlag; // 非分组标志通常对应截断排序
+
+                // 显示结果
+                let html = `
+                    <h4>排序规则检查结果:</h4>
+                    <p><strong>排序规则:</strong> ${sortRuleText}</p>
+                    <p><strong>解析状态:</strong> <span style="color: #166534;">成功</span></p>
+                    <p><strong>排序类型:</strong> ${parsedSortRule.isAdjacent ? '相邻模式' : '普通模式'}</p>
+                    <p><strong>非分组标志:</strong> ${parsedSortRule.hasNonGroupingFlag ? '是' : '否'}</p>
+                    <p><strong>截断排序:</strong> ${isTruncated ? '是' : '否'}</p>
+                    <p><strong>使用的全局集合:</strong> ${Array.from(testGlobalSets.keys()).join(', ')}</p>
+                    <p><strong>排序组数:</strong> ${parsedSortRule.groups.length}</p>
+                `;
+
+                // 显示解析的排序组详情
+                if (parsedSortRule.groups && parsedSortRule.groups.length > 0) {
+                    html += '<h4>排序组详情:</h4>';
+                    parsedSortRule.groups.forEach((group, index) => {
+                        html += `<p><strong>第${index + 1}组:</strong> 集合=${group.setName}, 位置=${group.position || '任意'}, 降序=${group.descending ? '是' : '否'}</p>`;
+                    });
+                }
+
+                if (sortedResult && sortedResult.length > 0) {
+                    html += '<h4>排序结果:</h4>';
+
+                    // 复用主应用的分组展示逻辑
+                    if (parsedSortRule.hasNonGroupingFlag) {
+                        // 非分组模式：直接显示扁平化的单词列表
+                        const allWords = [];
+                        sortedResult.forEach(group => {
+                            allWords.push(...group.words);
+                        });
+
+                        html += '<div class="word-list">';
+                        // 限制显示100个单词
+                        const displayWords = allWords.slice(0, 100);
+                        displayWords.forEach(word => {
+                            html += `<span class="word-item">${word}</span>`;
+                        });
+                        if (allWords.length > 100) {
+                            html += `<span class="word-item" style="background: #f3f4f6; color: #6b7280;">...还有 ${allWords.length - 100} 个单词</span>`;
+                        }
+                        html += '</div>';
+                        html += `<p style="margin-top: 10px;"><strong>总单词数:</strong> ${allWords.length}</p>`;
+                    } else {
+                        // 分组模式：显示分组结构
+                        html += '<div class="grouped-results">';
+                        sortedResult.forEach(group => {
+                            html += `<div class="group-section" style="margin-bottom: 15px; border-left: 3px solid #3b82f6; padding-left: 10px;">`;
+                            html += `<h5 style="margin: 0 0 8px 0; color: #1e40af; font-family: monospace;">${group.key} (${group.words.length}个)</h5>`;
+                            html += '<div class="word-list">';
+                            // 每组最多显示20个单词
+                            const displayWords = group.words.slice(0, 20);
+                            displayWords.forEach(word => {
+                                html += `<span class="word-item">${word}</span>`;
+                            });
+                            if (group.words.length > 20) {
+                                html += `<span class="word-item" style="background: #f3f4f6; color: #6b7280;">...还有 ${group.words.length - 20} 个</span>`;
+                            }
+                            html += '</div></div>';
+                        });
+                        html += '</div>';
+                        html += `<p style="margin-top: 10px;"><strong>总分组数:</strong> ${sortedResult.length}</p>`;
+                    }
+                } else {
+                    html += '<p style="color: #dc2626;">排序结果为空</p>';
+                }
+
+                resultDiv.innerHTML = html;
+                addMessage('排序规则检查完成', 'info');
+
+            } catch (error) {
+                const resultDiv = document.getElementById('sort-rule-result');
+                resultDiv.innerHTML = `
+                    <h4>排序规则检查结果:</h4>
+                    <p><strong>解析状态:</strong> <span style="color: #dc2626;">失败</span></p>
+                    <p><strong>错误信息:</strong> ${error.message}</p>
+                `;
+                addMessage(`排序规则检查失败: ${error.message}`, 'error');
+                console.error('排序规则检查错误:', error);
+            }
+        }
+
+        function clearModule4() {
+            document.getElementById('sort-rule').value = '';
+            document.getElementById('sort-rule-result').innerHTML = '<strong>排序结果将显示在这里</strong>';
+            addMessage('模块4已清空', 'info');
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            initTestEnvironment();
+            addMessage('半自动化测试页面加载完成，所有模块已就绪', 'success');
+            addMessage(`测试环境已初始化，默认全局集合: ${Array.from(testGlobalSets.keys()).join(', ')}`, 'info');
+        });
+    </script>
+</body>
+
+</html>

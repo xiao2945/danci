@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.2.2';
-        this.releaseDate = '2025-06-06';
-        this.description = '整理功能和测试文档结构，完成主要页面基础文字检查，优化项目文件组织';
+        this.version = 'v1.2.5';
+        this.releaseDate = '2025-06-09';
+        this.description = '修复test.html的明显问题，包括FileStorageManager未定义错误和模块3清空按钮逻辑问题';
     }
 
     /**
