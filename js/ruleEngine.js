@@ -2834,7 +2834,7 @@ class RuleEngine {
             nonGrouping = nonGroupingStartIndex !== -1 && elementIndex >= nonGroupingStartIndex;
 
             let setName = '';
-            let positionFlag = isAdjacent ? '*' : '^'; // @@模式默认为*，@模式默认为^
+            let positionFlag = '*'; // 统一默认为*，不再区分@@和@模式
 
             // 检查是否是括号引用的集合
             if (actualRule[i] === '(') {
