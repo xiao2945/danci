@@ -558,47 +558,53 @@ class FileUtils {
             data.push(['']); // 空行分隔
         }
 
-        // 如果使用!标志，强制不分组显示
-        if (hasNonGrouping) {
+        // 根据分组信息决定显示方式
+        if (groupedWords) {
+            // 如果有分组信息，按分组格式输出
+                // 检查分组层级
+                const groupLevels = this.getGroupLevels(groupedWords);
+
+                // 添加表头
+                if (groupLevels === 1) {
+                    data.push(['分组', '单词']);
+                } else if (groupLevels === 2) {
+                    data.push(['一级分组', '二级分组', '单词']);
+                } else if (groupLevels === 3) {
+                    data.push(['一级分组', '二级分组', '三级分组', '单词']);
+                } else {
+                    // 超过三级的情况，使用通用表头
+                    const headers = [];
+                    for (let i = 1; i <= groupLevels; i++) {
+                        headers.push(`${i}级分组`);
+                    }
+                    headers.push('单词');
+                    data.push(headers);
+                }
+                this.addGroupedDataToExcel(data, groupedWords, words, 0, '', groupLevels);
+        } else {
+            // 没有分组信息，显示单列
             data.push(['单词']);
             words.forEach(word => {
                 data.push([word]);
             });
-        } else {
-            // 如果有分组信息，按分组格式输出
-            if (groupedWords) {
-                // 检查是否有二级分组
-                const hasSecondLevel = this.hasSecondLevelGroups(groupedWords);
-
-                // 添加表头
-                if (hasSecondLevel) {
-                    data.push(['一级分组', '二级分组', '单词']);
-                } else {
-                    data.push(['分组', '单词']);
-                }
-                this.addGroupedDataToExcel(data, groupedWords, words, 0, '', hasSecondLevel);
-            } else {
-                // 添加表头
-                data.push(['单词']);
-
-                // 添加单词数据
-                words.forEach(word => {
-                    data.push([word]);
-                });
-            }
         }
 
         // 创建工作表
         const worksheet = XLSX.utils.aoa_to_sheet(data);
 
         // 设置列宽
-        if (!hasNonGrouping && groupedWords) {
-            const hasSecondLevel = this.hasSecondLevelGroups(groupedWords);
-            if (hasSecondLevel) {
-                worksheet['!cols'] = [{ width: 10 }, { width: 10 }, { width: 50 }];
-            } else {
-                worksheet['!cols'] = [{ width: 10 }, { width: 50 }];
+        if (groupedWords) {
+            const groupLevels = this.getGroupLevels(groupedWords);
+            const cols = [];
+            
+            // 为每个分组层级设置列宽
+            for (let i = 0; i < groupLevels; i++) {
+                cols.push({ width: 10 });
             }
+            // 单词列设置较宽的宽度
+            cols.push({ width: 50 });
+            
+            worksheet['!cols'] = cols;
         } else {
             worksheet['!cols'] = [{ width: 30 }];
         }
@@ -695,17 +701,31 @@ class FileUtils {
     }
 
     /**
-     * 检查是否有二级分组
+     * 检查分组层级
+     * @param {Object} groupedWords - 分组对象
+     * @returns {number} 分组层级数 (1=一级, 2=二级, 3=三级)
+     */
+    getGroupLevels(groupedWords) {
+        let maxLevel = 1;
+        
+        for (const [groupName, groupContent] of Object.entries(groupedWords)) {
+            if (!Array.isArray(groupContent)) {
+                // 发现子分组，检查子分组的层级
+                const subLevel = this.getGroupLevels(groupContent);
+                maxLevel = Math.max(maxLevel, subLevel + 1);
+            }
+        }
+        
+        return maxLevel;
+    }
+
+    /**
+     * 检查是否有二级分组（保持向后兼容）
      * @param {Object} groupedWords - 分组对象
      * @returns {boolean} 是否有二级分组
      */
     hasSecondLevelGroups(groupedWords) {
-        for (const [groupName, groupContent] of Object.entries(groupedWords)) {
-            if (!Array.isArray(groupContent)) {
-                return true; // 发现非数组内容，说明有子分组
-            }
-        }
-        return false;
+        return this.getGroupLevels(groupedWords) >= 2;
     }
 
     /**
@@ -713,59 +733,50 @@ class FileUtils {
      * @param {Array} data - Excel数据数组
      * @param {Object} groupedWords - 分组对象
      * @param {Array} activeWords - 活跃单词数组
-     * @param {number} level - 分组层级
-     * @param {string} parentGroup - 父级分组名称
-     * @param {boolean} hasSecondLevel - 是否有二级分组
+     * @param {number} level - 当前分组层级
+     * @param {Array} parentGroups - 父级分组名称数组
+     * @param {number} maxLevels - 最大分组层级数
+     * @param {Set} displayedGroups - 已显示的分组标签集合
      */
-    addGroupedDataToExcel(data, groupedWords, activeWords, level = 0, parentGroup = '', hasSecondLevel = true) {
+    addGroupedDataToExcel(data, groupedWords, activeWords, level = 0, parentGroups = [], maxLevels = 1, displayedGroups = new Set()) {
         for (const [groupName, groupContent] of Object.entries(groupedWords)) {
+            const currentGroups = [...parentGroups, groupName];
+            
             if (Array.isArray(groupContent)) {
                 // 这是最终的单词列表，只输出活跃的单词
                 const activeGroupWords = groupContent.filter(word => activeWords.includes(word));
                 if (activeGroupWords.length > 0) {
                     const wordsString = activeGroupWords.join('，');
-                    if (level === 0) {
-                        if (hasSecondLevel) {
-                            // 有二级分组：第一列是分组名，第二列空，第三列是单词
-                            data.push([groupName, '', wordsString]);
+                    
+                    // 构建行数据：填充所有分组层级
+                    const row = new Array(maxLevels + 1); // +1 for words column
+                    
+                    // 填充分组列 - 实现树形结构显示
+                    for (let i = 0; i < maxLevels; i++) {
+                        if (i < currentGroups.length) {
+                            // 生成当前层级的分组路径标识
+                            const groupPath = currentGroups.slice(0, i + 1).join('|');
+                            
+                            // 只在第一次出现时显示分组标签
+                            if (!displayedGroups.has(groupPath)) {
+                                row[i] = currentGroups[i];
+                                displayedGroups.add(groupPath);
+                            } else {
+                                row[i] = ''; // 相同分组标签留空
+                            }
                         } else {
-                            // 无二级分组：第一列是分组名，第二列是单词
-                            data.push([groupName, wordsString]);
-                        }
-                    } else if (level === 1) {
-                        if (hasSecondLevel) {
-                            // 二级分组：第一列是父分组名，第二列是当前分组名，第三列是单词
-                            data.push([parentGroup, groupName, wordsString]);
+                            row[i] = '';
                         }
                     }
+                    
+                    // 填充单词列
+                    row[maxLevels] = wordsString;
+                    
+                    data.push(row);
                 }
             } else {
                 // 这是子分组，需要递归处理
-                if (level === 0) {
-                    // 处理一级分组的子分组
-                    let isFirstSubGroup = true;
-                    for (const [subGroupName, subGroupContent] of Object.entries(groupContent)) {
-                        if (Array.isArray(subGroupContent)) {
-                            const activeSubGroupWords = subGroupContent.filter(word => activeWords.includes(word));
-                            if (activeSubGroupWords.length > 0) {
-                                const wordsString = activeSubGroupWords.join('，');
-                                if (hasSecondLevel) {
-                                    if (isFirstSubGroup) {
-                                        // 第一个二级分组和一级分组在同一行
-                                        data.push([groupName, subGroupName, wordsString]);
-                                        isFirstSubGroup = false;
-                                    } else {
-                                        // 后续二级分组，第一列为空
-                                        data.push(['', subGroupName, wordsString]);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // 更深层级的递归处理（虽然当前限制最多三级）
-                    this.addGroupedDataToExcel(data, groupContent, activeWords, level + 1, groupName, hasSecondLevel);
-                }
+                this.addGroupedDataToExcel(data, groupContent, activeWords, level + 1, currentGroups, maxLevels, displayedGroups);
             }
         }
     }

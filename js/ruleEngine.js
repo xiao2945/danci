@@ -1442,7 +1442,7 @@ class RuleEngine {
 
         // 提取非锚点元素
         const elements = pattern.filter(p => p.type !== 'position');
-        
+
         // 根据锚点组合分类处理
         if (beginAnchorIndex !== -1 && endAnchorIndex !== -1) {
             // 双边锚点情况
@@ -1464,7 +1464,7 @@ class RuleEngine {
      */
     handleDoubleAnchor(word, elements, beginAnchorType, endAnchorType, startPos) {
         let matchStart, matchEnd;
-        
+
         if (beginAnchorType === '\\b' && endAnchorType === '\\e') {
             // \\bAB+CD\\e: 前缀是A、后缀是D，中间结构且用完
             if (startPos !== 0) return false;
@@ -1494,15 +1494,15 @@ class RuleEngine {
             matchEnd = this.findLastElementFromEnd(word, lastElement, word.length - 1);
             if (matchEnd === -1) return false;
         }
-        
+
         // 检查锚点是否交叉
         if (matchStart >= matchEnd) {
             return false;  // 锚点交叉，无效匹配
         }
-        
+
         // 匹配中间部分，必须完全消耗
         const targetText = word.substring(matchStart, matchEnd);
-        
+
         // 检测是否存在歧义，选择合适的匹配策略
         let hasAmbiguity = false;
         for (const element of elements) {
@@ -1511,7 +1511,7 @@ class RuleEngine {
                 break;
             }
         }
-        
+
         if (hasAmbiguity) {
             console.log('[DEBUG] 双锚点匹配检测到歧义，使用增强回溯算法');
             return this.matchWithEnhancedBacktrack(targetText, elements, 0);
@@ -1526,7 +1526,7 @@ class RuleEngine {
      */
     handleBeginAnchor(word, elements, beginAnchorType, startPos) {
         let matchStart;
-        
+
         if (beginAnchorType === '\\b') {
             // \\bAB+C: 前缀是A，后面是结构，但后面还有没有都行
             if (startPos !== 0) return false;
@@ -1538,7 +1538,7 @@ class RuleEngine {
             matchStart = this.findFirstElementFromStart(word, firstElement, 1);
             if (matchStart === -1) return false;
         }
-        
+
         // 从matchStart开始尝试匹配，不要求完全消耗
         return this.matchesPatternPartial(word, elements, matchStart);
     }
@@ -1548,7 +1548,7 @@ class RuleEngine {
      */
     handleEndAnchor(word, elements, endAnchorType, startPos) {
         let matchEnd;
-        
+
         if (endAnchorType === '\\e') {
             // A+BC\\e: 后缀是C，前面紧邻结构，但A前面还有没有都行
             matchEnd = word.length;
@@ -1558,7 +1558,7 @@ class RuleEngine {
             matchEnd = this.findLastElementFromEnd(word, lastElement, word.length - 1);
             if (matchEnd === -1) return false;
         }
-        
+
         // 向前匹配到matchEnd，不要求完全消耗前面部分
         return this.matchesPatternFromEnd(word, elements, matchEnd, startPos);
     }
@@ -1611,10 +1611,10 @@ class RuleEngine {
             for (let j = i + 1; j < setElements.length; j++) {
                 const elemA = setElements[i];
                 const elemB = setElements[j];
-                
+
                 // 跳过空字符串
                 if (elemA === '' || elemB === '') continue;
-                
+
                 // 检查是否存在前缀关系
                 if (typeof elemA === 'string' && typeof elemB === 'string') {
                     if (elemA.startsWith(elemB) || elemB.startsWith(elemA)) {
@@ -1632,13 +1632,13 @@ class RuleEngine {
     matchSetWithBacktrack(word, setElements, startPos, isFromEnd = false) {
         // 尝试所有可能的匹配
         const candidates = [];
-        
+
         for (const setElement of setElements) {
             if (setElement === '') {
                 candidates.push({ element: setElement, length: 0 });
                 continue;
             }
-            
+
             if (typeof setElement === 'string' && setElement.length > 1) {
                 if (isFromEnd) {
                     if (startPos - setElement.length >= 0 &&
@@ -1663,7 +1663,7 @@ class RuleEngine {
                 }
             }
         }
-        
+
         return candidates;
     }
 
@@ -1690,14 +1690,14 @@ class RuleEngine {
         }
 
         const element = pattern[patternIndex];
-        
+
         if (element.type === 'set') {
             const hasAmbiguity = this.detectAmbiguity(element.value);
-            
+
             if (hasAmbiguity) {
                 // 有歧义：尝试所有可能的匹配
                 const candidates = this.matchSetWithBacktrack(word, element.value, wordIndex, false);
-                
+
                 for (const candidate of candidates) {
                     const newWordIndex = wordIndex + candidate.length;
                     const newMatchHistory = [...matchHistory, {
@@ -1706,7 +1706,7 @@ class RuleEngine {
                         length: candidate.length,
                         position: wordIndex
                     }];
-                    
+
                     if (this.enhancedBacktrackRecursive(word, pattern, newWordIndex, patternIndex + 1, newMatchHistory)) {
                         return true;
                     }
@@ -1727,7 +1727,7 @@ class RuleEngine {
             }
             return false;
         }
-        
+
         // 跳过其他类型的元素
         return this.enhancedBacktrackRecursive(word, pattern, wordIndex, patternIndex + 1, matchHistory);
     }
@@ -1765,7 +1765,7 @@ class RuleEngine {
 
             // 检测是否存在歧义
             const hasAmbiguity = this.detectAmbiguity(element.value);
-            
+
             if (element.quantifier === '+') {
                 let matchCount = 0;
                 let pos = startPos;
@@ -1794,7 +1794,7 @@ class RuleEngine {
                             }
                             return 0;
                         });
-                        
+
                         for (const setElement of sortedElements) {
                             if (setElement === '') continue;
 
@@ -1835,8 +1835,8 @@ class RuleEngine {
                     if (candidates.length > 0) {
                         // 返回第一个匹配，实际应用中可能需要尝试所有候选
                         const candidate = candidates[0];
-                        return { 
-                            matched: true, 
+                        return {
+                            matched: true,
                             endPos: startPos + candidate.length,
                             candidates: candidates // 保存所有候选，供回溯使用
                         };
@@ -1850,7 +1850,7 @@ class RuleEngine {
                         }
                         return 0;
                     });
-                    
+
                     for (const setElement of sortedElements) {
                         if (setElement === '') {
                             return { matched: true, endPos: startPos };
@@ -1903,7 +1903,7 @@ class RuleEngine {
         } else if (element.type === 'set') {
             // 检测是否存在歧义
             const hasAmbiguity = this.detectAmbiguity(element.value);
-            
+
             if (element.quantifier === '+') {
                 let matchCount = 0;
                 let pos = endPos;
@@ -1964,8 +1964,8 @@ class RuleEngine {
                     if (candidates.length > 0) {
                         // 返回第一个匹配
                         const candidate = candidates[0];
-                        return { 
-                            matched: true, 
+                        return {
+                            matched: true,
                             startPos: endPos - candidate.length,
                             candidates: candidates // 保存所有候选，供回溯使用
                         };
@@ -1979,7 +1979,7 @@ class RuleEngine {
                         }
                         return 0;
                     });
-                    
+
                     for (const setElement of sortedElements) {
                         if (setElement === '') {
                             return { matched: true, startPos: endPos };
@@ -2017,7 +2017,7 @@ class RuleEngine {
                 break;
             }
         }
-        
+
         if (hasAmbiguity) {
             // 有歧义：使用增强回溯算法
             console.log('[DEBUG] 检测到歧义，使用增强回溯算法');
@@ -2755,6 +2755,10 @@ class RuleEngine {
             if (actualRule.indexOf('!', nonGroupingFromIndex + 1) !== -1) {
                 throw new Error(`排序规则中最多只能有一个分组开关!: ${sortRule}`);
             }
+
+            // 验证!的位置是否合法
+            this.validateNonGroupingPosition(actualRule, nonGroupingFromIndex, sortRule);
+
             actualRule = actualRule.replace('!', ''); // 移除!标志
         }
 
@@ -2913,6 +2917,65 @@ class RuleEngine {
     }
 
     /**
+     * 验证!开关的位置是否合法
+     * @param {string} actualRule - 实际规则（已移除@前缀）
+     * @param {number} nonGroupingIndex - !的位置索引
+     * @param {string} originalRule - 原始规则（用于错误信息）
+     */
+    validateNonGroupingPosition(actualRule, nonGroupingIndex, originalRule) {
+        // 特殊情况：!- 或 !开头（如@!或@!-）是合法的
+        if (nonGroupingIndex === 0) {
+            return; // !在开头是合法的
+        }
+
+        // 检查!是否在括号内（不合法）
+        let openParenCount = 0;
+        for (let i = 0; i < nonGroupingIndex; i++) {
+            if (actualRule[i] === '(') {
+                openParenCount++;
+            } else if (actualRule[i] === ')') {
+                openParenCount--;
+            }
+        }
+
+        // 如果!前面有未闭合的括号，说明!在括号内
+        if (openParenCount > 0) {
+            throw new Error(`分组开关!不能放在集合引用的括号内: ${originalRule}`);
+        }
+
+        // 检查!是否直接跟在-后面（不合法，除非是特殊情况!-）
+        if (nonGroupingIndex > 0 && actualRule[nonGroupingIndex - 1] === '-') {
+            // 检查是否是特殊情况：整个规则就是!-
+            if (actualRule.trim() !== '!-') {
+                throw new Error(`分组开关!不能直接放在逆序标志-后面: ${originalRule}`);
+            }
+        }
+
+        // 检查!是否在规则末尾（不合法）
+        // 注意：需要检查去除!后的位置是否为末尾
+        if (nonGroupingIndex === actualRule.length - 1) {
+            throw new Error(`分组开关!不能放在排序规则的末尾: ${originalRule}`);
+        }
+
+        // 验证!前后是否为有效的排序单元分隔位置
+        // !应该在排序标志与排序单元之间，或排序单元与排序单元之间
+        const beforeChar = nonGroupingIndex > 0 ? actualRule[nonGroupingIndex - 1] : '';
+        const afterChar = nonGroupingIndex < actualRule.length - 1 ? actualRule[nonGroupingIndex + 1] : '';
+
+        // !前面应该是字母、数字、)、位置匹配符（^$*~）（表示一个排序单元的结束）
+        const validBeforeChars = /[a-zA-Z0-9)\^\$\*~]/;
+        if (beforeChar && !validBeforeChars.test(beforeChar)) {
+            throw new Error(`分组开关!的位置不正确，应该放在排序单元之间: ${originalRule}`);
+        }
+
+        // !后面应该是字母、(或-（表示一个排序单元的开始）
+        const validAfterChars = /[a-zA-Z(-]/;
+        if (afterChar && !validAfterChars.test(afterChar)) {
+            throw new Error(`分组开关!的位置不正确，应该放在排序单元之间: ${originalRule}`);
+        }
+    }
+
+    /**
      * 解析集合名和位置标识符
      * @param {string} content - 内容字符串
      * @returns {Object} 包含集合名、位置标识符和消费字符数的对象
@@ -2971,10 +3034,10 @@ class RuleEngine {
 
                     for (let i = 0; i < sortGroups.length; i++) {
                         let key = result.groupKeys[i];
-                        
+
                         // 注意：在严格排序模式下，降序处理已经在findAdjacentMatch中完成
                         // 这里不需要重复处理降序，直接分配到对应的键数组
-                        
+
                         if (sortGroups[i].nonGrouping) {
                             sortingKeys.push(key);
                         } else {
@@ -3009,13 +3072,13 @@ class RuleEngine {
 
             if (result.element) {
                 let key = result.element;
-                
+
                 // 如果是降序，需要反转排序键
                 if (group.descending) {
                     // 对于降序，使用字符串的反向比较值
                     key = String.fromCharCode(255 - key.charCodeAt(0)) + key.slice(1);
                 }
-                
+
                 keys.push(key);
                 lastMatchEnd = result.endPosition; // 更新下一次搜索的起始位置
             } else {
@@ -3171,19 +3234,19 @@ class RuleEngine {
                                 // 根据排序方向处理返回的键
                                 let key1 = match1.element;
                                 let key2 = match2.element;
-                                
+
                                 // 如果第一个集合是降序，需要反转排序键
                                 if (group1.descending) {
                                     // 对于降序，使用字符串的反向比较值
                                     key1 = String.fromCharCode(255 - key1.charCodeAt(0)) + key1.slice(1);
                                 }
-                                
+
                                 // 如果第二个集合是降序，需要反转排序键
                                 if (group2.descending) {
                                     // 对于降序，使用字符串的反向比较值
                                     key2 = String.fromCharCode(255 - key2.charCodeAt(0)) + key2.slice(1);
                                 }
-                                
+
                                 return {
                                     success: true,
                                     groupKeys: [key1, key2]

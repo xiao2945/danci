@@ -939,50 +939,53 @@ class WordFilterApp {
             if (groups[key].length === 0) {
                 delete groups[key];
             } else {
-                // 如果还有更多的排序规则，且没有被分组开关截断，递归进行下一级分组
-                if (sortGroups.length > 1 && !hasNonGrouping) {
-                    // 如果是严格紧邻模式，第二级已经在匹配过程中考虑过了
-                    if (isAdjacent) {
-                        // 如果有超过2个排序元素，仍需继续处理
-                        if (sortGroups.length > 2) {
+                // 如果还有更多的排序规则，检查是否需要继续分组
+                if (sortGroups.length > 1) {
+                    // 检查剩余的排序规则中是否还有需要分组的元素
+                    const remainingSortGroups = isAdjacent ? sortGroups.slice(2) : sortGroups.slice(1);
+                    const hasGroupingElements = remainingSortGroups.some(group => !group.nonGrouping);
+                    
+                    if (hasGroupingElements) {
+                        // 还有需要分组的元素，继续递归分组
+                        if (isAdjacent) {
+                            // 如果有超过2个排序元素，仍需继续处理
+                            if (sortGroups.length > 2) {
+                                // 创建当前级别的分组标签
+                                const currentLevelLabels = [...parentLabels, key];
+
+                                // 传递第三个及之后的排序规则数组和累积的分组标签
+                                groups[key] = this.groupWordsBySetRule(
+                                    groups[key],
+                                    remainingSortGroups,
+                                    ruleName,
+                                    currentLevelLabels
+                                );
+                            } else {
+                                // 只有两个排序元素，直接排序不再分组
+                                groups[key].sort((a, b) => this.ruleEngine.compareWords(a, b));
+                            }
+                        } else {
+                            // 非严格紧邻模式，正常处理
                             // 创建当前级别的分组标签
                             const currentLevelLabels = [...parentLabels, key];
 
-                            // 传递第三个及之后的排序规则数组和累积的分组标签
-                            const remainingSortGroups = sortGroups.slice(2);
+                            // 直接传递剩余的排序规则数组和累积的分组标签
                             groups[key] = this.groupWordsBySetRule(
                                 groups[key],
                                 remainingSortGroups,
                                 ruleName,
                                 currentLevelLabels
                             );
-                        } else {
-                            // 只有两个排序元素，直接排序不再分组
-                            groups[key].sort((a, b) => this.ruleEngine.compareWords(a, b));
                         }
                     } else {
-                        // 非严格紧邻模式，正常处理
-                        // 创建当前级别的分组标签
-                        const currentLevelLabels = [...parentLabels, key];
-
-                        // 直接传递剩余的排序规则数组和累积的分组标签
-                        const remainingSortGroups = sortGroups.slice(1);
-                        groups[key] = this.groupWordsBySetRule(
+                        // 剩余元素都被分组开关影响，只排序不分组
+                        const sortedWords = this.ruleEngine.sortBySetGroups(
                             groups[key],
-                            remainingSortGroups,
-                            ruleName,
-                            currentLevelLabels
+                            this.constructSortRuleString(remainingSortGroups, isAdjacent),
+                            localSets
                         );
+                        groups[key] = sortedWords;
                     }
-                } else if (sortGroups.length > 1 && hasNonGrouping) {
-                    // 有分组开关，先对当前组内单词按剩余规则排序，但不再继续分组
-                    const remainingSortGroups = sortGroups.slice(1);
-                    const sortedWords = this.ruleEngine.sortBySetGroups(
-                        groups[key],
-                        this.constructSortRuleString(remainingSortGroups, isAdjacent),
-                        localSets
-                    );
-                    groups[key] = sortedWords;
                 } else {
                     // 最后一级，对单词进行排序
                     groups[key].sort((a, b) => this.ruleEngine.compareWords(a, b));
@@ -1063,15 +1066,29 @@ class WordFilterApp {
                 exportedCount: activeWords.length
             };
 
-            // 检测是否有!标志影响分组显示
+            // 获取分组信息 - 使用与页面显示相同的逻辑
+            let groupedWords = null;
             let hasNonGrouping = false;
+            
             if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
-                const parseResult = this.ruleEngine.parseSortRule(rule.displayRule.substring(1));
+                const sortRule = rule.displayRule.substring(1);
+                const parseResult = this.ruleEngine.parseSortRule(sortRule);
                 hasNonGrouping = parseResult.hasNonGrouping;
+                
+                // 特殊处理：@! 和 @!- 表示不分组的排序
+                if (sortRule === '!' || sortRule === '!-') {
+                    groupedWords = null;
+                } else if (sortRule !== '-' && sortRule !== '') {
+                    // 如果有集合排序规则，按集合分组（即使有!标志也要分组到相应层级）
+                    groupedWords = this.groupWordsBySetRule(this.filteredWords, sortRule, ruleName);
+                } else {
+                    // 没有排序规则时，按首字母分组
+                    groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
+                }
+            } else {
+                // 没有排序规则时，按首字母分组
+                groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
             }
-
-            // 获取分组信息
-            const groupedWords = hasNonGrouping ? null : this.groupWordsByFirstLetter(this.filteredWords);
 
             if (format === 'txt') {
                 await this.fileUtils.exportToText(activeWords, `${filename}.txt`, exportInfo, groupedWords, hasNonGrouping);
