@@ -3229,16 +3229,9 @@ class RuleEngine {
                 if (group2.positionFlag === '^') {
                     throw new Error(`有序紧邻模式（@@）中第二个集合不能使用前缀匹配标识符（^）`);
                 }
-            } else {
-                // 验证@模式：强制要求位置标识符（除了单级排序）
-                if (groups.length > 1) {
-                    for (const group of groups) {
-                        if (!this.hasExplicitPositionFlag(group.setName, sortRule)) {
-                            throw new Error(`多级有序宽松模式（@）中的集合 "${group.setName}" 必须包含位置标识符（^, $, *, ~）`);
-                        }
-                    }
-                }
             }
+            // 移除多级排序必须显式指定位置标识符的限制
+            // 现在统一默认为*，不再强制要求显式位置标识符
         } catch (error) {
             throw new Error(`排序规则格式错误: ${error.message}`);
         }
