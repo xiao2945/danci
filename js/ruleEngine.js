@@ -1062,14 +1062,23 @@ class RuleEngine {
      * @returns {boolean} 是否匹配
      */
     matchesRule(word, rule) {
+        console.log(`[DEBUG] ===== matchesRule: word="${word}" =====`);
+        console.log(`[DEBUG] rule:`, rule);
+        
         const lowerWord = word.toLowerCase();
 
         if (rule.specificRule.startsWith('::')) {
             // 组合规则
-            return this.matchesCombinedRule(lowerWord, rule.specificRule, rule.localSets);
+            console.log(`[DEBUG] using combined rule`);
+            const result = this.matchesCombinedRule(lowerWord, rule.specificRule, rule.localSets);
+            console.log(`[DEBUG] matchesCombinedRule result: ${result}`);
+            return result;
         } else {
             // 普通规则
-            return this.matchesSpecificRule(lowerWord, rule.specificRule, rule.localSets);
+            console.log(`[DEBUG] using specific rule`);
+            const result = this.matchesSpecificRule(lowerWord, rule.specificRule, rule.localSets);
+            console.log(`[DEBUG] matchesSpecificRule result: ${result}`);
+            return result;
         }
     }
 
@@ -1262,8 +1271,15 @@ class RuleEngine {
                 const end = rulePattern.indexOf('"', i + 1);
                 if (end !== -1) {
                     const literal = rulePattern.substring(i + 1, end);
-                    pattern.push({ type: 'literal', value: literal });
+                    let element = { type: 'literal', value: literal };
                     i = end + 1;
+                    
+                    // 检查是否有量词
+                    if (i < rulePattern.length && rulePattern[i] === '+') {
+                        element.quantifier = '+';
+                        i++;
+                    }
+                    pattern.push(element);
                 } else {
                     i++;
                 }
@@ -1273,26 +1289,42 @@ class RuleEngine {
                 if (setEnd !== -1) {
                     const setName = rulePattern.substring(i + 1, setEnd);
                     const set = this.getSet(setName, localSets);
+                    let element;
                     if (!set) {
                         console.warn(`集合 "${setName}" 未找到`);
-                        pattern.push({ type: 'set', value: new Set() });
+                        element = { type: 'set', value: new Set() };
                     } else {
-                        pattern.push({ type: 'set', value: set });
+                        element = { type: 'set', value: set };
                     }
                     i = setEnd + 1;
+                    
+                    // 检查是否有量词
+                    if (i < rulePattern.length && rulePattern[i] === '+') {
+                        element.quantifier = '+';
+                        i++;
+                    }
+                    pattern.push(element);
                 } else {
                     i++;
                 }
             } else if (this.isSetName(rulePattern[i])) {
                 // 单字母集合名称（直接引用）
                 const set = this.getSet(rulePattern[i], localSets);
+                let element;
                 if (!set) {
                     console.warn(`集合 "${rulePattern[i]}" 未找到`);
-                    pattern.push({ type: 'set', value: new Set() });
+                    element = { type: 'set', value: new Set() };
                 } else {
-                    pattern.push({ type: 'set', value: set });
+                    element = { type: 'set', value: set };
                 }
                 i++;
+                
+                // 检查是否有量词
+                if (i < rulePattern.length && rulePattern[i] === '+') {
+                    element.quantifier = '+';
+                    i++;
+                }
+                pattern.push(element);
             } else {
                 i++;
             }
@@ -1355,99 +1387,644 @@ class RuleEngine {
      * @returns {boolean} 是否匹配
      */
     matchesPatternAtPosition(word, pattern, startPos) {
-        let wordIndex = startPos;
-        let patternIndex = 0;
+        console.log(`[DEBUG] matchesPatternAtPosition: word="${word}", startPos=${startPos}`);
+        console.log(`[DEBUG] pattern:`, pattern);
+        
+        // 检查是否有位置锚点
+        const hasBeginAnchor = pattern.some(el => el.type === 'position' && (el.value === '\\b' || el.value === '\\-b'));
+        const hasEndAnchor = pattern.some(el => el.type === 'position' && (el.value === '\\e' || el.value === '\\-e'));
+        
+        console.log(`[DEBUG] hasBeginAnchor: ${hasBeginAnchor}, hasEndAnchor: ${hasEndAnchor}`);
+        
+        if (hasBeginAnchor || hasEndAnchor) {
+            const result = this.matchesPatternWithAnchors(word, pattern, startPos);
+            console.log(`[DEBUG] matchesPatternWithAnchors result: ${result}`);
+            return result;
+        } else {
+            const result = this.matchesPatternSequential(word, pattern, startPos);
+            console.log(`[DEBUG] matchesPatternSequential result: ${result}`);
+            return result;
+        }
+    }
 
-        while (patternIndex < pattern.length) {
-            const element = pattern[patternIndex];
-
-            if (element.type === 'literal') {
-                // 字面字符串匹配（支持多字符）
+    /**
+     * 处理带位置锚点的模式匹配
+     */
+    matchesPatternWithAnchors(word, pattern, startPos) {
+        console.log(`[DEBUG] matchesPatternWithAnchors: word="${word}", startPos=${startPos}`);
+        console.log(`[DEBUG] pattern:`, pattern);
+        
+        // 找到开始和结束锚点的位置
+        let beginAnchorIndex = -1;
+        let endAnchorIndex = -1;
+        let beginAnchorType = null;
+        let endAnchorType = null;
+        
+        for (let i = 0; i < pattern.length; i++) {
+            const element = pattern[i];
+            if (element.type === 'position') {
+                if (element.value === '\\b' || element.value === '\\-b') {
+                    beginAnchorIndex = i;
+                    beginAnchorType = element.value;
+                } else if (element.value === '\\e' || element.value === '\\-e') {
+                    endAnchorIndex = i;
+                    endAnchorType = element.value;
+                }
+            }
+        }
+        
+        console.log(`[DEBUG] anchors: begin=${beginAnchorIndex}(${beginAnchorType}), end=${endAnchorIndex}(${endAnchorType})`);
+        
+        let wordStart = startPos;
+        let wordEnd = word.length;
+        
+        // 处理开始锚点约束
+        if (beginAnchorIndex !== -1) {
+            console.log(`[DEBUG] processing begin anchor: ${beginAnchorType}`);
+            if (beginAnchorType === '\\b') {
+                // 必须从单词开头开始
+                if (startPos !== 0) {
+                    console.log(`[DEBUG] \\b anchor failed: startPos=${startPos} !== 0`);
+                    return false;
+                }
+                wordStart = 0;
+            } else if (beginAnchorType === '\\-b') {
+                // 不能从单词开头开始
+                if (startPos === 0) {
+                    console.log(`[DEBUG] \\-b anchor failed: startPos=${startPos} === 0`);
+                    return false;
+                }
+                wordStart = startPos;
+            }
+            
+            // 处理开始锚点后的第一个集合/字面量
+            if (beginAnchorIndex + 1 < pattern.length) {
+                const nextElement = pattern[beginAnchorIndex + 1];
+                console.log(`[DEBUG] matching element after begin anchor:`, nextElement);
+                const matchResult = this.matchElementFromStart(word, nextElement, wordStart);
+                console.log(`[DEBUG] match result:`, matchResult);
+                if (!matchResult.matched) {
+                    console.log(`[DEBUG] element after begin anchor failed to match`);
+                    return false;
+                }
+                wordStart = matchResult.endPos;
+            }
+        }
+        
+        // 处理结束锚点约束
+        if (endAnchorIndex !== -1) {
+            console.log(`[DEBUG] processing end anchor: ${endAnchorType}`);
+            if (endAnchorType === '\\e') {
+                // 必须到单词结尾结束
+                wordEnd = word.length;
+            } else if (endAnchorType === '\\-e') {
+                // 不能到单词结尾结束
+                wordEnd = word.length - 1;
+            }
+            
+            // 处理结束锚点前的最后一个集合/字面量
+            if (endAnchorIndex - 1 >= 0) {
+                const prevElement = pattern[endAnchorIndex - 1];
+                console.log(`[DEBUG] matching element before end anchor:`, prevElement);
+                const matchResult = this.matchElementFromEnd(word, prevElement, wordEnd);
+                console.log(`[DEBUG] match result:`, matchResult);
+                if (!matchResult.matched) {
+                    console.log(`[DEBUG] element before end anchor failed to match`);
+                    return false;
+                }
+                wordEnd = matchResult.startPos;
+            }
+        }
+        
+        // 处理中间剩余的元素
+        const middleElements = [];
+        let startIdx = beginAnchorIndex !== -1 ? beginAnchorIndex + 2 : 0;
+        let endIdx = endAnchorIndex !== -1 ? endAnchorIndex - 2 : pattern.length - 1;
+        
+        console.log(`[DEBUG] middle elements range: startIdx=${startIdx}, endIdx=${endIdx}`);
+        
+        for (let i = startIdx; i <= endIdx; i++) {
+            if (pattern[i].type !== 'position') {
+                middleElements.push(pattern[i]);
+            }
+        }
+        
+        console.log(`[DEBUG] middleElements:`, middleElements);
+        console.log(`[DEBUG] wordStart=${wordStart}, wordEnd=${wordEnd}`);
+        
+        // 匹配中间部分
+        if (middleElements.length > 0) {
+            const middleText = word.substring(wordStart, wordEnd);
+            console.log(`[DEBUG] middleText="${middleText}"`);
+            const result = this.matchesPatternSequential(middleText, middleElements, 0);
+            console.log(`[DEBUG] middle pattern match result:`, result);
+            return result;
+        }
+        
+        const finalResult = wordStart <= wordEnd;
+        console.log(`[DEBUG] final result: ${finalResult}`);
+        return finalResult;
+    }
+    
+    /**
+     * 从开始位置匹配元素
+     */
+    matchElementFromStart(word, element, startPos) {
+        console.log(`[DEBUG] matchElementFromStart: word="${word}", element:`, element, `startPos=${startPos}`);
+        
+        if (element.type === 'literal') {
+            if (element.quantifier === '+') {
+                let matchCount = 0;
+                let pos = startPos;
                 const literalLength = element.value.length;
-                if (wordIndex + literalLength > word.length ||
-                    word.substring(wordIndex, wordIndex + literalLength) !== element.value) {
-                    return false;
+                
+                while (pos + literalLength <= word.length &&
+                       word.substring(pos, pos + literalLength) === element.value) {
+                    pos += literalLength;
+                    matchCount++;
                 }
-                wordIndex += literalLength;
-            } else if (element.type === 'set') {
-                // 集合匹配 - 支持多字符字符串匹配
-                let matched = false;
-                let matchLength = 0;
-
-                // 检查集合是否存在且可迭代
-                if (!element.value || typeof element.value[Symbol.iterator] !== 'function') {
-                    console.warn('集合值不存在或不可迭代:', element);
-                    return false;
+                
+                return { matched: matchCount > 0, endPos: pos };
+            } else {
+                const literalLength = element.value.length;
+                if (startPos + literalLength <= word.length &&
+                    word.substring(startPos, startPos + literalLength) === element.value) {
+                    return { matched: true, endPos: startPos + literalLength };
                 }
-
-                // 尝试匹配集合中的每个元素
-                // 优先尝试非空字符串匹配，最后才尝试空字符串
-                let emptyStringFound = false;
-
-                for (const setElement of element.value) {
-                    if (setElement === '') {
-                        // 记录找到空字符串，但不立即匹配
-                        emptyStringFound = true;
-                        continue;
-                    } else if (typeof setElement === 'string' && setElement.length > 1) {
-                        // 多字符字符串匹配
-                        if (wordIndex + setElement.length <= word.length) {
-                            const wordSubstring = word.substring(wordIndex, wordIndex + setElement.length);
-                            if (wordSubstring === setElement) {
+                return { matched: false, endPos: startPos };
+            }
+        } else if (element.type === 'set') {
+            console.log(`[DEBUG] matching set: ${element.name}, quantifier: ${element.quantifier}`);
+            console.log(`[DEBUG] set values:`, element.value);
+            
+            if (element.quantifier === '+') {
+                let matchCount = 0;
+                let pos = startPos;
+                
+                while (pos < word.length) {
+                    let matched = false;
+                    let matchLength = 0;
+                    
+                    console.log(`[DEBUG] trying to match at pos ${pos}, char: "${word[pos]}"`);
+                    
+                    for (const setElement of element.value) {
+                        if (setElement === '') continue;
+                        
+                        if (typeof setElement === 'string' && setElement.length > 1) {
+                            if (pos + setElement.length <= word.length &&
+                                word.substring(pos, pos + setElement.length) === setElement) {
+                                console.log(`[DEBUG] matched multi-char element: "${setElement}"`);
                                 matched = true;
                                 matchLength = setElement.length;
                                 break;
                             }
+                        } else {
+                            if (pos < word.length && word[pos] === setElement) {
+                                console.log(`[DEBUG] matched single char: "${setElement}"`);
+                                matched = true;
+                                matchLength = 1;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!matched) {
+                        console.log(`[DEBUG] no match found at pos ${pos}`);
+                        break;
+                    }
+                    pos += matchLength;
+                    matchCount++;
+                }
+                
+                console.log(`[DEBUG] set match result: matchCount=${matchCount}, endPos=${pos}`);
+                return { matched: matchCount > 0, endPos: pos };
+            } else {
+                // 单次匹配逻辑
+                for (const setElement of element.value) {
+                    if (setElement === '') {
+                        return { matched: true, endPos: startPos };
+                    }
+                    
+                    if (typeof setElement === 'string' && setElement.length > 1) {
+                        if (startPos + setElement.length <= word.length &&
+                            word.substring(startPos, startPos + setElement.length) === setElement) {
+                            return { matched: true, endPos: startPos + setElement.length };
                         }
                     } else {
-                        // 单字符匹配
-                        if (wordIndex < word.length && word[wordIndex] === setElement) {
-                            matched = true;
-                            matchLength = 1;
-                            break;
+                        if (startPos < word.length && word[startPos] === setElement) {
+                            return { matched: true, endPos: startPos + 1 };
                         }
                     }
                 }
-
-                // 如果没有匹配到任何非空元素，且集合中有空字符串，则匹配空字符串
-                if (!matched && emptyStringFound) {
-                    matched = true;
-                    matchLength = 0;
-                }
-
-                if (!matched) {
-                    return false;
-                }
-                wordIndex += matchLength;
-            } else if (element.type === 'position') {
-                // 位置标记处理
-                if (element.value === '\\b') {
-                    // 单词开头：必须在单词的开始位置
-                    if (wordIndex !== 0) {
-                        return false;
-                    }
-                } else if (element.value === '\\e') {
-                    // 单词结尾：必须在单词的结束位置
-                    if (wordIndex !== word.length) {
-                        return false;
-                    }
-                } else if (element.value === '\\-b') {
-                    // 不在开头：不能在单词的开始位置
-                    if (wordIndex === 0) {
-                        return false;
-                    }
-                } else if (element.value === '\\-e') {
-                    // 不在结尾：不能在单词的结束位置
-                    if (wordIndex === word.length) {
-                        return false;
-                    }
-                }
-                // 其他位置标记暂时忽略
+                return { matched: false, endPos: startPos };
             }
-            patternIndex++;
+        }
+        
+        return { matched: false, endPos: startPos };
+    }
+    
+    /**
+     * 从结束位置向前匹配元素
+     */
+    matchElementFromEnd(word, element, endPos) {
+        if (element.type === 'literal') {
+            if (element.quantifier === '+') {
+                let matchCount = 0;
+                let pos = endPos;
+                const literalLength = element.value.length;
+                
+                while (pos - literalLength >= 0 &&
+                       word.substring(pos - literalLength, pos) === element.value) {
+                    pos -= literalLength;
+                    matchCount++;
+                }
+                
+                return { matched: matchCount > 0, startPos: pos };
+            } else {
+                const literalLength = element.value.length;
+                if (endPos - literalLength >= 0 &&
+                    word.substring(endPos - literalLength, endPos) === element.value) {
+                    return { matched: true, startPos: endPos - literalLength };
+                }
+                return { matched: false, startPos: endPos };
+            }
+        } else if (element.type === 'set') {
+            if (element.quantifier === '+') {
+                let matchCount = 0;
+                let pos = endPos;
+                
+                while (pos > 0) {
+                    let matched = false;
+                    let matchLength = 0;
+                    
+                    // 优先匹配较长的字符串
+                    const sortedElements = Array.from(element.value).sort((a, b) => {
+                        if (typeof a === 'string' && typeof b === 'string') {
+                            return b.length - a.length;
+                        }
+                        return 0;
+                    });
+                    
+                    for (const setElement of sortedElements) {
+                        if (setElement === '') continue;
+                        
+                        if (typeof setElement === 'string' && setElement.length > 1) {
+                            if (pos - setElement.length >= 0 &&
+                                word.substring(pos - setElement.length, pos) === setElement) {
+                                matched = true;
+                                matchLength = setElement.length;
+                                break;
+                            }
+                        } else {
+                            if (pos > 0 && word[pos - 1] === setElement) {
+                                matched = true;
+                                matchLength = 1;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!matched) break;
+                    pos -= matchLength;
+                    matchCount++;
+                }
+                
+                return { matched: matchCount > 0, startPos: pos };
+            } else {
+                // 单次匹配逻辑
+                for (const setElement of element.value) {
+                    if (setElement === '') {
+                        return { matched: true, startPos: endPos };
+                    }
+                    
+                    if (typeof setElement === 'string' && setElement.length > 1) {
+                        if (endPos - setElement.length >= 0 &&
+                            word.substring(endPos - setElement.length, endPos) === setElement) {
+                            return { matched: true, startPos: endPos - setElement.length };
+                        }
+                    } else {
+                        if (endPos > 0 && word[endPos - 1] === setElement) {
+                            return { matched: true, startPos: endPos - 1 };
+                        }
+                    }
+                }
+                return { matched: false, startPos: endPos };
+            }
+        }
+        
+        return { matched: false, startPos: endPos };
+    }
+    
+    /**
+     * 顺序匹配模式（无位置锚点）- 支持非贪婪匹配和回溯
+     */
+    matchesPatternSequential(word, pattern, startPos) {
+        return this.matchWithBacktrack(word, pattern, startPos, 0, []);
+    }
+
+    /**
+     * 使用回溯算法进行模式匹配
+     * @param {string} word - 要匹配的单词
+     * @param {Array} pattern - 模式数组
+     * @param {number} wordIndex - 当前单词位置
+     * @param {number} patternIndex - 当前模式位置
+     * @param {Array} matchHistory - 匹配历史记录（用于回溯）
+     * @returns {boolean} 是否匹配成功
+     */
+    matchWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory) {
+        console.log(`[BACKTRACK] matchWithBacktrack: word="${word}", wordIndex=${wordIndex}, patternIndex=${patternIndex}`);
+        console.log(`[BACKTRACK] remaining word: "${word.substring(wordIndex)}", remaining pattern:`, pattern.slice(patternIndex));
+        
+        // 如果模式已全部匹配完成，检查是否所有字符都被消耗
+        if (patternIndex >= pattern.length) {
+            const allConsumed = wordIndex >= word.length;
+            console.log(`[BACKTRACK] Pattern fully matched! Final wordIndex=${wordIndex}, word.length=${word.length}, allConsumed=${allConsumed}`);
+            if (allConsumed) {
+                console.log(`[BACKTRACK] SUCCESS: All characters consumed`);
+                return true;
+            } else {
+                console.log(`[BACKTRACK] FAILURE: Remaining characters: "${word.substring(wordIndex)}"`);
+                return false;
+            }
         }
 
-        return true;
+        const element = pattern[patternIndex];
+        console.log(`[BACKTRACK] Processing element:`, element);
+
+        if (element.type === 'literal') {
+            return this.matchLiteralWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element);
+        } else if (element.type === 'set') {
+            return this.matchSetWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element);
+        }
+
+        // 跳过位置标记等其他类型
+        console.log(`[BACKTRACK] Skipping element type: ${element.type}`);
+        return this.matchWithBacktrack(word, pattern, wordIndex, patternIndex + 1, matchHistory);
+    }
+
+    /**
+     * 匹配字面字符串（支持回溯）
+     */
+    matchLiteralWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element) {
+        console.log(`[BACKTRACK] matchLiteralWithBacktrack: literal="${element.value}", quantifier="${element.quantifier}"`);
+        
+        if (element.quantifier === '+') {
+            // 非贪婪匹配：从最少匹配开始尝试
+            const literalLength = element.value.length;
+            let matchCount = 0;
+            
+            // 首先确保至少能匹配一次
+            if (wordIndex + literalLength > word.length ||
+                word.substring(wordIndex, wordIndex + literalLength) !== element.value) {
+                console.log(`[BACKTRACK] Literal+ failed: cannot match even once`);
+                return false;
+            }
+            
+            // 计算最大可能的匹配次数
+            let maxMatches = 0;
+            let tempIndex = wordIndex;
+            while (tempIndex + literalLength <= word.length &&
+                   word.substring(tempIndex, tempIndex + literalLength) === element.value) {
+                tempIndex += literalLength;
+                maxMatches++;
+            }
+            
+            console.log(`[BACKTRACK] Literal+ can match 1 to ${maxMatches} times`);
+            
+            // 从最少匹配（1次）开始尝试，逐步增加
+            for (let tryCount = 1; tryCount <= maxMatches; tryCount++) {
+                const newWordIndex = wordIndex + (tryCount * literalLength);
+                const matchedText = word.substring(wordIndex, newWordIndex);
+                console.log(`[BACKTRACK] Trying literal+ match: "${matchedText}" (${tryCount} times)`);
+                
+                const newMatchHistory = [...matchHistory, { type: 'literal', count: tryCount, length: tryCount * literalLength, matched: matchedText }];
+                
+                if (this.matchWithBacktrack(word, pattern, newWordIndex, patternIndex + 1, newMatchHistory)) {
+                    console.log(`[BACKTRACK] Literal+ successful with ${tryCount} matches`);
+                    return true;
+                }
+                console.log(`[BACKTRACK] Literal+ failed with ${tryCount} matches, trying next`);
+            }
+            
+            console.log(`[BACKTRACK] Literal+ exhausted all possibilities`);
+            return false;
+        } else {
+            // 精确匹配一次
+            const literalLength = element.value.length;
+            if (wordIndex + literalLength > word.length ||
+                word.substring(wordIndex, wordIndex + literalLength) !== element.value) {
+                console.log(`[BACKTRACK] Literal exact match failed`);
+                return false;
+            }
+            
+            const matchedText = word.substring(wordIndex, wordIndex + literalLength);
+            console.log(`[BACKTRACK] Literal exact match successful: "${matchedText}"`);
+            
+            const newMatchHistory = [...matchHistory, { type: 'literal', count: 1, length: literalLength, matched: matchedText }];
+            return this.matchWithBacktrack(word, pattern, wordIndex + literalLength, patternIndex + 1, newMatchHistory);
+        }
+    }
+
+    /**
+     * 匹配集合（支持回溯）
+     */
+    matchSetWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element) {
+        console.log(`[BACKTRACK] matchSetWithBacktrack: set size=${element.value?.size || 0}, quantifier="${element.quantifier}"`);
+        console.log(`[BACKTRACK] Set values:`, Array.from(element.value || []));
+        
+        // 检查集合是否存在且可迭代
+        if (!element.value || typeof element.value[Symbol.iterator] !== 'function') {
+            console.warn('集合值不存在或不可迭代:', element);
+            return false;
+        }
+
+        if (element.quantifier === '+') {
+            // 非贪婪匹配：从最少匹配开始尝试
+            return this.matchSetPlusWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element);
+        } else {
+            // 精确匹配一次
+            return this.matchSetOnceWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element);
+        }
+    }
+
+    /**
+     * 匹配集合的+量词（非贪婪+回溯）
+     */
+    matchSetPlusWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element) {
+        console.log(`[BACKTRACK] matchSetPlusWithBacktrack: generating all possible matches from position ${wordIndex}`);
+        
+        // 收集所有可能的匹配序列
+        const allPossibleMatches = this.generateAllPossibleMatches(word, wordIndex, element);
+        
+        console.log(`[BACKTRACK] Generated ${allPossibleMatches.length} possible match sequences`);
+        
+        // 按长度从短到长排序（非贪婪）
+        allPossibleMatches.sort((a, b) => a.totalLength - b.totalLength);
+        
+        // 尝试每种可能的匹配序列
+        for (let i = 0; i < allPossibleMatches.length; i++) {
+            const matchSequence = allPossibleMatches[i];
+            if (matchSequence.matches.length === 0) continue; // +量词至少需要一次匹配
+            
+            const newWordIndex = wordIndex + matchSequence.totalLength;
+            const matchedText = word.substring(wordIndex, newWordIndex);
+            
+            console.log(`[BACKTRACK] Trying set+ sequence ${i + 1}/${allPossibleMatches.length}: "${matchedText}" (${matchSequence.matches.join(', ')})`);
+            
+            const newMatchHistory = [...matchHistory, { 
+                type: 'set', 
+                count: matchSequence.matches.length, 
+                length: matchSequence.totalLength,
+                matches: matchSequence.matches,
+                matched: matchedText
+            }];
+            
+            if (this.matchWithBacktrack(word, pattern, newWordIndex, patternIndex + 1, newMatchHistory)) {
+                console.log(`[BACKTRACK] Set+ successful with sequence: "${matchedText}"`);
+                return true;
+            }
+            console.log(`[BACKTRACK] Set+ failed with sequence: "${matchedText}", trying next`);
+        }
+        
+        console.log(`[BACKTRACK] Set+ exhausted all ${allPossibleMatches.length} possibilities`);
+        return false;
+    }
+
+    /**
+     * 匹配集合的单次匹配（支持回溯）
+     */
+    matchSetOnceWithBacktrack(word, pattern, wordIndex, patternIndex, matchHistory, element) {
+        console.log(`[BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position ${wordIndex}`);
+        
+        let matched = false;
+        let matchLength = 0;
+        let matchedElement = null;
+
+        // 尝试匹配集合中的每个元素
+        // 优先尝试非空字符串匹配，最后才尝试空字符串
+        let emptyStringFound = false;
+
+        for (const setElement of element.value) {
+            if (setElement === '') {
+                emptyStringFound = true;
+                continue;
+            } else if (typeof setElement === 'string' && setElement.length > 1) {
+                // 多字符字符串匹配
+                if (wordIndex + setElement.length <= word.length) {
+                    const wordSubstring = word.substring(wordIndex, wordIndex + setElement.length);
+                    if (wordSubstring === setElement) {
+                        matched = true;
+                        matchLength = setElement.length;
+                        matchedElement = setElement;
+                        console.log(`[BACKTRACK] Set matched multi-char element: "${setElement}"`);
+                        break;
+                    }
+                }
+            } else {
+                // 单字符匹配
+                if (wordIndex < word.length && word[wordIndex] === setElement) {
+                    matched = true;
+                    matchLength = 1;
+                    matchedElement = setElement;
+                    console.log(`[BACKTRACK] Set matched single-char element: "${setElement}"`);
+                    break;
+                }
+            }
+        }
+
+        // 如果没有匹配到任何非空元素，且集合中有空字符串，则匹配空字符串
+        if (!matched && emptyStringFound) {
+            matched = true;
+            matchLength = 0;
+            matchedElement = '';
+            console.log(`[BACKTRACK] Set matched empty string`);
+        }
+
+        if (!matched) {
+            console.log(`[BACKTRACK] Set failed to match any element`);
+            return false;
+        }
+        
+        const matchedText = word.substring(wordIndex, wordIndex + matchLength);
+        console.log(`[BACKTRACK] Set single match successful: "${matchedText}" (element: "${matchedElement}")`);
+        
+        const newMatchHistory = [...matchHistory, { 
+            type: 'set', 
+            count: 1, 
+            length: matchLength,
+            matches: [matchedElement],
+            matched: matchedText
+        }];
+        return this.matchWithBacktrack(word, pattern, wordIndex + matchLength, patternIndex + 1, newMatchHistory);
+    }
+
+    /**
+     * 生成所有可能的匹配序列（用于+量词的非贪婪匹配）
+     */
+    generateAllPossibleMatches(word, startIndex, element) {
+        console.log(`[BACKTRACK] generateAllPossibleMatches: from position ${startIndex}, remaining: "${word.substring(startIndex)}"`);
+        
+        const results = [];
+        const maxLength = word.length - startIndex;
+        
+        // 使用动态规划生成所有可能的匹配组合
+        this.generateMatchSequences(word, startIndex, element, [], 0, maxLength, results);
+        
+        console.log(`[BACKTRACK] Generated ${results.length} total sequences:`);
+        results.forEach((seq, i) => {
+            const text = word.substring(startIndex, startIndex + seq.totalLength);
+            console.log(`[BACKTRACK]   ${i + 1}: "${text}" = [${seq.matches.join(', ')}]`);
+        });
+        
+        return results;
+    }
+
+    /**
+     * 递归生成匹配序列
+     */
+    generateMatchSequences(word, currentIndex, element, currentMatches, currentLength, maxLength, results) {
+        // 添加当前序列到结果中
+        if (currentMatches.length > 0) {
+            results.push({
+                matches: [...currentMatches],
+                totalLength: currentLength
+            });
+        }
+        
+        // 如果已达到最大长度，停止递归
+        if (currentLength >= maxLength) {
+            return;
+        }
+        
+        // 尝试匹配集合中的每个元素
+        for (const setElement of element.value) {
+            if (setElement === '') {
+                continue; // +量词不允许匹配空字符串
+            }
+            
+            const elementLength = typeof setElement === 'string' ? setElement.length : 1;
+            
+            if (currentIndex + currentLength + elementLength <= word.length) {
+                let canMatch = false;
+                
+                if (typeof setElement === 'string' && setElement.length > 1) {
+                    // 多字符字符串匹配
+                    const wordSubstring = word.substring(currentIndex + currentLength, currentIndex + currentLength + elementLength);
+                    canMatch = (wordSubstring === setElement);
+                } else {
+                    // 单字符匹配
+                    canMatch = (word[currentIndex + currentLength] === setElement);
+                }
+                
+                if (canMatch) {
+                    const newMatches = [...currentMatches, setElement];
+                    const newLength = currentLength + elementLength;
+                    
+                    // 递归生成更长的序列
+                    this.generateMatchSequences(word, currentIndex, element, newMatches, newLength, maxLength, results);
+                }
+            }
+        }
     }
 
     /**
@@ -1459,14 +2036,29 @@ class RuleEngine {
         let length = 0;
         for (const element of pattern) {
             if (element.type === 'literal') {
-                length += element.value.length;
+                if (element.quantifier === '+') {
+                    // +量词至少匹配一次
+                    length += element.value.length;
+                } else {
+                    length += element.value.length;
+                }
             } else if (element.type === 'set') {
                 // 对于集合，找到最短的元素长度
                 let minElementLength = 1;
                 if (element.value && element.value.size > 0) {
-                    minElementLength = Math.min(...Array.from(element.value).map(item =>
-                        typeof item === 'string' ? item.length : 1
-                    ));
+                    let validElements = Array.from(element.value);
+                    if (element.quantifier === '+') {
+                        // +量词不能匹配空字符串，过滤掉空字符串
+                        validElements = validElements.filter(item => item !== '');
+                    }
+                    if (validElements.length > 0) {
+                        minElementLength = Math.min(...validElements.map(item =>
+                            typeof item === 'string' ? item.length : 1
+                        ));
+                    } else if (element.quantifier === '+') {
+                        // +量词至少需要1个字符
+                        minElementLength = 1;
+                    }
                 }
                 length += minElementLength;
             }
@@ -1598,16 +2190,20 @@ class RuleEngine {
 
         // 按分组键排序（只对有效单词排序）
         validWords.sort((a, b) => {
-            // 处理新的分组键结构
+            // 从分组键结构中提取用于比较的键
             let keysA, keysB;
-            if (hasNonGrouping && typeof a.groupKeys === 'object' && a.groupKeys.allKeys) {
+
+            if (hasNonGrouping) {
+                // 如果有分组开关，使用所有键（包括不分组的键）进行排序比较
                 keysA = a.groupKeys.allKeys;
                 keysB = b.groupKeys.allKeys;
             } else {
+                // 没有分组开关，直接使用所有键
                 keysA = a.groupKeys;
                 keysB = b.groupKeys;
             }
 
+            // 按排序规则逐级比较
             for (let i = 0; i < sortGroups.length; i++) {
                 const keyA = keysA[i];
                 const keyB = keysB[i];
@@ -1618,7 +2214,7 @@ class RuleEngine {
                 }
             }
 
-            // 所有分组键都相同，按字母顺序排序（不显示字母分组）
+            // 所有分组键都相同，按字母顺序排序
             return this.compareWords(a.word, b.word);
         });
 
@@ -1643,40 +2239,99 @@ class RuleEngine {
             actualRule = sortRule.substring(2); // 移除@@前缀
         }
 
-        // 检查是否有!标志（不分组标志）
+        // 检查是否有!标志（分组开关）
         let nonGroupingFromIndex = -1;
-        let nonGroupingPositions = [];
         if (actualRule.includes('!')) {
-            // 记录所有!的位置
-            for (let pos = 0; pos < actualRule.length; pos++) {
-                if (actualRule[pos] === '!') {
-                    nonGroupingPositions.push(pos);
-                }
+            // 找到第一个!的位置（最多只能有一个分组开关）
+            nonGroupingFromIndex = actualRule.indexOf('!');
+            if (actualRule.indexOf('!', nonGroupingFromIndex + 1) !== -1) {
+                throw new Error(`排序规则中最多只能有一个分组开关!: ${sortRule}`);
             }
-            actualRule = actualRule.replace(/!/g, ''); // 移除所有!标志
+            actualRule = actualRule.replace('!', ''); // 移除!标志
         }
 
         const groups = [];
         let i = 0;
-        let currentGroupIndex = 0;
-        let originalPosition = 0; // 跟踪在原始字符串中的位置
+        let elementIndex = 0; // 跟踪当前是第几个排序元素
+        let nonGroupingStartIndex = -1; // 分组开关影响的起始元素索引
 
+        // 解析分组开关的影响
+        if (nonGroupingFromIndex !== -1) {
+            // 如果!在最开始，即@!或@@!，则所有元素都不分组
+            if (nonGroupingFromIndex === 0) {
+                nonGroupingStartIndex = 0;
+            } else {
+                // 扫描!之前的部分，识别排序元素
+                let tempI = 0;
+                let tempElementIndex = 0;
+
+                while (tempI < nonGroupingFromIndex) {
+                    // 跳过-号
+                    if (actualRule[tempI] === '-') {
+                        tempI++;
+                        continue;
+                    }
+
+                    // 处理括号引用的集合
+                    if (actualRule[tempI] === '(') {
+                        const closeIndex = actualRule.indexOf(')', tempI);
+                        if (closeIndex !== -1) {
+                            // 括号内是一个完整的集合引用，算作一个元素
+                            tempI = closeIndex + 1;
+                            tempElementIndex++;
+                        } else {
+                            tempI++; // 括号不匹配，跳过
+                        }
+                    }
+                    // 处理单字母集合
+                    else if (/[a-zA-Z]/.test(actualRule[tempI])) {
+                        // 读取连续的字母数字（可能是集合名）
+                        let setName = '';
+                        const startPos = tempI;
+
+                        while (tempI < actualRule.length && /[a-zA-Z0-9]/.test(actualRule[tempI])) {
+                            setName += actualRule[tempI];
+                            tempI++;
+                        }
+
+                        // 如果后面紧跟位置匹配符，一起算作一个元素
+                        if (tempI < actualRule.length && /[\^\$\*~]/.test(actualRule[tempI])) {
+                            tempI++;
+                        }
+
+                        // 每个单字母集合算一个元素，但规则上要求多字母集合必须用括号
+                        if (setName.length === 1) {
+                            tempElementIndex++;
+                        } else {
+                            // 多字母集合，如果没有括号，每个字母视为一个独立集合
+                            tempElementIndex += setName.length;
+                        }
+                    } else {
+                        tempI++; // 跳过其他字符
+                    }
+                }
+
+                // 设置开始不分组的元素索引
+                nonGroupingStartIndex = tempElementIndex;
+            }
+        }
+
+        // 解析所有排序元素
         while (i < actualRule.length) {
             let descending = false;
             let nonGrouping = false;
             let startI = i; // 记录循环开始时的位置
 
-            // 检查是否有负号
+            // 检查是否有负号（位于括号外）
             if (actualRule[i] === '-') {
                 descending = true;
                 i++;
-                originalPosition++;
             }
 
             if (i >= actualRule.length) break;
 
-            // 检查当前位置是否有!标志（基于原始位置）
-            nonGrouping = nonGroupingPositions.some(pos => pos <= originalPosition);
+            // 检查当前元素是否在分组开关之后
+            nonGrouping = nonGroupingStartIndex !== -1 && elementIndex >= nonGroupingStartIndex;
 
             let setName = '';
             let positionFlag = isAdjacent ? '*' : '^'; // @@模式默认为*，@模式默认为^
@@ -1693,39 +2348,51 @@ class RuleEngine {
                 const result = this.parseSetNameWithPosition(content);
                 setName = result.setName;
                 positionFlag = result.positionFlag || positionFlag;
+                // 如果括号内有逆序标志，使用它
+                if (result.descending) {
+                    descending = result.descending;
+                }
 
                 i = closeIndex + 1;
-                originalPosition = i;
+
+                // 添加为单个排序元素
+                groups.push({ setName, positionFlag, descending, nonGrouping });
+                elementIndex++;
             } else {
                 // 单字母集合，可能带位置标识符
                 const result = this.parseSetNameWithPosition(actualRule.substring(i));
                 setName = result.setName;
                 positionFlag = result.positionFlag || positionFlag;
-                i += result.consumed;
-                originalPosition = i;
-
-                // 如果集合名长度大于1且没有位置标识符，可能是连续的单字母集合
-                if (setName.length > 1 && result.positionFlag === null && result.consumed === setName.length) {
-                    // 将多字母集合拆分为单个字母集合
-                    for (let j = 0; j < setName.length; j++) {
-                        const groupNonGrouping = nonGroupingPositions.some(pos => pos <= originalPosition - setName.length + j);
-                        groups.push({ setName: setName[j], positionFlag: positionFlag, descending, nonGrouping: groupNonGrouping });
-                        currentGroupIndex++;
-                    }
-                    setName = ''; // 清空，避免重复添加
+                // 如果返回的结果中包含逆序标志，使用它
+                if (result.descending) {
+                    descending = result.descending;
                 }
-            }
+                i += result.consumed;
 
-            if (setName) {
-                groups.push({ setName, positionFlag, descending, nonGrouping });
-                currentGroupIndex++;
+                // 处理多字母序列（如ABC）- 规则要求多字母集合必须用括号，所以这里应该是连续的单字母集合
+                if (setName.length > 1 && result.positionFlag === null && result.consumed === setName.length) {
+                    // 拆分为单个字母集合
+                    for (let j = 0; j < setName.length; j++) {
+                        const currentElementNonGrouping = nonGroupingStartIndex !== -1 && elementIndex >= nonGroupingStartIndex;
+                        groups.push({
+                            setName: setName[j],
+                            positionFlag: positionFlag,
+                            descending,
+                            nonGrouping: currentElementNonGrouping
+                        });
+                        elementIndex++;
+                    }
+                } else if (setName.length > 0) {
+                    // 单字母集合
+                    groups.push({ setName, positionFlag, descending, nonGrouping });
+                    elementIndex++;
+                }
             }
 
             // 防止死循环：如果位置没有前进，强制跳过当前字符
             if (i === startI) {
                 console.warn(`解析排序规则时遇到无法识别的字符: '${actualRule[i]}' at position ${i}`);
                 i++; // 强制前进一位
-                originalPosition++;
             }
         }
 
@@ -1734,7 +2401,7 @@ class RuleEngine {
             throw new Error(`排序规则层数超过限制，最多允许三级排序，当前为 ${groups.length} 级`);
         }
 
-        return { groups, isAdjacent, hasNonGrouping: nonGroupingPositions.length > 0 };
+        return { groups, isAdjacent, hasNonGrouping: nonGroupingFromIndex !== -1 };
     }
 
     /**
@@ -1746,9 +2413,17 @@ class RuleEngine {
         let setName = '';
         let positionFlag = null; // 默认为null，表示没有显式位置标识符
         let consumed = 0;
+        let descending = false;
+
+        // 处理开头的逆序标志
+        let i = 0;
+        if (i < content.length && content[i] === '-') {
+            descending = true;
+            i++;
+        }
 
         // 提取集合名（字母开头，可包含数字）
-        let i = 0;
+        const startNameIndex = i;
         while (i < content.length && /[a-zA-Z0-9]/.test(content[i])) {
             setName += content[i];
             i++;
@@ -1762,7 +2437,7 @@ class RuleEngine {
 
         consumed = i;
 
-        return { setName, positionFlag, consumed };
+        return { setName, positionFlag, consumed, descending };
     }
 
     /**
@@ -1772,18 +2447,20 @@ class RuleEngine {
      * @param {Map} localSets - 局部集合映射
      * @param {boolean} isAdjacent - 是否为紧邻模式
      * @param {boolean} hasNonGrouping - 是否有不分组标志
-     * @returns {Array} 分组键数组
+     * @returns {Array|Object} 分组键数组或包含分组和排序键的对象
      */
     calculateGroupKeys(word, sortGroups, localSets = new Map(), isAdjacent = false, hasNonGrouping = false) {
+        // 有序紧邻模式特殊处理
         if (isAdjacent && sortGroups.length === 2) {
             // 有序紧邻模式：两个集合必须相邻匹配
             const result = this.findAdjacentMatch(word, sortGroups, localSets);
             if (result.success) {
                 // 根据!标志决定返回的分组键
                 if (hasNonGrouping) {
-                    // 如果有!标志，只返回用于排序的键，不用于分组
+                    // 如果有!标志，分离用于分组和排序的键
                     const groupingKeys = [];
                     const sortingKeys = [];
+
                     for (let i = 0; i < sortGroups.length; i++) {
                         if (sortGroups[i].nonGrouping) {
                             sortingKeys.push(result.groupKeys[i]);
@@ -1791,18 +2468,31 @@ class RuleEngine {
                             groupingKeys.push(result.groupKeys[i]);
                         }
                     }
-                    return { groupingKeys, sortingKeys, allKeys: result.groupKeys };
+
+                    return {
+                        groupingKeys, // 用于分组的键
+                        sortingKeys,  // 用于排序但不分组的键
+                        allKeys: result.groupKeys // 所有键（用于比较）
+                    };
                 }
                 return result.groupKeys;
             }
             return null;
         }
 
+        // 普通模式处理
         const keys = [];
         let lastMatchEnd = 0; // 记录上一个匹配的结束位置
 
+        // 逐个处理排序元素
         for (const group of sortGroups) {
-            const result = this.findMatchingSetElementWithPosition(word, group.setName, localSets, group.positionFlag, lastMatchEnd);
+            const result = this.findMatchingSetElementWithPosition(
+                word,
+                group.setName,
+                localSets,
+                group.positionFlag,
+                lastMatchEnd
+            );
 
             if (result.element) {
                 keys.push(result.element);
@@ -1813,10 +2503,11 @@ class RuleEngine {
             }
         }
 
-        // 根据!标志决定返回的分组键
+        // 如果有分组开关，需要分离分组键和排序键
         if (hasNonGrouping) {
             const groupingKeys = [];
             const sortingKeys = [];
+
             for (let i = 0; i < sortGroups.length; i++) {
                 if (sortGroups[i].nonGrouping) {
                     sortingKeys.push(keys[i]);
@@ -1824,7 +2515,13 @@ class RuleEngine {
                     groupingKeys.push(keys[i]);
                 }
             }
-            return { groupingKeys, sortingKeys, allKeys: keys };
+
+            // 如果所有元素都不分组（如@!ABC），则groupingKeys为空数组
+            return {
+                groupingKeys, // 用于分组的键（可能为空）
+                sortingKeys,  // 用于排序但不分组的键
+                allKeys: keys // 所有键（用于比较）
+            };
         }
 
         return keys;
@@ -1856,89 +2553,112 @@ class RuleEngine {
             return { success: false, groupKeys: null };
         }
 
+        // 按元素长度排序，优先匹配较长的元素
+        const sortedElements1 = Array.from(set1).sort((a, b) => b.length - a.length);
+        const sortedElements2 = Array.from(set2).sort((a, b) => b.length - a.length);
+
         // 遍历单词的每个位置，寻找相邻匹配
-        for (let i = 0; i < word.length - 1; i++) {
-            // 检查第一个集合的匹配
-            const match1 = this.findMatchAtPosition(word, set1, group1.positionFlag, i);
-            if (match1.found) {
-                // 检查第二个集合是否在紧邻位置匹配
-                const nextPos = match1.endPosition;
-                if (nextPos < word.length) {
-                    const match2 = this.findMatchAtPosition(word, set2, group2.positionFlag, nextPos);
-                    if (match2.found && match2.startPosition === nextPos) {
-                        return {
-                            success: true,
-                            groupKeys: [match1.element, match2.element]
-                        };
+        const lowerWord = word.toLowerCase();
+
+        for (let i = 0; i < lowerWord.length - 1; i++) {
+            // 逐个尝试第一个集合的元素
+            for (const element1 of sortedElements1) {
+                const element1Lower = element1.toLowerCase();
+                let match1 = null;
+
+                // 根据位置标志检查第一个元素是否匹配
+                switch (group1.positionFlag) {
+                    case '^': // 前缀匹配
+                        if (i === 0 && lowerWord.startsWith(element1Lower)) {
+                            match1 = {
+                                element: element1Lower,
+                                startPos: 0,
+                                endPos: element1Lower.length
+                            };
+                        }
+                        break;
+                    case '*': // 包含匹配
+                    default:
+                        if (lowerWord.indexOf(element1Lower, i) === i) {
+                            match1 = {
+                                element: element1Lower,
+                                startPos: i,
+                                endPos: i + element1Lower.length
+                            };
+                        }
+                        break;
+                    case '~': // 严格中间匹配
+                        if (i > 0 && i + element1Lower.length < lowerWord.length &&
+                            lowerWord.indexOf(element1Lower, i) === i) {
+                            match1 = {
+                                element: element1Lower,
+                                startPos: i,
+                                endPos: i + element1Lower.length
+                            };
+                        }
+                        break;
+                }
+
+                // 如果第一个元素匹配，检查第二个元素是否紧邻
+                if (match1) {
+                    const nextPos = match1.endPos;
+
+                    // 确保下一个位置存在
+                    if (nextPos < lowerWord.length) {
+                        // 逐个尝试第二个集合的元素
+                        for (const element2 of sortedElements2) {
+                            const element2Lower = element2.toLowerCase();
+                            let match2 = null;
+
+                            // 根据位置标志检查第二个元素是否匹配且紧邻第一个元素
+                            switch (group2.positionFlag) {
+                                case '$': // 后缀匹配
+                                    if (nextPos + element2Lower.length === lowerWord.length &&
+                                        lowerWord.endsWith(element2Lower) &&
+                                        lowerWord.indexOf(element2Lower, nextPos) === nextPos) {
+                                        match2 = {
+                                            element: element2Lower,
+                                            startPos: nextPos,
+                                            endPos: lowerWord.length
+                                        };
+                                    }
+                                    break;
+                                case '*': // 包含匹配
+                                default:
+                                    if (lowerWord.indexOf(element2Lower, nextPos) === nextPos) {
+                                        match2 = {
+                                            element: element2Lower,
+                                            startPos: nextPos,
+                                            endPos: nextPos + element2Lower.length
+                                        };
+                                    }
+                                    break;
+                                case '~': // 严格中间匹配
+                                    if (nextPos > 0 && nextPos + element2Lower.length < lowerWord.length &&
+                                        lowerWord.indexOf(element2Lower, nextPos) === nextPos) {
+                                        match2 = {
+                                            element: element2Lower,
+                                            startPos: nextPos,
+                                            endPos: nextPos + element2Lower.length
+                                        };
+                                    }
+                                    break;
+                            }
+
+                            // 如果两个元素都匹配且紧邻，返回成功
+                            if (match2) {
+                                return {
+                                    success: true,
+                                    groupKeys: [match1.element, match2.element]
+                                };
+                            }
+                        }
                     }
                 }
             }
         }
 
         return { success: false, groupKeys: null };
-    }
-
-    /**
-     * 在指定位置查找集合匹配
-     * @param {string} word - 单词
-     * @param {Set} set - 集合
-     * @param {string} positionFlag - 位置标识符
-     * @param {number} startPos - 起始位置
-     * @returns {Object} 匹配结果
-     */
-    findMatchAtPosition(word, set, positionFlag, startPos) {
-        for (const element of set) {
-            const elementLower = element.toLowerCase();
-            let found = false;
-            let actualStart = startPos;
-            let actualEnd = startPos;
-
-            switch (positionFlag) {
-                case '^': // 前缀匹配
-                    if (startPos === 0 && word.toLowerCase().startsWith(elementLower)) {
-                        found = true;
-                        actualEnd = elementLower.length;
-                    }
-                    break;
-                case '$': // 后缀匹配
-                    if (word.toLowerCase().endsWith(elementLower)) {
-                        const endPos = word.length - elementLower.length;
-                        if (endPos >= startPos) {
-                            found = true;
-                            actualStart = endPos;
-                            actualEnd = word.length;
-                        }
-                    }
-                    break;
-                case '*': // 包含匹配
-                    const index = word.toLowerCase().indexOf(elementLower, startPos);
-                    if (index >= startPos) {
-                        found = true;
-                        actualStart = index;
-                        actualEnd = index + elementLower.length;
-                    }
-                    break;
-                case '~': // 严格中间匹配
-                    const midIndex = word.toLowerCase().indexOf(elementLower, startPos);
-                    if (midIndex > 0 && midIndex + elementLower.length < word.length && midIndex >= startPos) {
-                        found = true;
-                        actualStart = midIndex;
-                        actualEnd = midIndex + elementLower.length;
-                    }
-                    break;
-            }
-
-            if (found) {
-                return {
-                    found: true,
-                    element: elementLower,
-                    startPosition: actualStart,
-                    endPosition: actualEnd
-                };
-            }
-        }
-
-        return { found: false, element: null, startPosition: -1, endPosition: -1 };
     }
 
     /**
