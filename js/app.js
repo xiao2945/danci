@@ -875,6 +875,25 @@ class WordFilterApp {
                         groups[originalElement].push(word);
                         matched = true;
                     }
+                } else {
+                    // 在严格紧邻模式下，即使两个元素不能紧邻匹配，我们也需要尝试单独匹配第一个元素
+                    // 这样可以确保单词被正确分组，而不是全部归入"其他"分组
+                    const result = this.ruleEngine.findMatchingSetElementWithPosition(
+                        word,
+                        primarySet.setName,
+                        localSets,
+                        primarySet.positionFlag,
+                        0
+                    );
+                    
+                    if (result.element) {
+                        // 找到对应的原始集合元素（保持大小写）
+                        const originalElement = setElements.find(el => el.toLowerCase() === result.element);
+                        if (originalElement) {
+                            groups[originalElement].push(word);
+                            matched = true;
+                        }
+                    }
                 }
             } else {
                 // 宽松模式下，使用统一的匹配策略，优先匹配较长的元素
