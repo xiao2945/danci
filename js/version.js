@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.2.6';
+        this.version = 'v1.2.8';
         this.releaseDate = '2025-06-10';
-        this.description = '完善预处理模块中音标、单词检查功能，实现严格验证规则，预处理模块测试通过';
+        this.description = '修复排序规则核心问题：统一默认位置匹配符、修复严格中间匹配符逻辑、完善分组处理机制';
     }
 
     /**
