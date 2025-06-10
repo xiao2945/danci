@@ -1,0 +1,12 @@
+competition 0 1
+action      0
+attention   0
+addition    0 1 
+position
+promotion
+emotion     0
+creation
+relation
+information
+comaabbaaition  0 1 2
+adbbaabbtion    0

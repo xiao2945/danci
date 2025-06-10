@@ -1216,9 +1216,9 @@ class RuleEngine {
                 tokens.push({ type: 'rparen' });
                 i++;
             } else {
-                // 规则名（允许字母、数字、下划线）
+                // 规则名（允许字母、数字、下划线、中文字符）
                 let start = i;
-                while (i < expr.length && /[\w\d_]/.test(expr[i])) i++;
+                while (i < expr.length && /[\w\d_\u4e00-\u9fff]/.test(expr[i])) i++;
                 const name = expr.slice(start, i).trim();
                 if (!name) throw new Error('缺少规则名');
                 tokens.push({ type: 'rule', value: name });
@@ -1401,9 +1401,17 @@ class RuleEngine {
             // console.log(`[DEBUG] matchesPatternWithAnchors result: ${result}`);
             return result;
         } else {
-            const result = this.matchesPatternSequential(word, pattern, startPos);
-            // console.log(`[DEBUG] matchesPatternSequential result: ${result}`);
-            return result;
+            // 对于单个集合规则（如:V），使用部分匹配而不是完全匹配
+            // 这样:V规则就能正确匹配包含元音的单词，而不是要求所有字符都是元音
+            if (pattern.length === 1 && pattern[0].type === 'set') {
+                const result = this.matchesPatternPartial(word, pattern, startPos);
+                // console.log(`[DEBUG] matchesPatternPartial result: ${result}`);
+                return result;
+            } else {
+                const result = this.matchesPatternSequential(word, pattern, startPos);
+                // console.log(`[DEBUG] matchesPatternSequential result: ${result}`);
+                return result;
+            }
         }
     }
 

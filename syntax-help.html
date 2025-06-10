@@ -589,10 +589,10 @@
             <h2>4. 排序规则</h2>
             <p><strong>本质</strong>：对<span style="color: red;">筛选结果中的单词</span>的再<span style="color: red;">分组</span>与<span
                     style="color: red;">排序</span>。</p>
-            <p><strong>格式</strong>：以<code>@</code>或<code>@@</code>开头，由分组开关、排序元素组合而成。</p>
+            <p><strong>格式</strong>：以<code>@</code>或<code>@@</code>开头，由分组开关、排序单元组合而成。</p>
             <p>根据排序标志的不同，又可分为宽松排序（以<code>@</code>开头）、严格排序（以<code>@@</code>开头）。</p>
 
-            <h3>4.1 排序元素</h3>
+            <h3>4.1 排序单元</h3>
             <p><strong>格式</strong>：由集合名、逆序标志和位置匹配符组合而成。</p>
             <ul>
                 <li>单字母集合可以直接引用。（如：<code>V</code>或<code>(V)</code>）</li>
@@ -649,6 +649,12 @@
                             <code>V~</code>匹配中间包含元音但首尾不是元音
                         </td>
                     </tr>
+                    <tr>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;"></td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;">无符号</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;">等同于<code>*</code></td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;"></td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -665,11 +671,11 @@
             <p><code>-A^</code>，表示从筛选结果中，匹配前缀（<code>^</code>）为A集合中元素的单词，按集合A中的元素逆序（<code>-</code>）分组排列。</p>
 
             <h3>4.2 分组开关</h3>
-            <p>可以使用<code>!</code>分割排序元素，表示不继续按<code>!</code>后的排序元素分组。（如：<code>@A!B</code>表示按A分组，但B仅用于排序不再分组）</p>
+            <p>可以使用<code>!</code>分割排序单元，表示不继续按<code>!</code>后的排序单元分组。（如：<code>@A!B</code>表示按A分组，但B仅用于排序不再分组）</p>
 
             <ul>
                 <li>最多只能有一个分组开关。</li>
-                <li><code>!</code>只能放在排序标志与排序元素或排序元素与排序元素间。（如：<code>@!-</code>、<code>@!A</code>或<code>@A!BC</code>、<code>@AB!(-C)</code>）
+                <li><code>!</code>只能放在排序标志与排序单元或排序单元与排序单元间。（如：<code>@!-</code>、<code>@!A</code>或<code>@A!BC</code>、<code>@AB!(-C)</code>）
                 </li>
             </ul>
 
@@ -680,14 +686,14 @@
             <h3>4.3 通用逻辑</h3>
 
             <h4>4.3.1 匹配逻辑</h4>
-            <p><span style="color: red;">逐级</span>、<span style="color: red;">按序</span>用排序元素引用的集合中的元素对筛选结果中的单词进行匹配。</p>
+            <p><span style="color: red;">逐级</span>、<span style="color: red;">按序</span>用排序单元引用的集合中的元素对筛选结果中的单词进行匹配。</p>
 
             <ul>
-                <li><strong>逐级</strong>：排序元素之间隐含前后关系，前一个元素在后一个元素之前。</li>
-                <li><strong>依序</strong>：根据排序元素的逆序标志，决定在该级内正序或逆序匹配。</li>
-                <li><strong>特殊情况</strong>：如果没有排序元素，则全部匹配。</li>
-                <li>宽松模式下，不要求各级排序元素紧邻。（如<code>@ABC</code>，即在单词中先后出现A集合中元素、B集合中元素、C集合中元素即可，不要求ABC元素紧邻）</li>
-                <li>严格模式下，必须要求两级元素紧邻。（如<code>@@AB</code>，即在单词中先后出现的A、B集合中元素必须紧邻。）</li>
+                <li><strong>逐级</strong>：排序单元之间隐含前后关系，前一个单元在后一个单元之前。</li>
+                <li><strong>依序</strong>：根据排序单元的逆序标志，决定在该级内正序或逆序匹配。</li>
+                <li><strong>特殊情况</strong>：如果没有排序单元，则全部匹配。</li>
+                <li>宽松模式下，不要求各级排序单元紧邻。（如<code>@ABC</code>，即在单词中先后出现A集合中元素、B集合中元素、C集合中元素即可，不要求ABC元素紧邻）</li>
+                <li>严格模式下，必须要求两级单元紧邻。（如<code>@@AB</code>，即在单词中先后出现的A、B集合中元素必须紧邻。）</li>
             </ul>
 
             <div class="note">
@@ -696,12 +702,12 @@
 
             <h4>4.3.2 分组逻辑</h4>
             <p><span style="color: red;">逐级</span>、<span
-                    style="color: red;">按序</span>用排序元素引用的集合中的元素组成树状结构，并将满足匹配条件的单词放入该组。</p>
+                    style="color: red;">按序</span>用排序单元引用的集合中的元素组成树状结构，并将满足匹配条件的单词放入该组。</p>
 
             <ul>
                 <li>未分组的单词会放到"其他"分组，"其他"分组始终排在各组最后。</li>
                 <li><strong>分组开关</strong>：分组开关会截断分组，即分组开关后的树状结构不再展开。</li>
-                <li><strong>特殊情况</strong>：如果没有排序元素且没有分组开关则按首字母分组；如果没有排序元素但有分组开关则不分组。</li>
+                <li><strong>特殊情况</strong>：如果没有排序单元且没有分组开关则按首字母分组；如果没有排序单元但有分组开关则不分组。</li>
             </ul>
 
             <div class="note">
@@ -720,20 +726,20 @@
             <h4>4.3.4 组内排序</h4>
 
             <ul>
-                <li>没有排序元素时，组内单词排序受逆序标志影响。</li>
-                <li>有排序元素时，组内单词按字母正序排列。</li>
-                <li><strong>特殊情况</strong>：有排序元素但在第一个元素前就有分组开关，等同于<code>@!</code>，即没有排序元素、没有逆序标志，组内单词按字母正序排列。</li>
+                <li>没有排序单元时，组内单词排序受逆序标志影响。</li>
+                <li>有排序单元时，组内单词按字母正序排列。</li>
+                <li><strong>特殊情况</strong>：有排序单元但在第一个单元前就有分组开关，等同于<code>@!</code>，即没有排序单元、没有逆序标志，组内单词按字母正序排列。</li>
             </ul>
 
             <h3>4.4 宽松排序</h3>
-            <p><strong>格式</strong>：以<code>@</code>开头，由分组开关、0-3个排序元素组合而成。</p>
+            <p><strong>格式</strong>：以<code>@</code>开头，由分组开关、0-3个排序单元组合而成。</p>
 
-            <p>根据排序元素数量不同，又可分为：</p>
+            <p>根据排序单元数量不同，又可分为：</p>
 
             <ul>
-                <li>基础排序（0个排序元素）</li>
-                <li>单级排序（1个排序元素）</li>
-                <li>多级排序（2-3个排序元素）</li>
+                <li>基础排序（0个排序单元）</li>
+                <li>单级排序（1个排序单元）</li>
+                <li>多级排序（2-3个排序单元）</li>
             </ul>
 
             <h4>4.4.1 基础排序</h4>
@@ -777,18 +783,11 @@
                 <li>特殊情况：无排序标志等同于<code>@</code>。</li>
             </ul>
 
-            <h4>4.4.2 单级排序</h4>
-            <p>单级排序的排序元素如果无显式匹配符，则同于<code>^</code>。</p>
-
-            <h4>4.4.3 多级排序</h4>
-            <p>多级排序的排序元素匹配标识符必须显式表达。（如：<code>@A^B*C$</code>）</p>
-
             <h3>4.5 严格排序</h3>
-            <p><strong></strong>格式</strong>：以<code>@@</code>开头，由分组开关和2个排序元素组成。</p>
+            <p><strong></strong>格式</strong>：以<code>@@</code>开头，由分组开关和2个排序单元组成。</p>
 
             <ul>
-                <li>严格排序<span style="color: red;">有且只有</span>两个排序元素。</li>
-                <li>严格排序的排序元素如果无显式匹配符，则同于<code>*</code>。</li>
+                <li>严格排序<span style="color: red;">有且只有</span>两个排序单元。</li>
             </ul>
 
             <h2>5. 规则示例</h2>
@@ -801,7 +800,7 @@
 <span class="set-definition">BL=={bl,br,cl,cr,dr,fl,fr,gl,gr,pl,pr,sc,sk,sl,sm,sn,sp,st,sw,tr,tw}</span>
 <span class="set-definition">ShortV==V>>{u}</span>
 <span class="rule-content">:\b(BL)(ShortV)</span>
-<span class="sort-rule">@(BL)</span></pre>
+<span class="sort-rule">@(BL^)</span></pre>
 
             <h3>5.2 普通规则示例</h3>
 
@@ -820,7 +819,7 @@
 <span class="comment">//匹配前缀+tion后缀单词</span>
 <span class="set-definition">PRE=={a,ab,ac,ad,ag,al,ambl,auto,bene,cata,col,com,con,contra,dia,dif,dis,ef,em,en,entra,fore,inter,micro,mis,ob,oc,post,pre,semi,sub,un,with}</span>
 <span class="rule-content">:\b(PRE)L+"tion"\e</span>
-<span class="sort-rule">@(PRE)</span></pre>
+<span class="sort-rule">@(PRE^)</span></pre>
 
 
             <h3>5.3 基础排序示例</h3>
@@ -841,9 +840,9 @@
 
             <p class="comment">/* 前缀匹配 */</p>
             <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#元音开头</span>
-<span class="comment">//按开头元音分组（无显式匹配符等同于^）</span>
+<span class="comment">//按开头元音分组</span>
 <span class="rule-content">:\bV</span>
-<span class="sort-rule">@V</span></pre>
+<span class="sort-rule">@V^</span></pre>
 
             <p class="comment">/* 后缀匹配 */</p>
             <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#辅音结尾</span>
