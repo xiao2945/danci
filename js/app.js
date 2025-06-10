@@ -148,7 +148,7 @@ class WordFilterApp {
                 this.displayWordList();
                 this.updateResultStats();
             });
-            
+
             // 添加搜索历史功能
             searchInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && this.searchTerm.trim()) {
@@ -251,7 +251,7 @@ class WordFilterApp {
 
             // 加载删除状态
             this.loadDeletedWordsState();
-            
+
             // 加载搜索历史
             this.loadSearchHistory();
 
@@ -554,8 +554,18 @@ class WordFilterApp {
             return;
         }
 
-        // 按首字母分组
-        const groupedWords = this.groupWordsByFirstLetter(searchFilteredWords);
+        // 根据当前规则决定是否分组
+        let groupedWords = null;
+        const rule = this.ruleEngine.getRule(this.currentRule);
+        if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
+            const parseResult = this.ruleEngine.parseSortRule(rule.displayRule.substring(1));
+            if (!parseResult.hasNonGrouping) {
+                groupedWords = this.groupWordsByFirstLetter(searchFilteredWords);
+            }
+        } else {
+            // 没有排序规则时，按首字母分组
+            groupedWords = this.groupWordsByFirstLetter(searchFilteredWords);
+        }
 
         let html = '';
 
@@ -594,7 +604,7 @@ class WordFilterApp {
         }
 
         container.innerHTML = html;
-        
+
         // 加载折叠状态
         this.loadCollapseStates();
     }
@@ -603,13 +613,22 @@ class WordFilterApp {
      * 递归渲染单词分组
      * @param {Object} groups - 分组对象
      * @param {number} level - 分组层级
+     * @param {Array} parentLabels - 父级分组标签
      * @returns {string} HTML字符串
      */
-    renderWordGroups(groups, level = 0) {
+    renderWordGroups(groups, level = 0, parentLabels = []) {
         let html = '';
-        const indent = '    '.repeat(level); // 缩进
 
         for (const [groupName, content] of Object.entries(groups)) {
+            // 构建当前分组的完整标签
+            let displayLabel = groupName;
+
+            // 如果有父级标签，则按"一级标签 > 二级标签 > 三级标签"格式显示
+            if (parentLabels.length > 0) {
+                const allLabels = [...parentLabels, groupName];
+                displayLabel = allLabels.join(' > ');
+            }
+
             // 检查content是否为数组（单词列表）还是对象（子分组）
             if (Array.isArray(content)) {
                 // 这是最终的单词列表
@@ -625,7 +644,7 @@ class WordFilterApp {
                 html += `
                     <div class="word-group" style="margin-left: 0px;">
                         <div class="group-title level-${level} collapsible" onclick="app.toggleGroupCollapse('${groupId}')">
-                            ${groupName} (${activeWords.length}/${displayWords.length})
+                            ${displayLabel} (${activeWords.length}/${displayWords.length})
                         </div>
                         <div class="word-list" id="${groupId}">
                             ${displayWords.map(item => {
@@ -646,14 +665,17 @@ class WordFilterApp {
                 const totalWords = this.countWordsInGroup(content);
                 const activeWords = this.countActiveWordsInGroup(content);
 
+                // 添加当前分组标签到父级标签列表，用于子分组
+                const currentLabels = [...parentLabels, groupName];
+
                 const groupId = `group-${level}-${groupName.replace(/[^a-zA-Z0-9]/g, '')}-${Math.random().toString(36).substr(2, 9)}`;
                 html += `
                     <div class="word-group" style="margin-left: 0px;">
                         <div class="group-title level-${level} collapsible" onclick="app.toggleGroupCollapse('${groupId}')">
-                            ${groupName} (${activeWords}/${totalWords})
+                            ${displayLabel} (${activeWords}/${totalWords})
                         </div>
                         <div class="sub-groups" id="${groupId}">
-                            ${this.renderWordGroups(content, level + 1)}
+                            ${this.renderWordGroups(content, level + 1, currentLabels)}
                         </div>
                     </div>
                 `;
@@ -716,6 +738,13 @@ class WordFilterApp {
         if (rule && rule.displayRule && rule.displayRule.startsWith('@') && rule.displayRule.length > 1) {
             const sortRule = rule.displayRule.substring(1);
 
+            // 特殊处理：@! 和 @!- 表示不分组的排序，直接返回单词列表不分组
+            if (sortRule === '!' || sortRule === '!-') {
+                const descending = sortRule === '!-';
+                const sortedWords = this.ruleEngine.sortByAlphabet(words, descending);
+                return { '单词列表': sortedWords };
+            }
+
             // 如果有集合排序规则，按集合分组
             if (sortRule !== '-' && sortRule !== '') {
                 return this.groupWordsBySetRule(words, sortRule, ruleName);
@@ -768,18 +797,24 @@ class WordFilterApp {
      * @param {Array} words - 单词数组
      * @param {string|Array} sortRule - 排序规则字符串或解析后的规则数组
      * @param {string} ruleName - 规则名称
+     * @param {Array} parentLabels - 父级分组标签数组，用于构建多级标签
      * @returns {Object} 分组后的单词对象
      */
-    groupWordsBySetRule(words, sortRule, ruleName) {
+    groupWordsBySetRule(words, sortRule, ruleName, parentLabels = []) {
         const groups = {};
 
         // 解析排序规则（如果传入的是字符串）
         let sortGroups;
+        let hasNonGrouping = false;
+        let isAdjacent = false;
+
         if (Array.isArray(sortRule)) {
             sortGroups = sortRule;
         } else {
             const parseResult = this.ruleEngine.parseSortRule(sortRule);
             sortGroups = parseResult.groups;
+            hasNonGrouping = parseResult.hasNonGrouping;
+            isAdjacent = parseResult.isAdjacent;
         }
 
         if (sortGroups.length === 0) {
@@ -792,6 +827,14 @@ class WordFilterApp {
 
         // 使用第一个集合进行分组
         const primarySet = sortGroups[0];
+
+        // 检查是否需要分组（排序开关可能导致第一个元素就不分组）
+        if (primarySet.nonGrouping) {
+            // 第一个元素就标记为不分组，则不按集合分组，按字母顺序排序
+            const sortedWords = words.sort((a, b) => this.ruleEngine.compareWords(a, b));
+            return { '单词列表': sortedWords };
+        }
+
         const set = this.ruleEngine.getSet(primarySet.setName, localSets);
 
         if (!set) {
@@ -818,15 +861,52 @@ class WordFilterApp {
             const lowerWord = word.toLowerCase();
             let matched = false;
 
-            // 使用统一的匹配策略
-            // 创建按长度降序排列的元素副本，优先匹配较长的元素
-            const sortedElementsForMatching = [...setElements].sort((a, b) => b.length - a.length);
+            // 如果是严格紧邻模式(@@)且有多个排序元素，需要特殊处理
+            if (isAdjacent && sortGroups.length >= 2) {
+                // 使用findAdjacentMatch来确定严格紧邻模式下的匹配
+                const result = this.ruleEngine.findAdjacentMatch(word, [primarySet, sortGroups[1]], localSets);
 
-            for (const element of sortedElementsForMatching) {
-                if (lowerWord.startsWith(element.toLowerCase())) {
-                    groups[element].push(word);
-                    matched = true;
-                    break;
+                if (result.success) {
+                    // 匹配成功，将单词添加到第一个匹配元素的分组中
+                    const matchedElement = result.groupKeys[0];
+                    // 找到对应的原始集合元素（保持大小写）
+                    const originalElement = setElements.find(el => el.toLowerCase() === matchedElement);
+                    if (originalElement) {
+                        groups[originalElement].push(word);
+                        matched = true;
+                    }
+                }
+            } else {
+                // 宽松模式下，使用统一的匹配策略，优先匹配较长的元素
+                const sortedElementsForMatching = [...setElements].sort((a, b) => b.length - a.length);
+
+                // 根据位置标识符进行匹配
+                for (const element of sortedElementsForMatching) {
+                    const elementLower = element.toLowerCase();
+                    let found = false;
+
+                    // 根据位置标识符使用不同的匹配策略
+                    switch (primarySet.positionFlag) {
+                        case '^': // 前缀匹配
+                            found = lowerWord.startsWith(elementLower);
+                            break;
+                        case '$': // 后缀匹配
+                            found = lowerWord.endsWith(elementLower);
+                            break;
+                        case '*': // 包含匹配
+                            found = lowerWord.includes(elementLower);
+                            break;
+                        case '~': // 严格中间匹配
+                            const index = lowerWord.indexOf(elementLower);
+                            found = index > 0 && index + elementLower.length < lowerWord.length;
+                            break;
+                    }
+
+                    if (found) {
+                        groups[element].push(word);
+                        matched = true;
+                        break;
+                    }
                 }
             }
 
@@ -840,11 +920,50 @@ class WordFilterApp {
             if (groups[key].length === 0) {
                 delete groups[key];
             } else {
-                // 如果还有更多的排序规则，递归进行下一级分组
-                if (sortGroups.length > 1) {
-                    // 直接传递剩余的排序规则数组
+                // 如果还有更多的排序规则，且没有被分组开关截断，递归进行下一级分组
+                if (sortGroups.length > 1 && !hasNonGrouping) {
+                    // 如果是严格紧邻模式，第二级已经在匹配过程中考虑过了
+                    if (isAdjacent) {
+                        // 如果有超过2个排序元素，仍需继续处理
+                        if (sortGroups.length > 2) {
+                            // 创建当前级别的分组标签
+                            const currentLevelLabels = [...parentLabels, key];
+
+                            // 传递第三个及之后的排序规则数组和累积的分组标签
+                            const remainingSortGroups = sortGroups.slice(2);
+                            groups[key] = this.groupWordsBySetRule(
+                                groups[key],
+                                remainingSortGroups,
+                                ruleName,
+                                currentLevelLabels
+                            );
+                        } else {
+                            // 只有两个排序元素，直接排序不再分组
+                            groups[key].sort((a, b) => this.ruleEngine.compareWords(a, b));
+                        }
+                    } else {
+                        // 非严格紧邻模式，正常处理
+                        // 创建当前级别的分组标签
+                        const currentLevelLabels = [...parentLabels, key];
+
+                        // 直接传递剩余的排序规则数组和累积的分组标签
+                        const remainingSortGroups = sortGroups.slice(1);
+                        groups[key] = this.groupWordsBySetRule(
+                            groups[key],
+                            remainingSortGroups,
+                            ruleName,
+                            currentLevelLabels
+                        );
+                    }
+                } else if (sortGroups.length > 1 && hasNonGrouping) {
+                    // 有分组开关，先对当前组内单词按剩余规则排序，但不再继续分组
                     const remainingSortGroups = sortGroups.slice(1);
-                    groups[key] = this.groupWordsBySetRule(groups[key], remainingSortGroups, ruleName);
+                    const sortedWords = this.ruleEngine.sortBySetGroups(
+                        groups[key],
+                        this.constructSortRuleString(remainingSortGroups, isAdjacent),
+                        localSets
+                    );
+                    groups[key] = sortedWords;
                 } else {
                     // 最后一级，对单词进行排序
                     groups[key].sort((a, b) => this.ruleEngine.compareWords(a, b));
@@ -853,6 +972,36 @@ class WordFilterApp {
         });
 
         return groups;
+    }
+
+    /**
+     * 构造排序规则字符串
+     * @param {Array} sortGroups - 排序组数组
+     * @param {boolean} isAdjacent - 是否为紧邻模式
+     * @returns {string} 排序规则字符串
+     */
+    constructSortRuleString(sortGroups, isAdjacent) {
+        if (!sortGroups || sortGroups.length === 0) {
+            return '';
+        }
+
+        let prefix = isAdjacent ? '@@' : '@';
+        let ruleString = '';
+
+        for (const group of sortGroups) {
+            if (group.descending) {
+                ruleString += '-';
+            }
+
+            // 检查是否需要括号
+            if (group.setName.length > 1 || group.positionFlag) {
+                ruleString += `(${group.setName}${group.positionFlag || ''})`;
+            } else {
+                ruleString += group.setName;
+            }
+        }
+
+        return prefix + ruleString;
     }
 
     /**
@@ -898,11 +1047,8 @@ class WordFilterApp {
             // 检测是否有!标志影响分组显示
             let hasNonGrouping = false;
             if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
-                const sortRule = rule.displayRule.substring(1);
-                // 检查是否包含!标志（但@-和@!-等基础排序除外）
-                if (sortRule.includes('!') && sortRule !== '!' && sortRule !== '!-') {
-                    hasNonGrouping = true;
-                }
+                const parseResult = this.ruleEngine.parseSortRule(rule.displayRule.substring(1));
+                hasNonGrouping = parseResult.hasNonGrouping;
             }
 
             // 获取分组信息
@@ -1231,54 +1377,54 @@ class WordFilterApp {
                 this.deletedWords = new Set();
             }
         }
-     }
+    }
 
-     /**
-      * 添加搜索词到搜索历史
-      * @param {string} searchTerm - 搜索词
-      */
-     addToSearchHistory(searchTerm) {
-         // 移除重复项
-         this.searchHistory = this.searchHistory.filter(term => term !== searchTerm);
-         
-         // 添加到开头
-         this.searchHistory.unshift(searchTerm);
-         
-         // 限制历史记录数量
-         if (this.searchHistory.length > 10) {
-             this.searchHistory = this.searchHistory.slice(0, 10);
-         }
-         
-         // 保存到localStorage
-         this.saveSearchHistory();
-     }
-
-     /**
-      * 保存搜索历史到localStorage
-      */
-     saveSearchHistory() {
-         localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
-     }
-
-     /**
-      * 从localStorage加载搜索历史
-      */
-     loadSearchHistory() {
-         try {
-             const saved = localStorage.getItem('searchHistory');
-             if (saved) {
-                 this.searchHistory = JSON.parse(saved);
-             }
-         } catch (error) {
-             console.warn('加载搜索历史失败:', error);
-             this.searchHistory = [];
-         }
-     }
-
-     /**
-      * 切换分组折叠状态
-     * @param {string} groupId - 分组的ID
+    /**
+     * 添加搜索词到搜索历史
+     * @param {string} searchTerm - 搜索词
      */
+    addToSearchHistory(searchTerm) {
+        // 移除重复项
+        this.searchHistory = this.searchHistory.filter(term => term !== searchTerm);
+
+        // 添加到开头
+        this.searchHistory.unshift(searchTerm);
+
+        // 限制历史记录数量
+        if (this.searchHistory.length > 10) {
+            this.searchHistory = this.searchHistory.slice(0, 10);
+        }
+
+        // 保存到localStorage
+        this.saveSearchHistory();
+    }
+
+    /**
+     * 保存搜索历史到localStorage
+     */
+    saveSearchHistory() {
+        localStorage.setItem('searchHistory', JSON.stringify(this.searchHistory));
+    }
+
+    /**
+     * 从localStorage加载搜索历史
+     */
+    loadSearchHistory() {
+        try {
+            const saved = localStorage.getItem('searchHistory');
+            if (saved) {
+                this.searchHistory = JSON.parse(saved);
+            }
+        } catch (error) {
+            console.warn('加载搜索历史失败:', error);
+            this.searchHistory = [];
+        }
+    }
+
+    /**
+     * 切换分组折叠状态
+    * @param {string} groupId - 分组的ID
+    */
     toggleGroupCollapse(groupId) {
         const groupContent = document.getElementById(groupId);
         const groupTitle = groupContent.previousElementSibling;
@@ -1296,7 +1442,7 @@ class WordFilterApp {
                 groupContent.style.display = 'none';
                 groupTitle.classList.add('collapsed');
             }
-            
+
             // 保存折叠状态
             this.saveCollapseState(groupId, groupContent.style.display === 'none');
         }
@@ -1319,7 +1465,7 @@ class WordFilterApp {
             } catch (error) {
                 console.warn('加载折叠状态失败:', error);
             }
-            
+
             collapseStates[groupId] = isCollapsed;
             localStorage.setItem(key, JSON.stringify(collapseStates));
         }
@@ -1335,13 +1481,13 @@ class WordFilterApp {
                 const saved = localStorage.getItem(key);
                 if (saved) {
                     const collapseStates = JSON.parse(saved);
-                    
+
                     // 应用保存的折叠状态
                     setTimeout(() => {
                         for (const [groupId, isCollapsed] of Object.entries(collapseStates)) {
                             const groupContent = document.getElementById(groupId);
                             const groupTitle = groupContent?.previousElementSibling;
-                            
+
                             if (groupContent && groupTitle && isCollapsed) {
                                 groupContent.style.display = 'none';
                                 groupTitle.classList.add('collapsed');
