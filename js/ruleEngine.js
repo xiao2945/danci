@@ -2964,11 +2964,8 @@ class RuleEngine {
                     for (let i = 0; i < sortGroups.length; i++) {
                         let key = result.groupKeys[i];
                         
-                        // 对于分组键，如果是降序且不是用于分组的键，需要处理排序方向
-                        if (sortGroups[i].nonGrouping && sortGroups[i].descending) {
-                            // 对于降序的排序键，使用字符串的反向比较值
-                            key = String.fromCharCode(255 - key.charCodeAt(0)) + key.slice(1);
-                        }
+                        // 注意：在严格排序模式下，降序处理已经在findAdjacentMatch中完成
+                        // 这里不需要重复处理降序，直接分配到对应的键数组
                         
                         if (sortGroups[i].nonGrouping) {
                             sortingKeys.push(key);
