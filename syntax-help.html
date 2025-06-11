@@ -788,6 +788,9 @@
 
             <ul>
                 <li>严格排序<span style="color: red;">有且只有</span>两个排序单元。</li>
+                <li>严格模式下两个排序单元只（按第一个）产生一级分组。</li>
+                <li>严格排序如果需要不分组，可使用分组开关<code>!</code>（默认字母顺序）。且只能放在排序标志与排序单元之间；放在排序单元与排序单元间无效。（如：<code>@@!AB</code>；<code>@@A!B</code>无效）
+                </li>
             </ul>
 
             <h2>5. 规则示例</h2>
@@ -882,9 +885,9 @@
 
             <p class="comment">/* 混合分组排序 */</p>
             <pre><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="rule-name">#混合分组</span>
-<span class="comment">//只分组严格辅音-元音结构单词，按辅音开头分组，元音仅用于排序</span>
+<span class="comment">//只分组严格辅音+元音结构单词，按辅音开头分组</span>
 <span class="rule-content">:\bCV</span>
-<span class="sort-rule">@@C^!V*</span></pre>
+<span class="sort-rule">@@C^V*</span></pre>
 
             <h3>5.7 组合规则示例</h3>
 

@@ -309,7 +309,8 @@ class RuleEngine {
             return;
         }
 
-        const sortRule = displayRule.substring(1);
+        // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+        const sortRule = displayRule.startsWith('@@') ? displayRule.substring(2) : displayRule.substring(1);
         if (sortRule === '' || sortRule === '-') {
             return; // 基础字母排序，无需验证
         }
@@ -955,6 +956,11 @@ class RuleEngine {
         const savedRules = JSON.parse(localStorage.getItem('wordFilterRules') || '{}');
 
         for (const [name, ruleData] of Object.entries(savedRules)) {
+            // 添加调试信息，特别关注"末尾Xle"规则
+            if (name === '末尾Xle') {
+                // Debug logs removed for performance
+            }
+            
             // 确保localSets正确转换为Map
             let localSets = new Map();
             if (ruleData.localSets) {
@@ -987,6 +993,12 @@ class RuleEngine {
                 specificRule: ruleData.specificRule,
                 displayRule: ruleData.displayRule
             };
+            
+            // 添加调试信息，确认规则对象的最终状态
+            if (name === '末尾Xle') {
+                // Debug logs removed for performance
+            }
+            
             this.rules.set(name, rule);
         }
     }
@@ -1513,10 +1525,10 @@ class RuleEngine {
         }
 
         if (hasAmbiguity) {
-            console.log('[DEBUG] 双锚点匹配检测到歧义，使用增强回溯算法');
+            // Enhanced backtracking for ambiguous patterns
             return this.matchWithEnhancedBacktrack(targetText, elements, 0);
         } else {
-            console.log('[DEBUG] 双锚点匹配无歧义，使用标准匹配');
+            // Standard matching for unambiguous patterns
             return this.matchesPatternSequential(targetText, elements, 0);
         }
     }
@@ -1801,14 +1813,14 @@ class RuleEngine {
                             if (typeof setElement === 'string' && setElement.length > 1) {
                                 if (pos + setElement.length <= word.length &&
                                     word.substring(pos, pos + setElement.length) === setElement) {
-                                    console.log(`[DEBUG] matched multi-char element: "${setElement}"`);
+                                    // Multi-char element matched
                                     matched = true;
                                     matchLength = setElement.length;
                                     break;
                                 }
                             } else {
                                 if (pos < word.length && word[pos] === setElement) {
-                                    console.log(`[DEBUG] matched single char: "${setElement}"`);
+                                    // Single char matched
                                     matched = true;
                                     matchLength = 1;
                                     break;
@@ -1818,14 +1830,14 @@ class RuleEngine {
                     }
 
                     if (!matched) {
-                        console.log(`[DEBUG] no match found at pos ${pos}`);
+                        // No match at current position
                         break;
                     }
                     pos += matchLength;
                     matchCount++;
                 }
 
-                console.log(`[DEBUG] set match result: matchCount=${matchCount}, endPos=${pos}`);
+                // Set match completed
                 return { matched: matchCount > 0, endPos: pos };
             } else {
                 // 单次匹配逻辑
@@ -2020,11 +2032,11 @@ class RuleEngine {
 
         if (hasAmbiguity) {
             // 有歧义：使用增强回溯算法
-            console.log('[DEBUG] 检测到歧义，使用增强回溯算法');
+            // Enhanced backtracking for ambiguous patterns
             return this.matchWithEnhancedBacktrack(word, pattern, startPos);
         } else {
             // 无歧义：使用原有的回溯算法（性能更好）
-            console.log('[DEBUG] 无歧义，使用标准回溯算法');
+            // Standard backtracking algorithm
             return this.matchWithBacktrack(word, pattern, startPos, 0, []);
         }
     }
@@ -2585,7 +2597,8 @@ class RuleEngine {
         }
 
         // 解析排序规则
-        const sortRule = displayRule.substring(1); // 去掉@符号
+        // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+        const sortRule = displayRule.startsWith('@@') ? displayRule.substring(2) : displayRule.substring(1); // 去掉@符号
 
         // 处理基础字母排序和不分组排序
         if (sortRule === '-' || sortRule === '' || sortRule === '!' || sortRule === '!-') {
@@ -3119,21 +3132,28 @@ class RuleEngine {
      * @returns {Object} 包含成功标志和分组键的对象
      */
     findAdjacentMatch(word, sortGroups, localSets) {
+        // Find adjacent matches for strict matching rules
+        
         if (sortGroups.length !== 2) {
+            // Invalid sortGroups length
             return { success: false, groupKeys: null };
         }
 
         const [group1, group2] = sortGroups;
+        // Process group1 and group2
 
         // 检查无效的位置标志组合
         if (group1.positionFlag === '$' || group2.positionFlag === '^') {
+            // Invalid position flag combination
             return { success: false, groupKeys: null }; // 不符合紧邻逻辑的组合
         }
 
         const set1 = this.getSet(group1.setName, localSets);
         const set2 = this.getSet(group2.setName, localSets);
+        // Get sets for both groups
 
         if (!set1 || !set2) {
+            // Missing required sets
             return { success: false, groupKeys: null };
         }
 
@@ -3141,9 +3161,157 @@ class RuleEngine {
         const sortedElements1 = Array.from(set1).sort((a, b) => b.length - a.length);
         const sortedElements2 = Array.from(set2).sort((a, b) => b.length - a.length);
 
-        // 遍历单词的每个位置，寻找相邻匹配
         const lowerWord = word.toLowerCase();
 
+        // 优先处理有明确位置标志的元素（^或$），这样可以确保正确的匹配顺序
+        // 对于@@X(Le$)这样的规则，应该先找到末尾的Le，再向前查找紧邻的X
+        if (group2.positionFlag === '$') {
+            // Using end-based matching for $ flag
+            // 第二个元素有$标志，先匹配它，再向前查找第一个元素
+            return this.findAdjacentMatchFromEnd(word, group1, group2, sortedElements1, sortedElements2, localSets);
+        } else if (group1.positionFlag === '^') {
+            // Using start-based matching for ^ flag
+            // 第一个元素有^标志，先匹配它，再向后查找第二个元素
+            return this.findAdjacentMatchFromStart(word, group1, group2, sortedElements1, sortedElements2, localSets);
+        } else {
+            // Using sequential matching for general cases
+            // 都没有明确位置标志，使用原来的逻辑
+            return this.findAdjacentMatchSequential(word, group1, group2, sortedElements1, sortedElements2, localSets);
+        }
+    }
+
+    /**
+     * 从词尾开始的紧邻匹配（用于处理$标志）
+     */
+    findAdjacentMatchFromEnd(word, group1, group2, sortedElements1, sortedElements2, localSets) {
+        const lowerWord = word.toLowerCase();
+        // Match from end for $ flag rules
+        
+        // 先匹配第二个元素（有$标志）
+        for (const element2 of sortedElements2) {
+            const element2Lower = element2.toLowerCase();
+            // Check element2 for end match
+            
+            // 检查是否是词尾匹配
+            if (lowerWord.endsWith(element2Lower)) {
+                const match2StartPos = lowerWord.length - element2Lower.length;
+                
+                // 向前查找紧邻的第一个元素
+                for (const element1 of sortedElements1) {
+                    const element1Lower = element1.toLowerCase();
+                    const expectedEndPos = match2StartPos;
+                    const expectedStartPos = expectedEndPos - element1Lower.length;
+                    
+                    // 检查位置是否有效且元素匹配
+                    if (expectedStartPos >= 0 && 
+                        lowerWord.substring(expectedStartPos, expectedEndPos) === element1Lower) {
+                        // Element1 matches at expected position
+
+                        
+                        // 根据第一个元素的位置标志进行额外检查
+                        let validMatch = true;
+                        switch (group1.positionFlag) {
+                            case '^': // 前缀匹配
+                                validMatch = expectedStartPos === 0;
+                                break;
+                            case '~': // 严格中间匹配
+                                validMatch = expectedStartPos > 0 && expectedEndPos < lowerWord.length;
+                                break;
+                            // '*'和默认情况不需要额外检查
+                        }
+                        
+                        if (validMatch) {
+                            // 处理降序标志
+                            let key1 = element1Lower;
+                            let key2 = element2Lower;
+                            
+                            if (group1.descending) {
+                                key1 = String.fromCharCode(255 - key1.charCodeAt(0)) + key1.slice(1);
+                            }
+                            if (group2.descending) {
+                                key2 = String.fromCharCode(255 - key2.charCodeAt(0)) + key2.slice(1);
+                            }
+                            
+                            return {
+                                success: true,
+                                groupKeys: [key1, key2]
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return { success: false, groupKeys: null };
+    }
+
+    /**
+     * 从词首开始的紧邻匹配（用于处理^标志）
+     */
+    findAdjacentMatchFromStart(word, group1, group2, sortedElements1, sortedElements2, localSets) {
+        const lowerWord = word.toLowerCase();
+        
+        // 先匹配第一个元素（有^标志）
+        for (const element1 of sortedElements1) {
+            const element1Lower = element1.toLowerCase();
+            
+            // 检查是否是词首匹配
+            if (lowerWord.startsWith(element1Lower)) {
+                const match1EndPos = element1Lower.length;
+                
+                // 向后查找紧邻的第二个元素
+                for (const element2 of sortedElements2) {
+                    const element2Lower = element2.toLowerCase();
+                    const expectedStartPos = match1EndPos;
+                    const expectedEndPos = expectedStartPos + element2Lower.length;
+                    
+                    // 检查位置是否有效且元素匹配
+                    if (expectedEndPos <= lowerWord.length && 
+                        lowerWord.substring(expectedStartPos, expectedEndPos) === element2Lower) {
+                        
+                        // 根据第二个元素的位置标志进行额外检查
+                        let validMatch = true;
+                        switch (group2.positionFlag) {
+                            case '$': // 后缀匹配
+                                validMatch = expectedEndPos === lowerWord.length;
+                                break;
+                            case '~': // 严格中间匹配
+                                validMatch = expectedStartPos > 0 && expectedEndPos < lowerWord.length;
+                                break;
+                            // '*'和默认情况不需要额外检查
+                        }
+                        
+                        if (validMatch) {
+                            // 处理降序标志
+                            let key1 = element1Lower;
+                            let key2 = element2Lower;
+                            
+                            if (group1.descending) {
+                                key1 = String.fromCharCode(255 - key1.charCodeAt(0)) + key1.slice(1);
+                            }
+                            if (group2.descending) {
+                                key2 = String.fromCharCode(255 - key2.charCodeAt(0)) + key2.slice(1);
+                            }
+                            
+                            return {
+                                success: true,
+                                groupKeys: [key1, key2]
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return { success: false, groupKeys: null };
+    }
+
+    /**
+     * 顺序紧邻匹配（原来的逻辑，用于没有明确位置标志的情况）
+     */
+    findAdjacentMatchSequential(word, group1, group2, sortedElements1, sortedElements2, localSets) {
+        const lowerWord = word.toLowerCase();
+        
         for (let i = 0; i < lowerWord.length - 1; i++) {
             // 逐个尝试第一个集合的元素
             for (const element1 of sortedElements1) {
@@ -3270,7 +3438,8 @@ class RuleEngine {
             return; // 非排序规则，无需验证
         }
 
-        const sortRule = displayRule.substring(1);
+        // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+        const sortRule = displayRule.startsWith('@@') ? displayRule.substring(2) : displayRule.substring(1);
         if (sortRule === '' || sortRule === '-' || sortRule === '!' || sortRule === '!-') {
             return; // 基础字母排序或不分组排序，无需验证
         }

@@ -558,7 +558,9 @@ class WordFilterApp {
         let groupedWords = null;
         const rule = this.ruleEngine.getRule(this.currentRule);
         if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
-            const parseResult = this.ruleEngine.parseSortRule(rule.displayRule.substring(1));
+            // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+            const sortRule = rule.displayRule.startsWith('@@') ? rule.displayRule.substring(2) : rule.displayRule.substring(1);
+            const parseResult = this.ruleEngine.parseSortRule(sortRule);
             if (!parseResult.hasNonGrouping) {
                 groupedWords = this.groupWordsByFirstLetter(searchFilteredWords);
             }
@@ -736,7 +738,8 @@ class WordFilterApp {
 
         // 检查是否有排序规则
         if (rule && rule.displayRule && rule.displayRule.startsWith('@') && rule.displayRule.length > 1) {
-            const sortRule = rule.displayRule.substring(1);
+            // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+            const sortRule = rule.displayRule.startsWith('@@') ? rule.displayRule.substring(2) : rule.displayRule.substring(1);
 
             // 特殊处理：@! 和 @!- 表示不分组的排序，直接返回单词列表不分组
             if (sortRule === '!' || sortRule === '!-') {
@@ -747,13 +750,15 @@ class WordFilterApp {
 
             // 如果有集合排序规则，按集合分组
             if (sortRule !== '-' && sortRule !== '') {
-                return this.groupWordsBySetRule(words, sortRule, ruleName);
+                // 传入完整的displayRule，让groupWordsBySetRule内部处理@@前缀
+                return this.groupWordsBySetRule(words, rule.displayRule, ruleName);
             }
         }
 
         // 处理@-逆序或@正序的情况
         if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
-            const sortRule = rule.displayRule.substring(1);
+            // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+            const sortRule = rule.displayRule.startsWith('@@') ? rule.displayRule.substring(2) : rule.displayRule.substring(1);
             if (sortRule === '-' || sortRule === '') {
                 // 使用ruleEngine的applySorting方法处理排序
                 const sortedWords = this.ruleEngine.applySorting(words, rule.displayRule, rule.localSets);
@@ -811,10 +816,25 @@ class WordFilterApp {
         if (Array.isArray(sortRule)) {
             sortGroups = sortRule;
         } else {
-            const parseResult = this.ruleEngine.parseSortRule(sortRule);
+            // 如果sortRule以@开头，需要先处理前缀
+            let actualSortRule = sortRule;
+            if (sortRule.startsWith('@')) {
+                // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+                actualSortRule = sortRule.startsWith('@@') ? sortRule.substring(2) : sortRule.substring(1);
+            }
+            
+            const parseResult = this.ruleEngine.parseSortRule(actualSortRule);
             sortGroups = parseResult.groups;
             hasNonGrouping = parseResult.hasNonGrouping;
             isAdjacent = parseResult.isAdjacent;
+            
+            // 如果原始sortRule以@@开头，强制设置isAdjacent为true
+            if (sortRule.startsWith('@@')) {
+                isAdjacent = true;
+            }
+            
+            // 添加调试信息
+            // Debug logs removed for performance
         }
 
         if (sortGroups.length === 0) {
@@ -863,6 +883,8 @@ class WordFilterApp {
 
             // 如果是严格紧邻模式(@@)且有多个排序元素，需要特殊处理
             if (isAdjacent && sortGroups.length >= 2) {
+                // Debug logs removed for performance
+                
                 // 使用findAdjacentMatch来确定严格紧邻模式下的匹配
                 const result = this.ruleEngine.findAdjacentMatch(word, [primarySet, sortGroups[1]], localSets);
 
@@ -875,26 +897,9 @@ class WordFilterApp {
                         groups[originalElement].push(word);
                         matched = true;
                     }
-                } else {
-                    // 在严格紧邻模式下，即使两个元素不能紧邻匹配，我们也需要尝试单独匹配第一个元素
-                    // 这样可以确保单词被正确分组，而不是全部归入"其他"分组
-                    const result = this.ruleEngine.findMatchingSetElementWithPosition(
-                        word,
-                        primarySet.setName,
-                        localSets,
-                        primarySet.positionFlag,
-                        0
-                    );
-                    
-                    if (result.element) {
-                        // 找到对应的原始集合元素（保持大小写）
-                        const originalElement = setElements.find(el => el.toLowerCase() === result.element);
-                        if (originalElement) {
-                            groups[originalElement].push(word);
-                            matched = true;
-                        }
-                    }
                 }
+                // 在严格紧邻模式下，如果两个元素不能紧邻匹配，则不进行任何匹配
+                // 该单词将被归入"其他"分组，因为它不满足严格紧邻的要求
             } else {
                 // 宽松模式下，使用统一的匹配策略，优先匹配较长的元素
                 const sortedElementsForMatching = [...setElements].sort((a, b) => b.length - a.length);
@@ -944,7 +949,7 @@ class WordFilterApp {
                     // 检查剩余的排序规则中是否还有需要分组的元素
                     const remainingSortGroups = isAdjacent ? sortGroups.slice(2) : sortGroups.slice(1);
                     const hasGroupingElements = remainingSortGroups.some(group => !group.nonGrouping);
-                    
+
                     if (hasGroupingElements) {
                         // 还有需要分组的元素，继续递归分组
                         if (isAdjacent) {
@@ -1069,12 +1074,19 @@ class WordFilterApp {
             // 获取分组信息 - 使用与页面显示相同的逻辑
             let groupedWords = null;
             let hasNonGrouping = false;
-            
+
             if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
-                const sortRule = rule.displayRule.substring(1);
+                // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
+                const sortRule = rule.displayRule.startsWith('@@') ? rule.displayRule.substring(2) : rule.displayRule.substring(1);
+                
+                // 添加调试信息，特别关注"末尾Xle"规则
+                if (ruleName === '末尾Xle') {
+                    // Debug logs removed for performance
+                }
+                
                 const parseResult = this.ruleEngine.parseSortRule(sortRule);
                 hasNonGrouping = parseResult.hasNonGrouping;
-                
+
                 // 特殊处理：@! 和 @!- 表示不分组的排序
                 if (sortRule === '!' || sortRule === '!-') {
                     groupedWords = null;
