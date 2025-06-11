@@ -371,8 +371,8 @@ class RuleEngine {
         }
 
         // 检查规则名称是否包含特殊字符
-        if (!/^[\u4e00-\u9fa5a-zA-Z0-9\s_-]+$/.test(ruleName)) {
-            throw new Error('规则名称只能包含中文、英文、数字、空格、下划线和连字符');
+        if (!/^[\u4e00-\u9fa5a-zA-Z0-9_]+$/.test(ruleName)) {
+            throw new Error('规则名称只能包含中文、英文、数字和下划线');
         }
     }
 
@@ -463,10 +463,11 @@ class RuleEngine {
      * @param {Map} localSets - 本地集合映射
      */
     validateSetNameConflicts(localSets) {
+        const builtinSetNames = this.getBuiltinSetNames();
         for (const setName of localSets.keys()) {
-            // 检查是否与全局集合冲突
-            if (this.globalSets.has(setName)) {
-                throw new Error(`局部集合名称 "${setName}" 与全局集合冲突`);
+            // 只检查是否与默认集合冲突，允许覆盖自定义全局集合
+            if (builtinSetNames.includes(setName)) {
+                throw new Error(`局部集合名称 "${setName}" 与默认集合冲突`);
             }
         }
     }
@@ -652,6 +653,7 @@ class RuleEngine {
      */
     evaluateSetExpression(expression, localSets, isFromBraces = false) {
         const resultSet = new Set();
+        const originalExpression = expression;
 
         // 检查是否有大括号（在处理运算符之前）
         const hasBraces = expression.startsWith('{') && expression.endsWith('}');
@@ -661,32 +663,65 @@ class RuleEngine {
             return this.evaluateSetOperation(expression, localSets);
         }
 
-        // 移除外层大括号
-        if (hasBraces) {
-            expression = expression.slice(1, -1);
-            isFromBraces = true;
+        // 情况1：双引号字面字符串（如 "abc"）
+        if (!hasBraces && expression.startsWith('"') && expression.endsWith('"')) {
+            const content = expression.slice(1, -1);
+            resultSet.add(content);
+            return resultSet;
         }
 
-        // 分割元素
-        const elements = this.splitElements(expression);
-
-        for (const element of elements) {
-            const trimmedElement = element.trim();
-            if (trimmedElement === '') {
-                resultSet.add('');
-            } else if (!isFromBraces && this.isSetName(trimmedElement)) {
-                // 只有不是来自大括号内容时才尝试作为集合引用
-                const referencedSet = this.getSet(trimmedElement, localSets);
+        // 情况2：集合名引用（单大写字母或括号形式）
+        if (!hasBraces) {
+            // 单大写字母集合名
+            if (/^[A-Z]$/.test(expression)) {
+                const referencedSet = this.getSet(expression, localSets);
                 if (referencedSet) {
                     referencedSet.forEach(item => resultSet.add(item));
+                    return resultSet;
                 } else {
-                    // 如果集合不存在，当作字面值处理
+                    throw new Error(`集合 "${expression}" 不存在`);
+                }
+            }
+            // 括号形式的集合名（支持单字母和多字母）
+            else if (expression.startsWith('(') && expression.endsWith(')')) {
+                const setName = expression.slice(1, -1);
+                // 单字母集合名必须是大写，多字母集合名必须以字母开头
+                if (/^[A-Z]$/.test(setName) || /^[a-zA-Z][a-zA-Z0-9]*$/.test(setName)) {
+                    const referencedSet = this.getSet(setName, localSets);
+                    if (referencedSet) {
+                        referencedSet.forEach(item => resultSet.add(item));
+                        return resultSet;
+                    } else {
+                        throw new Error(`集合 "${setName}" 不存在`);
+                    }
+                } else {
+                    throw new Error(`无效的集合名格式: ${expression}`);
+                }
+            }
+            // 其他情况都不允许
+            else {
+                throw new Error(`无效的集合定义格式: ${originalExpression}。只允许：1）单大写字母集合名(如A) 2）括号集合名(如(ShortV)) 3）大括号字面集合(如{a,b}) 4）双引号字面字符串(如"abc")`);
+            }
+        }
+
+        // 情况3：大括号字面集合（如 {a,b,c}）
+        if (hasBraces) {
+            expression = expression.slice(1, -1);
+            
+            // 分割元素
+            const elements = this.splitElements(expression);
+
+            for (const element of elements) {
+                const trimmedElement = element.trim();
+                if (trimmedElement === '') {
+                    resultSet.add('');
+                } else {
+                    // 大括号内的元素都作为字面值处理，保持原样不去除引号
+                    // 例如：{"hello"} 中的 "hello" 应该匹配带引号的字符串
                     resultSet.add(trimmedElement);
                 }
-            } else {
-                // 直接字符或字符组合
-                resultSet.add(trimmedElement);
             }
+            return resultSet;
         }
 
         return resultSet;
@@ -705,13 +740,21 @@ class RuleEngine {
         // 处理 >> 运算符（集合减法）
         if (currentExpression.includes('>>')) {
             const parts = currentExpression.split('>>');
-            let result = this.evaluateSetExpression(parts[0].trim(), localSets);
-            console.log('[evaluateSetOperation] Initial result for ' + parts[0].trim() + ':', new Set(result));
+            
+            // 验证左侧操作数
+            const leftPart = parts[0].trim();
+            this.validateSetOperand(leftPart, localSets);
+            let result = this.evaluateSetExpression(leftPart, localSets);
+            console.log('[evaluateSetOperation] Initial result for ' + leftPart + ':', new Set(result));
 
             for (let i = 1; i < parts.length; i++) {
                 let partToEvaluate = parts[i].trim();
                 // 去除行尾注释
                 partToEvaluate = partToEvaluate.replace(/\s*\/\/.*$/, '').trim();
+                
+                // 验证右侧操作数
+                this.validateSetOperand(partToEvaluate, localSets);
+                
                 console.log('[evaluateSetOperation] Processing subtraction part (comment stripped): ' + partToEvaluate);
                 // 检查是否是大括号表达式，如果是则直接处理为字面值
                 const isFromBraces = partToEvaluate.startsWith('{') && partToEvaluate.endsWith('}');
@@ -739,6 +782,10 @@ class RuleEngine {
                 let partToEvaluate = part.trim();
                 // 去除行尾注释
                 partToEvaluate = partToEvaluate.replace(/\s*\/\/.*$/, '').trim();
+                
+                // 验证操作数
+                this.validateSetOperand(partToEvaluate, localSets);
+                
                 const isFromBraces = partToEvaluate.startsWith('{') && partToEvaluate.endsWith('}');
                 const partSet = this.evaluateSetExpression(partToEvaluate, localSets, isFromBraces);
                 partSet.forEach(item => result.add(item));
@@ -790,15 +837,22 @@ class RuleEngine {
      * @returns {boolean} 是否为集合名称
      */
     isSetName(str) {
-        // 单字母集合允许大写和小写字母，可直接引用
-        if (str.length === 1 && /^[A-Za-z]$/.test(str)) {
+        // 排除带引号的字符串，这些应该作为字面值处理
+        if ((str.startsWith('"') && str.endsWith('"')) || 
+            (str.startsWith("'") && str.endsWith("'"))) {
+            return false;
+        }
+        
+        // 单字母集合只允许大写字母
+        if (str.length === 1 && /^[A-Z]$/.test(str)) {
             return true;
         }
 
-        // 多字母集合必须用括号引用
+        // 括号形式的集合名（支持单字母和多字母）
         if (str.startsWith('(') && str.endsWith(')')) {
             const setName = str.slice(1, -1);
-            return setName.length > 0 && /^[a-zA-Z][a-zA-Z0-9]*$/.test(setName);
+            // 单字母集合名必须是大写，多字母集合名必须以字母开头
+            return /^[A-Z]$/.test(setName) || /^[a-zA-Z][a-zA-Z0-9]*$/.test(setName);
         }
 
         return false;
@@ -828,6 +882,50 @@ class RuleEngine {
         }
 
         return undefined;
+    }
+
+    /**
+     * 验证集合运算操作数
+     * @param {string} operand - 操作数
+     * @param {Map} localSets - 本地集合映射
+     */
+    validateSetOperand(operand, localSets) {
+        // 情况1：大括号字面集合
+        if (operand.startsWith('{') && operand.endsWith('}')) {
+            return;
+        }
+        
+        // 情况2：双引号字面字符串
+        if (operand.startsWith('"') && operand.endsWith('"')) {
+            return;
+        }
+        
+        // 情况3：单大写字母集合名
+        if (/^[A-Z]$/.test(operand)) {
+            const referencedSet = this.getSet(operand, localSets);
+            if (!referencedSet) {
+                throw new Error(`集合 "${operand}" 不存在`);
+            }
+            return;
+        }
+        
+        // 情况4：括号形式的集合名（支持单字母和多字母）
+        if (operand.startsWith('(') && operand.endsWith(')')) {
+            const setName = operand.slice(1, -1);
+            // 单字母集合名必须是大写，多字母集合名必须以字母开头
+            if (/^[A-Z]$/.test(setName) || /^[a-zA-Z][a-zA-Z0-9]*$/.test(setName)) {
+                const referencedSet = this.getSet(setName, localSets);
+                if (!referencedSet) {
+                    throw new Error(`集合 "${setName}" 不存在`);
+                }
+                return;
+            } else {
+                throw new Error(`无效的集合名格式: ${operand}`);
+            }
+        }
+        
+        // 其他情况都不允许
+        throw new Error(`无效的集合操作数格式: ${operand}。只允许：1）单大写字母集合名(如A) 2）括号集合名(如(ShortV)) 3）大括号字面集合(如{a,b}) 4）双引号字面字符串(如"abc")`);
     }
 
     /**

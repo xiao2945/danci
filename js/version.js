@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.3.2';
-        this.releaseDate = '2025-06-11';
-        this.description = '修复包含"!"开关的排序规则在Excel导出时变为不分组状态的问题，优化分组逻辑处理';
+        this.version = 'v1.3.3';
+        this.releaseDate = '2025-06-12';
+        this.description = '实现严格的集合定义解析规则，统一集合语法标准，支持四种集合定义格式';
     }
 
     /**

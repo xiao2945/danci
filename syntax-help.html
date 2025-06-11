@@ -72,7 +72,7 @@
 
         .syntax-help-content ul,
         .syntax-help-content ol {
-            margin-bottom: 15px;
+            /* margin-bottom: 15px; */
             padding-left: 25px;
         }
 
@@ -382,6 +382,9 @@
             <ul>
                 <li>使用逗号<code>,</code>分隔集合中的元素。</li>
                 <li>逗号前的空位置表示空元素。（如：<code>{,a}</code>、<code>{a,,b}</code>表示包含空元素）</li>
+                <ul>
+                    <li><strong>注意：</strong>虽然支持空字符，但不支持纯白字符，如空格、制表符、换行符。</li>
+                </ul>
                 <li>集合元素大小写敏感。</li>
             </ul>
 
@@ -440,6 +443,9 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="note">
+                <strong>注意：</strong>集合运算符仅限于在规则的局部集合定义中使用 ，不能在全局集合定义中使用。全局集合只支持<code>{a,b,c}</code>这样的字面值定义格式。
             </div>
 
             <h3>2.5 字面集合</h3>

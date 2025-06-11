@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>集合运算操作数严格解析测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .test-input {
+            font-family: monospace;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-result {
+            font-size: 0.9em;
+            color: #666;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>集合运算操作数严格解析测试</h1>
+        <p>测试 >> 和 << 运算符两边的严格集合定义解析规则</p>
+        
+        <button onclick="runAllTests()">运行所有测试</button>
+        <button onclick="clearResults()">清空结果</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script src="js/fileStorage.js"></script>
+    <script src="js/ruleEngine.js"></script>
+    <script>
+        const ruleEngine = new RuleEngine();
+        
+        // 预设一些集合用于测试
+        ruleEngine.globalSets.set('A', new Set(['apple', 'ant']));
+        ruleEngine.globalSets.set('B', new Set(['banana', 'ball']));
+        ruleEngine.globalSets.set('ShortV', new Set(['short1', 'short2']));
+        ruleEngine.globalSets.set('LongV', new Set(['verylongword1', 'verylongword2']));
+        
+        const testCases = [
+            {
+                category: "应该成功的集合运算",
+                tests: [
+                    // 单大写字母集合名
+                    { input: "A >> B", shouldSucceed: true, description: "单字母集合减法" },
+                    { input: "A << B", shouldSucceed: true, description: "单字母集合加法" },
+                    
+                    // 括号形式集合名
+                    { input: "(A) >> (B)", shouldSucceed: true, description: "括号单字母集合" },
+                    { input: "(ShortV) >> (LongV)", shouldSucceed: true, description: "括号多字母集合" },
+                    { input: "A >> (ShortV)", shouldSucceed: true, description: "混合格式集合" },
+                    
+                    // 大括号字面集合
+                    { input: "A >> {test,demo}", shouldSucceed: true, description: "集合减去字面集合" },
+                    { input: "{hello,world} << A", shouldSucceed: true, description: "字面集合加上集合" },
+                    { input: "{a,b} >> {c,d}", shouldSucceed: true, description: "字面集合运算" },
+                    { input: "{\"quoted\",\"string\"} << A", shouldSucceed: true, description: "带引号的字面集合" },
+                    
+                    // 双引号字面字符串
+                    { input: "A >> \"test\"", shouldSucceed: true, description: "集合减去字面字符串" },
+                    { input: "\"hello\" << B", shouldSucceed: true, description: "字面字符串加上集合" },
+                    { input: "\"abc\" >> \"def\"", shouldSucceed: true, description: "字面字符串运算" }
+                ]
+            },
+            {
+                category: "应该失败的集合运算",
+                tests: [
+                    // 小写字母集合名
+                    { input: "a >> B", shouldSucceed: false, description: "小写字母集合名" },
+                    { input: "A >> b", shouldSucceed: false, description: "小写字母集合名" },
+                    
+                    // 不存在的集合
+                    { input: "X >> Y", shouldSucceed: false, description: "不存在的集合" },
+                    { input: "(NonExist) >> A", shouldSucceed: false, description: "不存在的括号集合" },
+                    
+                    // 无效格式
+                    { input: "ABC >> DEF", shouldSucceed: false, description: "多字母无括号集合名" },
+                    { input: "A >> test", shouldSucceed: false, description: "无引号字面字符串" },
+                    { input: "'single' >> A", shouldSucceed: false, description: "单引号字符串" },
+                    { input: "[array] >> A", shouldSucceed: false, description: "方括号格式" },
+                    { input: "A >> (invalid name)", shouldSucceed: false, description: "括号内包含空格" },
+                    { input: "A >> (123invalid)", shouldSucceed: false, description: "括号内数字开头" }
+                ]
+            }
+        ];
+        
+        function runAllTests() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            
+            testCases.forEach(category => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'test-section';
+                sectionDiv.innerHTML = `<h3>${category.category}</h3>`;
+                
+                category.tests.forEach(test => {
+                    const testDiv = document.createElement('div');
+                    testDiv.className = 'test-case';
+                    
+                    const inputDiv = document.createElement('div');
+                    inputDiv.className = 'test-input';
+                    inputDiv.textContent = `测试: ${test.input}`;
+                    
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'test-result';
+                    
+                    try {
+                        // 创建一个简单的规则来测试集合运算
+                        const testRule = {
+                            name: 'test',
+                            type: 'filter',
+                            condition: test.input,
+                            action: 'hide'
+                        };
+                        
+                        // 尝试解析集合运算
+                        const result = ruleEngine.evaluateSetOperation(test.input, new Map());
+                        
+                        if (test.shouldSucceed) {
+                            testDiv.classList.add('success');
+                            resultDiv.textContent = `✓ 成功: ${test.description} - 结果集合大小: ${result.size}`;
+                        } else {
+                            testDiv.classList.add('error');
+                            resultDiv.textContent = `✗ 预期失败但成功了: ${test.description}`;
+                        }
+                    } catch (error) {
+                        if (!test.shouldSucceed) {
+                            testDiv.classList.add('success');
+                            resultDiv.textContent = `✓ 预期失败: ${test.description} - ${error.message}`;
+                        } else {
+                            testDiv.classList.add('error');
+                            resultDiv.textContent = `✗ 预期成功但失败了: ${test.description} - ${error.message}`;
+                        }
+                    }
+                    
+                    testDiv.appendChild(inputDiv);
+                    testDiv.appendChild(resultDiv);
+                    sectionDiv.appendChild(testDiv);
+                });
+                
+                resultsDiv.appendChild(sectionDiv);
+            });
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            runAllTests();
+        };
+    </script>
+</body>
+</html>
