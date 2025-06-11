@@ -822,17 +822,17 @@ class WordFilterApp {
                 // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
                 actualSortRule = sortRule.startsWith('@@') ? sortRule.substring(2) : sortRule.substring(1);
             }
-            
+
             const parseResult = this.ruleEngine.parseSortRule(actualSortRule);
             sortGroups = parseResult.groups;
             hasNonGrouping = parseResult.hasNonGrouping;
             isAdjacent = parseResult.isAdjacent;
-            
+
             // 如果原始sortRule以@@开头，强制设置isAdjacent为true
             if (sortRule.startsWith('@@')) {
                 isAdjacent = true;
             }
-            
+
             // 添加调试信息
             // Debug logs removed for performance
         }
@@ -884,7 +884,7 @@ class WordFilterApp {
             // 如果是严格紧邻模式(@@)且有多个排序元素，需要特殊处理
             if (isAdjacent && sortGroups.length >= 2) {
                 // Debug logs removed for performance
-                
+
                 // 使用findAdjacentMatch来确定严格紧邻模式下的匹配
                 const result = this.ruleEngine.findAdjacentMatch(word, [primarySet, sortGroups[1]], localSets);
 
@@ -1078,24 +1078,28 @@ class WordFilterApp {
             if (rule && rule.displayRule && rule.displayRule.startsWith('@')) {
                 // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
                 const sortRule = rule.displayRule.startsWith('@@') ? rule.displayRule.substring(2) : rule.displayRule.substring(1);
-                
-                // 添加调试信息，特别关注"末尾Xle"规则
-                if (ruleName === '末尾Xle') {
-                    // Debug logs removed for performance
-                }
-                
                 const parseResult = this.ruleEngine.parseSortRule(sortRule);
                 hasNonGrouping = parseResult.hasNonGrouping;
+        
 
-                // 特殊处理：@! 和 @!- 表示不分组的排序
-                if (sortRule === '!' || sortRule === '!-') {
-                    groupedWords = null;
-                } else if (sortRule !== '-' && sortRule !== '') {
-                    // 如果有集合排序规则，按集合分组（即使有!标志也要分组到相应层级）
-                    groupedWords = this.groupWordsBySetRule(this.filteredWords, sortRule, ruleName);
+                // 严格排序模式（@@前缀）：只按首字母分组，不使用集合分组
+                if (rule.displayRule.startsWith('@@')) {
+                    if (!parseResult.hasNonGrouping) {
+                        groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
+                    }
                 } else {
-                    // 没有排序规则时，按首字母分组
-                    groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
+                    // 松散排序模式（@前缀）：按集合规则分组
+                    // 特殊处理：@! 和 @!- 表示不分组的排序
+                    if (sortRule === '!' || sortRule === '!-') {
+                        groupedWords = null;
+                    } else if (sortRule !== '-' && sortRule !== '') {
+                        // 如果有集合排序规则，按集合分组
+                        // 注意：即使有!标志，也要按!之前的部分进行分组
+                        groupedWords = this.groupWordsBySetRule(this.filteredWords, sortRule, ruleName);
+                    } else {
+                        // 没有排序规则时，按首字母分组
+                        groupedWords = this.groupWordsByFirstLetter(this.filteredWords);
+                    }
                 }
             } else {
                 // 没有排序规则时，按首字母分组
@@ -1105,6 +1109,7 @@ class WordFilterApp {
             if (format === 'txt') {
                 await this.fileUtils.exportToText(activeWords, `${filename}.txt`, exportInfo, groupedWords, hasNonGrouping);
             } else if (format === 'excel') {
+        
                 await this.fileUtils.exportToExcel(activeWords, `${filename}.xlsx`, exportInfo, groupedWords, hasNonGrouping);
             }
 

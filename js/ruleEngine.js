@@ -960,7 +960,7 @@ class RuleEngine {
             if (name === '末尾Xle') {
                 // Debug logs removed for performance
             }
-            
+
             // 确保localSets正确转换为Map
             let localSets = new Map();
             if (ruleData.localSets) {
@@ -993,12 +993,12 @@ class RuleEngine {
                 specificRule: ruleData.specificRule,
                 displayRule: ruleData.displayRule
             };
-            
+
             // 添加调试信息，确认规则对象的最终状态
             if (name === '末尾Xle') {
                 // Debug logs removed for performance
             }
-            
+
             this.rules.set(name, rule);
         }
     }
@@ -2786,58 +2786,62 @@ class RuleEngine {
             if (nonGroupingFromIndex === 0) {
                 nonGroupingStartIndex = 0;
             } else {
-                // 扫描!之前的部分，识别排序元素
-                let tempI = 0;
-                let tempElementIndex = 0;
+                // 正常处理!开关的位置（包括严格模式和宽松模式）
+                // 严格模式的特殊处理在最后的返回值中进行
+                {
+                    // 扫描!之前的部分，识别排序元素
+                    let tempI = 0;
+                    let tempElementIndex = 0;
 
-                while (tempI < nonGroupingFromIndex) {
-                    // 跳过-号
-                    if (actualRule[tempI] === '-') {
-                        tempI++;
-                        continue;
-                    }
-
-                    // 处理括号引用的集合
-                    if (actualRule[tempI] === '(') {
-                        const closeIndex = actualRule.indexOf(')', tempI);
-                        if (closeIndex !== -1) {
-                            // 括号内是一个完整的集合引用，算作一个元素
-                            tempI = closeIndex + 1;
-                            tempElementIndex++;
-                        } else {
-                            tempI++; // 括号不匹配，跳过
-                        }
-                    }
-                    // 处理单字母集合
-                    else if (/[a-zA-Z]/.test(actualRule[tempI])) {
-                        // 读取连续的字母数字（可能是集合名）
-                        let setName = '';
-                        const startPos = tempI;
-
-                        while (tempI < actualRule.length && /[a-zA-Z0-9]/.test(actualRule[tempI])) {
-                            setName += actualRule[tempI];
+                    while (tempI < nonGroupingFromIndex) {
+                        // 跳过-号
+                        if (actualRule[tempI] === '-') {
                             tempI++;
+                            continue;
                         }
 
-                        // 如果后面紧跟位置匹配符，一起算作一个元素
-                        if (tempI < actualRule.length && /[\^\$\*~]/.test(actualRule[tempI])) {
-                            tempI++;
+                        // 处理括号引用的集合
+                        if (actualRule[tempI] === '(') {
+                            const closeIndex = actualRule.indexOf(')', tempI);
+                            if (closeIndex !== -1) {
+                                // 括号内是一个完整的集合引用，算作一个元素
+                                tempI = closeIndex + 1;
+                                tempElementIndex++;
+                            } else {
+                                tempI++; // 括号不匹配，跳过
+                            }
                         }
+                        // 处理单字母集合
+                        else if (/[a-zA-Z]/.test(actualRule[tempI])) {
+                            // 读取连续的字母数字（可能是集合名）
+                            let setName = '';
+                            const startPos = tempI;
 
-                        // 每个单字母集合算一个元素，但规则上要求多字母集合必须用括号
-                        if (setName.length === 1) {
-                            tempElementIndex++;
+                            while (tempI < actualRule.length && /[a-zA-Z0-9]/.test(actualRule[tempI])) {
+                                setName += actualRule[tempI];
+                                tempI++;
+                            }
+
+                            // 如果后面紧跟位置匹配符，一起算作一个元素
+                            if (tempI < actualRule.length && /[\^\$\*~]/.test(actualRule[tempI])) {
+                                tempI++;
+                            }
+
+                            // 每个单字母集合算一个元素，但规则上要求多字母集合必须用括号
+                            if (setName.length === 1) {
+                                tempElementIndex++;
+                            } else {
+                                // 多字母集合，如果没有括号，每个字母视为一个独立集合
+                                tempElementIndex += setName.length;
+                            }
                         } else {
-                            // 多字母集合，如果没有括号，每个字母视为一个独立集合
-                            tempElementIndex += setName.length;
+                            tempI++; // 跳过其他字符
                         }
-                    } else {
-                        tempI++; // 跳过其他字符
                     }
+
+                    // 设置开始不分组的元素索引
+                    nonGroupingStartIndex = tempElementIndex;
                 }
-
-                // 设置开始不分组的元素索引
-                nonGroupingStartIndex = tempElementIndex;
             }
         }
 
@@ -2926,7 +2930,52 @@ class RuleEngine {
             throw new Error(`排序规则层数超过限制，最多允许三级排序，当前为 ${groups.length} 级`);
         }
 
-        return { groups, isAdjacent, hasNonGrouping: nonGroupingFromIndex !== -1 };
+        // 严格排序验证
+        if (isAdjacent) {
+
+            // 验证@@模式：必须是两个集合
+            if (groups.length === 0) {
+                throw new Error(`严格排序模式（@@）必须包含两个排序单元，当前没有任何排序单元`);
+            }
+            if (groups.length === 1) {
+                throw new Error(`严格排序模式（@@）必须包含两个排序单元，当前只有一个排序单元`);
+            }
+            if (groups.length !== 2) {
+                throw new Error(`严格排序模式（@@）只支持两个排序单元，当前为 ${groups.length} 个排序单元`);
+            }
+
+            // 验证@@模式中的位置标识符限制
+            const [group1, group2] = groups;
+
+            // 硬性限制：第一个集合不能使用$
+            if (group1.positionFlag === '$') {
+                throw new Error(`有序紧邻模式（@@）中第一个集合不能使用后缀匹配标识符（$）`);
+            }
+
+            // 硬性限制：第二个集合不能使用^
+            if (group2.positionFlag === '^') {
+                throw new Error(`有序紧邻模式（@@）中第二个集合不能使用前缀匹配标识符（^）`);
+            }
+        }
+
+        // 计算最终的hasNonGrouping值
+        let finalHasNonGrouping = nonGroupingFromIndex !== -1;
+
+        // 严格排序模式下的特殊处理
+        if (isAdjacent && nonGroupingFromIndex !== -1 && nonGroupingFromIndex !== 0) {
+            // 在严格排序模式下，如果!不在开头，则忽略!开关
+            finalHasNonGrouping = false;
+        }
+        
+        // 宽松排序模式下，如果!不在开头，应该根据!的位置进行分组
+        // 这里finalHasNonGrouping应该表示是否完全不分组
+        // 对于@(BL^)!(V*)这种情况，应该按!之前的部分分组，所以不是完全不分组
+        if (!isAdjacent && nonGroupingFromIndex !== -1 && nonGroupingFromIndex !== 0) {
+            // 在宽松排序模式下，如果!不在开头，则表示部分分组，不是完全不分组
+            finalHasNonGrouping = false;
+        }
+
+        return { groups, isAdjacent, hasNonGrouping: finalHasNonGrouping };
     }
 
     /**
@@ -3133,7 +3182,7 @@ class RuleEngine {
      */
     findAdjacentMatch(word, sortGroups, localSets) {
         // Find adjacent matches for strict matching rules
-        
+
         if (sortGroups.length !== 2) {
             // Invalid sortGroups length
             return { success: false, groupKeys: null };
@@ -3186,28 +3235,28 @@ class RuleEngine {
     findAdjacentMatchFromEnd(word, group1, group2, sortedElements1, sortedElements2, localSets) {
         const lowerWord = word.toLowerCase();
         // Match from end for $ flag rules
-        
+
         // 先匹配第二个元素（有$标志）
         for (const element2 of sortedElements2) {
             const element2Lower = element2.toLowerCase();
             // Check element2 for end match
-            
+
             // 检查是否是词尾匹配
             if (lowerWord.endsWith(element2Lower)) {
                 const match2StartPos = lowerWord.length - element2Lower.length;
-                
+
                 // 向前查找紧邻的第一个元素
                 for (const element1 of sortedElements1) {
                     const element1Lower = element1.toLowerCase();
                     const expectedEndPos = match2StartPos;
                     const expectedStartPos = expectedEndPos - element1Lower.length;
-                    
+
                     // 检查位置是否有效且元素匹配
-                    if (expectedStartPos >= 0 && 
+                    if (expectedStartPos >= 0 &&
                         lowerWord.substring(expectedStartPos, expectedEndPos) === element1Lower) {
                         // Element1 matches at expected position
 
-                        
+
                         // 根据第一个元素的位置标志进行额外检查
                         let validMatch = true;
                         switch (group1.positionFlag) {
@@ -3219,19 +3268,19 @@ class RuleEngine {
                                 break;
                             // '*'和默认情况不需要额外检查
                         }
-                        
+
                         if (validMatch) {
                             // 处理降序标志
                             let key1 = element1Lower;
                             let key2 = element2Lower;
-                            
+
                             if (group1.descending) {
                                 key1 = String.fromCharCode(255 - key1.charCodeAt(0)) + key1.slice(1);
                             }
                             if (group2.descending) {
                                 key2 = String.fromCharCode(255 - key2.charCodeAt(0)) + key2.slice(1);
                             }
-                            
+
                             return {
                                 success: true,
                                 groupKeys: [key1, key2]
@@ -3241,7 +3290,7 @@ class RuleEngine {
                 }
             }
         }
-        
+
         return { success: false, groupKeys: null };
     }
 
@@ -3250,25 +3299,25 @@ class RuleEngine {
      */
     findAdjacentMatchFromStart(word, group1, group2, sortedElements1, sortedElements2, localSets) {
         const lowerWord = word.toLowerCase();
-        
+
         // 先匹配第一个元素（有^标志）
         for (const element1 of sortedElements1) {
             const element1Lower = element1.toLowerCase();
-            
+
             // 检查是否是词首匹配
             if (lowerWord.startsWith(element1Lower)) {
                 const match1EndPos = element1Lower.length;
-                
+
                 // 向后查找紧邻的第二个元素
                 for (const element2 of sortedElements2) {
                     const element2Lower = element2.toLowerCase();
                     const expectedStartPos = match1EndPos;
                     const expectedEndPos = expectedStartPos + element2Lower.length;
-                    
+
                     // 检查位置是否有效且元素匹配
-                    if (expectedEndPos <= lowerWord.length && 
+                    if (expectedEndPos <= lowerWord.length &&
                         lowerWord.substring(expectedStartPos, expectedEndPos) === element2Lower) {
-                        
+
                         // 根据第二个元素的位置标志进行额外检查
                         let validMatch = true;
                         switch (group2.positionFlag) {
@@ -3280,19 +3329,19 @@ class RuleEngine {
                                 break;
                             // '*'和默认情况不需要额外检查
                         }
-                        
+
                         if (validMatch) {
                             // 处理降序标志
                             let key1 = element1Lower;
                             let key2 = element2Lower;
-                            
+
                             if (group1.descending) {
                                 key1 = String.fromCharCode(255 - key1.charCodeAt(0)) + key1.slice(1);
                             }
                             if (group2.descending) {
                                 key2 = String.fromCharCode(255 - key2.charCodeAt(0)) + key2.slice(1);
                             }
-                            
+
                             return {
                                 success: true,
                                 groupKeys: [key1, key2]
@@ -3302,7 +3351,7 @@ class RuleEngine {
                 }
             }
         }
-        
+
         return { success: false, groupKeys: null };
     }
 
@@ -3311,7 +3360,7 @@ class RuleEngine {
      */
     findAdjacentMatchSequential(word, group1, group2, sortedElements1, sortedElements2, localSets) {
         const lowerWord = word.toLowerCase();
-        
+
         for (let i = 0; i < lowerWord.length - 1; i++) {
             // 逐个尝试第一个集合的元素
             for (const element1 of sortedElements1) {
@@ -3440,18 +3489,31 @@ class RuleEngine {
 
         // 正确处理@@前缀（严格相邻匹配）和@前缀（松散匹配）
         const sortRule = displayRule.startsWith('@@') ? displayRule.substring(2) : displayRule.substring(1);
+
+        // 对于@@模式，空规则是无效的
+        if (displayRule.startsWith('@@') && sortRule === '') {
+            throw new Error(`严格排序模式（@@）不能为空，必须包含排序规则`);
+        }
+
         if (sortRule === '' || sortRule === '-' || sortRule === '!' || sortRule === '!-') {
             return; // 基础字母排序或不分组排序，无需验证
         }
 
         try {
-            const parseResult = this.parseSortRule(sortRule);
+            const parseResult = this.parseSortRule(displayRule);
             const { groups, isAdjacent } = parseResult;
 
             if (isAdjacent) {
+
                 // 验证@@模式：必须是两个集合
+                if (groups.length === 0) {
+                    throw new Error(`严格排序模式（@@）必须包含两个排序单元，当前没有任何排序单元`);
+                }
+                if (groups.length === 1) {
+                    throw new Error(`严格排序模式（@@）必须包含两个排序单元，当前只有一个排序单元`);
+                }
                 if (groups.length !== 2) {
-                    throw new Error(`有序紧邻模式（@@）只支持两个集合，当前为 ${groups.length} 个集合`);
+                    throw new Error(`严格排序模式（@@）只支持两个排序单元，当前为 ${groups.length} 个排序单元`);
                 }
 
                 // 验证@@模式中的位置标识符限制

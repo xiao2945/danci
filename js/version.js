@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.3.0';
+        this.version = 'v1.3.2';
         this.releaseDate = '2025-06-11';
-        this.description = '修复排序规则中"!"标志位置验证逻辑，增强规则语法验证，改进用户体验';
+        this.description = '修复包含"!"开关的排序规则在Excel导出时变为不分组状态的问题，优化分组逻辑处理';
     }
 
     /**

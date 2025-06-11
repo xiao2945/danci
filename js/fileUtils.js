@@ -558,31 +558,32 @@ class FileUtils {
             data.push(['']); // 空行分隔
         }
 
-        // 根据分组信息决定显示方式
-        if (groupedWords) {
-            // 如果有分组信息，按分组格式输出
-                // 检查分组层级
-                const groupLevels = this.getGroupLevels(groupedWords);
+        // 根据分组信息和hasNonGrouping标志决定显示方式
 
-                // 添加表头
-                if (groupLevels === 1) {
-                    data.push(['分组', '单词']);
-                } else if (groupLevels === 2) {
-                    data.push(['一级分组', '二级分组', '单词']);
-                } else if (groupLevels === 3) {
-                    data.push(['一级分组', '二级分组', '三级分组', '单词']);
-                } else {
-                    // 超过三级的情况，使用通用表头
-                    const headers = [];
-                    for (let i = 1; i <= groupLevels; i++) {
-                        headers.push(`${i}级分组`);
-                    }
-                    headers.push('单词');
-                    data.push(headers);
+        if (groupedWords && !hasNonGrouping) {
+            // 如果有分组信息且没有不分组标志，按分组格式输出
+            // 检查分组层级
+            const groupLevels = this.getGroupLevels(groupedWords);
+
+            // 添加表头
+            if (groupLevels === 1) {
+                data.push(['分组', '单词']);
+            } else if (groupLevels === 2) {
+                data.push(['一级分组', '二级分组', '单词']);
+            } else if (groupLevels === 3) {
+                data.push(['一级分组', '二级分组', '三级分组', '单词']);
+            } else {
+                // 超过三级的情况，使用通用表头
+                const headers = [];
+                for (let i = 1; i <= groupLevels; i++) {
+                    headers.push(`${i}级分组`);
                 }
-                this.addGroupedDataToExcel(data, groupedWords, words, 0, '', groupLevels);
+                headers.push('单词');
+                data.push(headers);
+            }
+            this.addGroupedDataToExcel(data, groupedWords, words, 0, '', groupLevels);
         } else {
-            // 没有分组信息，显示单列
+            // 没有分组信息或有不分组标志，显示单列
             data.push(['单词']);
             words.forEach(word => {
                 data.push([word]);
@@ -596,14 +597,14 @@ class FileUtils {
         if (groupedWords) {
             const groupLevels = this.getGroupLevels(groupedWords);
             const cols = [];
-            
+
             // 为每个分组层级设置列宽
             for (let i = 0; i < groupLevels; i++) {
                 cols.push({ width: 10 });
             }
             // 单词列设置较宽的宽度
             cols.push({ width: 50 });
-            
+
             worksheet['!cols'] = cols;
         } else {
             worksheet['!cols'] = [{ width: 30 }];
@@ -707,7 +708,7 @@ class FileUtils {
      */
     getGroupLevels(groupedWords) {
         let maxLevel = 1;
-        
+
         for (const [groupName, groupContent] of Object.entries(groupedWords)) {
             if (!Array.isArray(groupContent)) {
                 // 发现子分组，检查子分组的层级
@@ -715,7 +716,7 @@ class FileUtils {
                 maxLevel = Math.max(maxLevel, subLevel + 1);
             }
         }
-        
+
         return maxLevel;
     }
 
@@ -741,22 +742,22 @@ class FileUtils {
     addGroupedDataToExcel(data, groupedWords, activeWords, level = 0, parentGroups = [], maxLevels = 1, displayedGroups = new Set()) {
         for (const [groupName, groupContent] of Object.entries(groupedWords)) {
             const currentGroups = [...parentGroups, groupName];
-            
+
             if (Array.isArray(groupContent)) {
                 // 这是最终的单词列表，只输出活跃的单词
                 const activeGroupWords = groupContent.filter(word => activeWords.includes(word));
                 if (activeGroupWords.length > 0) {
                     const wordsString = activeGroupWords.join('，');
-                    
+
                     // 构建行数据：填充所有分组层级
                     const row = new Array(maxLevels + 1); // +1 for words column
-                    
+
                     // 填充分组列 - 实现树形结构显示
                     for (let i = 0; i < maxLevels; i++) {
                         if (i < currentGroups.length) {
                             // 生成当前层级的分组路径标识
                             const groupPath = currentGroups.slice(0, i + 1).join('|');
-                            
+
                             // 只在第一次出现时显示分组标签
                             if (!displayedGroups.has(groupPath)) {
                                 row[i] = currentGroups[i];
@@ -768,10 +769,10 @@ class FileUtils {
                             row[i] = '';
                         }
                     }
-                    
+
                     // 填充单词列
                     row[maxLevels] = wordsString;
-                    
+
                     data.push(row);
                 }
             } else {

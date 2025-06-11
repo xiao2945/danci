@@ -1131,11 +1131,17 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
                 }
 
                 try {
+                    console.log('[DEBUG] 开始保存规则，规则文本:', ruleText);
+
                     // 直接解析规则文本（注释已包含在文本中）
+                    console.log('[DEBUG] 调用 parseRule 方法');
                     const rule = this.ruleEngine.parseRule(ruleText);
+                    console.log('[DEBUG] parseRule 成功，解析结果:', rule);
 
                     // 检查规则冲突
+                    console.log('[DEBUG] 开始检查规则冲突');
                     const conflicts = this.checkRuleConflicts(rule);
+                    console.log('[DEBUG] 规则冲突检查完成，冲突数量:', conflicts.length);
                     if (conflicts.length > 0) {
                         const conflictMsg = `检测到规则冲突:\n${conflicts.join('\n')}`;
                         if (!confirm(`${conflictMsg}\n\n是否仍要保存此规则？`)) {
@@ -1143,14 +1149,18 @@ L=={a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z}`;
                         }
                     }
 
+                    console.log('[DEBUG] 调用 saveRule 方法保存规则');
                     this.ruleEngine.saveRule(rule);
+                    console.log('[DEBUG] 规则保存成功，开始刷新界面');
                     this.loadSavedRules();
                     document.getElementById('ruleEditor').value = '';
 
                     this.showMessage(`规则 "${rule.name}" 保存成功`, 'success');
+                    console.log('[DEBUG] 规则保存流程完成');
 
                 } catch (error) {
-                    console.error('规则保存错误:', error);
+                    console.error('[ERROR] 规则保存错误:', error);
+                    console.error('[ERROR] 错误堆栈:', error.stack);
                     this.showMessage(`规则保存失败: ${error.message}`, 'error');
                 }
             }
