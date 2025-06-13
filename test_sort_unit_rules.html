@@ -1,0 +1,177 @@
+< !DOCTYPE html >
+    <html>
+        <head>
+            <title>排序单元规则测试</title>
+            <meta charset="UTF-8">
+        </head>
+        <body>
+            <h1>排序单元规则测试</h1>
+            <div id="test-results"></div>
+
+            <script src="js/ruleEngine.js"></script>
+            <script>
+        // 测试用例
+                const testCases = [
+                // 4.1 排序单元基本格式测试
+                {
+                    name: "单字母集合直接引用",
+                rule: "@V",
+                expected: "应该正确解析单字母集合V"
+            },
+                {
+                    name: "单字母集合括号引用",
+                rule: "@(V)",
+                expected: "应该正确解析括号中的单字母集合V"
+            },
+                {
+                    name: "多字母集合括号引用",
+                rule: "@(BL)",
+                expected: "应该正确解析括号中的多字母集合BL"
+            },
+
+                // 4.1.1 逆序标志测试
+                {
+                    name: "逆序标志在集合名前",
+                rule: "@-A",
+                expected: "应该正确解析逆序标志在集合名前"
+            },
+                {
+                    name: "逆序标志在括号内",
+                rule: "@(-A)",
+                expected: "应该正确解析括号内的逆序标志"
+            },
+                {
+                    name: "逆序标志在括号外",
+                rule: "@-(A)",
+                expected: "应该正确解析括号外的逆序标志"
+            },
+
+                // 4.1.2 位置匹配符测试
+                {
+                    name: "位置匹配符在集合名后",
+                rule: "@A^",
+                expected: "应该正确解析位置匹配符在集合名后"
+            },
+                {
+                    name: "位置匹配符在括号内",
+                rule: "@(A^)",
+                expected: "应该正确解析括号内的位置匹配符"
+            },
+                {
+                    name: "位置匹配符在括号外（错误）",
+                rule: "@(A)^",
+                expected: "应该报错：位置匹配符不能在括号外",
+                shouldError: true
+            },
+
+                // 复合测试
+                {
+                    name: "逆序标志和位置匹配符组合",
+                rule: "@-A^",
+                expected: "应该正确解析逆序标志和位置匹配符的组合"
+            },
+                {
+                    name: "括号内逆序标志和位置匹配符",
+                rule: "@(-A^)",
+                expected: "应该正确解析括号内的逆序标志和位置匹配符"
+            },
+                {
+                    name: "括号外逆序标志，括号内位置匹配符",
+                rule: "@-(A^)",
+                expected: "应该正确解析括号外逆序标志和括号内位置匹配符"
+            },
+
+                // 多个排序单元测试
+                {
+                    name: "两个排序单元",
+                rule: "@A^(B)",
+                expected: "应该正确解析两个排序单元：A^和(B)"
+            },
+                {
+                    name: "复杂多排序单元",
+                rule: "@-A^(-B$)(C*)",
+                expected: "应该正确解析复杂的多排序单元组合"
+            },
+
+                // 特殊情况测试
+                {
+                    name: "只有逆序标志@-",
+                rule: "@-",
+                expected: "应该允许只有逆序标志的情况"
+            },
+                {
+                    name: "分组开关加逆序标志@!-",
+                rule: "@!-",
+                expected: "应该允许分组开关加逆序标志的情况"
+            },
+                {
+                    name: "独立位置匹配符（错误）",
+                rule: "@^",
+                expected: "应该报错：位置匹配符不能独立存在",
+                shouldError: true
+            },
+                {
+                    name: "独立位置匹配符$（错误）",
+                rule: "@$",
+                expected: "应该报错：位置匹配符不能独立存在",
+                shouldError: true
+            }
+                ];
+
+                // 创建规则引擎实例
+                const engine = new RuleEngine();
+
+                function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+                let html = '<h2>测试结果</h2>';
+
+                let passCount = 0;
+                let failCount = 0;
+            
+            testCases.forEach((testCase, index) => {
+                    html += `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ccc;">`;
+                html += `<h3>测试 ${index + 1}: ${testCase.name}</h3>`;
+                html += `<p><strong>规则:</strong> ${testCase.rule}</p>`;
+                html += `<p><strong>期望:</strong> ${testCase.expected}</p>`;
+
+                try {
+                    // 尝试解析排序规则
+                    const result = engine.parseSortRule(testCase.rule);
+
+                if (testCase.shouldError) {
+                    html += '<p style="color: red;">❌ 失败: 应该报错但没有报错</p>';
+                html += `<p><strong>实际结果:</strong> ${JSON.stringify(result, null, 2)}</p>`;
+                failCount++;
+                    } else {
+                    html += '<p style="color: green;">✅ 成功: 规则解析正常</p>';
+                html += `<p><strong>解析结果:</strong> <pre>${JSON.stringify(result, null, 2)}</pre></p>`;
+                passCount++;
+                    }
+                } catch (error) {
+                    if (testCase.shouldError) {
+                    html += '<p style="color: green;">✅ 成功: 正确报错</p>';
+                html += `<p><strong>错误信息:</strong> ${error.message}</p>`;
+                passCount++;
+                    } else {
+                    html += '<p style="color: red;">❌ 失败: 不应该报错但报错了</p>';
+                html += `<p><strong>错误信息:</strong> ${error.message}</p>`;
+                failCount++;
+                    }
+                }
+
+                html += '</div>';
+            });
+
+            html += `<div style="margin: 20px 0; padding: 15px; background: #f0f0f0;">`;
+                html += `<h3>测试总结</h3>`;
+                html += `<p>通过: ${passCount}, 失败: ${failCount}</p>`;
+                html += '</div>';
+
+            resultsDiv.innerHTML = html;
+        }
+
+            // 页面加载完成后运行测试
+            window.onload = runTests;
+        </script>
+    </body>
+</html >

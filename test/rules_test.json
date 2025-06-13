@@ -1,0 +1,885 @@
+{
+  "globalSets": {
+    "C": [
+      "b",
+      "c",
+      "d",
+      "f",
+      "g",
+      "h",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z"
+    ],
+    "V": [
+      "a",
+      "e",
+      "i",
+      "o",
+      "u"
+    ],
+    "L": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z"
+    ]
+  },
+  "rules": {
+    "四字母及以上单词": {
+      "name": "四字母及以上单词",
+      "comment": "",
+      "localSets": [],
+      "specificRule": ":\\bLLLL",
+      "displayRule": "@"
+    },
+    "双辅音开头": {
+      "name": "双辅音开头",
+      "comment": "",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)",
+      "displayRule": "@(BL^)"
+    },
+    "CVC": {
+      "name": "CVC",
+      "comment": "辅音-元音-辅音（去y）",
+      "localSets": [
+        [
+          "eC",
+          [
+            "b",
+            "c",
+            "d",
+            "f",
+            "g",
+            "h",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "v",
+            "w",
+            "x",
+            "z"
+          ]
+        ]
+      ],
+      "specificRule": ":\\bCV(eC)\\e",
+      "displayRule": "@"
+    },
+    "CVCE": {
+      "name": "CVCE",
+      "comment": "辅音-元音-辅音-e",
+      "localSets": [],
+      "specificRule": ":\\bCVC\"e\"\\e",
+      "displayRule": "@"
+    },
+    "CVC或CVCE": {
+      "name": "CVC或CVCE",
+      "comment": "",
+      "localSets": [],
+      "specificRule": "::CVC||CVCE",
+      "displayRule": "@"
+    },
+    "特殊辅音组合": {
+      "name": "特殊辅音组合",
+      "comment": "短元音（去掉u）",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ],
+        [
+          "ShortV",
+          [
+            "a",
+            "e",
+            "i",
+            "o"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)(ShortV)",
+      "displayRule": "@(BL^)"
+    },
+    "All单词音标": {
+      "name": "All单词音标",
+      "comment": "",
+      "localSets": [],
+      "specificRule": ":",
+      "displayRule": ""
+    },
+    "All单词": {
+      "name": "All单词",
+      "comment": "所有单词",
+      "localSets": [],
+      "specificRule": ":\\bL",
+      "displayRule": "@"
+    },
+    "前缀匹配": {
+      "name": "前缀匹配",
+      "comment": "匹配前缀+tion后缀单词",
+      "localSets": [
+        [
+          "PRE",
+          [
+            "a",
+            "ab",
+            "ac",
+            "ad",
+            "ag",
+            "al",
+            "ambl",
+            "auto",
+            "bene",
+            "cata",
+            "col",
+            "com",
+            "con",
+            "contra",
+            "dia",
+            "dif",
+            "dis",
+            "ef",
+            "em",
+            "en",
+            "entra",
+            "fore",
+            "inter",
+            "micro",
+            "mis",
+            "ob",
+            "oc",
+            "post",
+            "pre",
+            "semi",
+            "sub",
+            "un",
+            "with"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(PRE)L+\"tion\"\\e",
+      "displayRule": "@(PRE^)"
+    },
+    "无分组正序": {
+      "name": "无分组正序",
+      "comment": "匹配所有单词，按字母顺序排列但不分组",
+      "localSets": [],
+      "specificRule": ":",
+      "displayRule": "@!"
+    },
+    "无分组逆序": {
+      "name": "无分组逆序",
+      "comment": "匹配所有单词，按字母逆序排列但不分组",
+      "localSets": [],
+      "specificRule": ":",
+      "displayRule": "@!-"
+    },
+    "元音开头": {
+      "name": "元音开头",
+      "comment": "按开头元音分组",
+      "localSets": [],
+      "specificRule": ":\\bV",
+      "displayRule": "@V^"
+    },
+    "辅音结尾": {
+      "name": "辅音结尾",
+      "comment": "按结尾辅音分组",
+      "localSets": [],
+      "specificRule": ":C\\e",
+      "displayRule": "@C$"
+    },
+    "包含元音": {
+      "name": "包含元音",
+      "comment": "按包含的元音分组",
+      "localSets": [],
+      "specificRule": ":V",
+      "displayRule": "@V*"
+    },
+    "中间元音": {
+      "name": "中间元音",
+      "comment": "按中间元音分组（首尾不是元音）",
+      "localSets": [],
+      "specificRule": ":\\bCV+C\\e",
+      "displayRule": "@V~"
+    },
+    "逆序多级": {
+      "name": "逆序多级",
+      "comment": "第一级逆序，第二级正序",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)V",
+      "displayRule": "@(-BL^)(V*)"
+    },
+    "完整音韵分析": {
+      "name": "完整音韵分析",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@(BL^)(V*)(C$)"
+    },
+    "混合分组": {
+      "name": "混合分组",
+      "comment": "只分组严格辅音-元音结构单词，按辅音开头分组，元音仅用于排序",
+      "localSets": [],
+      "specificRule": ":\\bCV",
+      "displayRule": "@@C^!V*"
+    },
+    "元音开头且辅音结尾": {
+      "name": "元音开头且辅音结尾",
+      "comment": "匹配元音开头且辅音结尾的单词",
+      "localSets": [],
+      "specificRule": "::元音开头&&辅音结尾",
+      "displayRule": "@"
+    },
+    "前缀匹配1": {
+      "name": "前缀匹配1",
+      "comment": "匹配前缀+tion后缀单词",
+      "localSets": [
+        [
+          "PRE",
+          [
+            "a",
+            "ab",
+            "ac",
+            "ad",
+            "ag",
+            "al",
+            "ambl",
+            "auto",
+            "bene",
+            "cata",
+            "col",
+            "com",
+            "con",
+            "contra",
+            "dia",
+            "dif",
+            "dis",
+            "ef",
+            "em",
+            "en",
+            "entra",
+            "fore",
+            "inter",
+            "micro",
+            "mis",
+            "ob",
+            "oc",
+            "post",
+            "pre",
+            "semi",
+            "sub",
+            "un",
+            "with"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(PRE)L+V\"tion\"\\e",
+      "displayRule": "@(PRE)"
+    },
+    "前缀匹配2": {
+      "name": "前缀匹配2",
+      "comment": "匹配前缀+tion后缀单词",
+      "localSets": [
+        [
+          "PRE",
+          [
+            "a",
+            "ab",
+            "ac",
+            "ad",
+            "ag",
+            "al",
+            "ambl",
+            "auto",
+            "bene",
+            "cata",
+            "col",
+            "com",
+            "con",
+            "contra",
+            "dia",
+            "dif",
+            "dis",
+            "ef",
+            "em",
+            "en",
+            "entra",
+            "fore",
+            "inter",
+            "micro",
+            "mis",
+            "ob",
+            "oc",
+            "post",
+            "pre",
+            "semi",
+            "sub",
+            "un",
+            "with"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(PRE)V+C+V+\"tion\"\\e",
+      "displayRule": "@(PRE)"
+    },
+    "首字母分组": {
+      "name": "首字母分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@"
+    },
+    "一级分组": {
+      "name": "一级分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@(BL^)"
+    },
+    "二级分组": {
+      "name": "二级分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@(BL^)(V*)"
+    },
+    "三级分组": {
+      "name": "三级分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@(BL^)(V*)(C$)"
+    },
+    "不分组": {
+      "name": "不分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@!"
+    },
+    "开关不分组": {
+      "name": "开关不分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@!(BL^)(V*)"
+    },
+    "开关一级分组": {
+      "name": "开关一级分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@(BL^)!(V*)"
+    },
+    "开关二级分组": {
+      "name": "开关二级分组",
+      "comment": "按开头辅音群、中间元音、结尾辅音三级分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@(BL^)(V*)!(C$)"
+    },
+    "严格排序默认一级分组": {
+      "name": "严格排序默认一级分组",
+      "comment": "不分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@@(BL^)(V*)"
+    },
+    "严格排序开关不分组测试": {
+      "name": "严格排序开关不分组测试",
+      "comment": "不分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@@!(BL^)(V*)"
+    },
+    "严格排序开关测试中间无效": {
+      "name": "严格排序开关测试中间无效",
+      "comment": "不分组",
+      "localSets": [
+        [
+          "BL",
+          [
+            "bl",
+            "br",
+            "cl",
+            "cr",
+            "dr",
+            "fl",
+            "fr",
+            "gl",
+            "gr",
+            "pl",
+            "pr",
+            "sc",
+            "sk",
+            "sl",
+            "sm",
+            "sn",
+            "sp",
+            "st",
+            "sw",
+            "tr",
+            "tw"
+          ]
+        ]
+      ],
+      "specificRule": ":\\b(BL)VC",
+      "displayRule": "@@(BL^)!(V*)"
+    },
+    "非首非尾测试1": {
+      "name": "非首非尾测试1",
+      "comment": "",
+      "localSets": [
+        [
+          "X",
+          [
+            "ab"
+          ]
+        ],
+        [
+          "Y",
+          [
+            "cd"
+          ]
+        ]
+      ],
+      "specificRule": ":\\-bXY\\-e",
+      "displayRule": ""
+    },
+    "非首非尾测试2": {
+      "name": "非首非尾测试2",
+      "comment": "",
+      "localSets": [
+        [
+          "X",
+          [
+            "ab"
+          ]
+        ],
+        [
+          "Y",
+          [
+            "cd"
+          ]
+        ]
+      ],
+      "specificRule": ":\\-bX+Y\\-e",
+      "displayRule": ""
+    }
+  }
+}

@@ -44,7 +44,7 @@ class RuleEngine {
         if (typeof localStorage === 'undefined') {
             return;
         }
-        
+
         const savedGlobalSets = JSON.parse(localStorage.getItem('globalSets') || '{}');
         for (const [setName, setValues] of Object.entries(savedGlobalSets)) {
             this.globalSets.set(setName, new Set(setValues));
@@ -3497,7 +3497,13 @@ class RuleEngine {
                 i++;
             }
 
-            if (i >= actualRule.length) break;
+            if (i >= actualRule.length) {
+                // 如果只剩下逆序标志，这是允许的特殊情况
+                if (descending) {
+                    groups.push({ setName: '', positionFlag: '*', descending, nonGrouping: false });
+                }
+                break;
+            }
 
             // 检查当前元素是否在分组开关之后
             nonGrouping = nonGroupingStartIndex !== -1 && elementIndex >= nonGroupingStartIndex;
@@ -3523,6 +3529,11 @@ class RuleEngine {
                 }
 
                 i = closeIndex + 1;
+                
+                // 检查括号后是否有位置匹配符（这是错误的）
+                if (i < actualRule.length && /[\^\$\*~]/.test(actualRule[i])) {
+                    throw new Error(`位置匹配符必须放在括号内，不能放在括号外: ${sortRule}`);
+                }
 
                 // 添加为单个排序元素
                 groups.push({ setName, positionFlag, descending, nonGrouping });
@@ -3538,23 +3549,41 @@ class RuleEngine {
                 }
                 i += result.consumed;
 
-                // 处理多字母序列（如ABC）- 规则要求多字母集合必须用括号，所以这里应该是连续的单字母集合
-                if (setName.length > 1 && result.positionFlag === null && result.consumed === setName.length) {
-                    // 拆分为单个字母集合
-                    for (let j = 0; j < setName.length; j++) {
-                        const currentElementNonGrouping = nonGroupingStartIndex !== -1 && elementIndex >= nonGroupingStartIndex;
-                        groups.push({
-                            setName: setName[j],
-                            positionFlag: positionFlag,
-                            descending,
-                            nonGrouping: currentElementNonGrouping
-                        });
+                // 验证集合名不能为空
+                if (setName.length === 0) {
+                    // 检查是否只有位置匹配符或逆序标志
+                    if (result.positionFlag && !result.descending) {
+                        throw new Error(`位置匹配符不能独立存在，必须与集合名组合使用: ${sortRule}`);
+                    }
+                    if (result.descending && !result.positionFlag) {
+                        // 允许只有逆序标志的情况（@- 或 @!-）
+                        groups.push({ setName: '', positionFlag: positionFlag, descending, nonGrouping });
+                        elementIndex++;
+                    } else if (result.descending && result.positionFlag) {
+                        throw new Error(`逆序标志和位置匹配符不能独立存在，必须与集合名组合使用: ${sortRule}`);
+                    } else {
+                        // 如果既没有集合名，也没有逆序标志或位置匹配符，跳过
+                        continue;
+                    }
+                } else {
+                    // 处理多字母序列（如ABC）- 规则要求多字母集合必须用括号，所以这里应该是连续的单字母集合
+                    if (setName.length > 1 && result.positionFlag === null && result.consumed === setName.length) {
+                        // 拆分为单个字母集合
+                        for (let j = 0; j < setName.length; j++) {
+                            const currentElementNonGrouping = nonGroupingStartIndex !== -1 && elementIndex >= nonGroupingStartIndex;
+                            groups.push({
+                                setName: setName[j],
+                                positionFlag: positionFlag,
+                                descending,
+                                nonGrouping: currentElementNonGrouping
+                            });
+                            elementIndex++;
+                        }
+                    } else {
+                        // 单字母集合或带位置匹配符的集合
+                        groups.push({ setName, positionFlag, descending, nonGrouping });
                         elementIndex++;
                     }
-                } else if (setName.length > 0) {
-                    // 单字母集合
-                    groups.push({ setName, positionFlag, descending, nonGrouping });
-                    elementIndex++;
                 }
             }
 
@@ -3706,6 +3735,20 @@ class RuleEngine {
         if (i < content.length && /[\^\$\*~]/.test(content[i])) {
             positionFlag = content[i];
             i++;
+        }
+
+        // 检查是否只有位置匹配符（在没有集合名的情况下）
+        if (setName === '' && !descending && i < content.length && /[\^\$\*~]/.test(content[i])) {
+            positionFlag = content[i];
+            consumed = i + 1;
+            return { setName: '', positionFlag, consumed, descending: false };
+        }
+        
+        // 如果开头就是位置匹配符（没有逆序标志和集合名）
+        if (i === 0 && content.length > 0 && /^[\^\$\*~]/.test(content)) {
+            positionFlag = content[0];
+            consumed = 1;
+            return { setName: '', positionFlag, consumed, descending: false };
         }
 
         consumed = i;
