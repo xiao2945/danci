@@ -1472,9 +1472,20 @@ class RuleEngine {
                 // 触发全局集合更新事件
                 window.dispatchEvent(new CustomEvent('globalSetsUpdated'));
 
-                const ruleCount = Object.keys(importData.rules).length;
+                // 计算实际导入的规则数量
+                const originalRuleCount = Object.keys(importData.rules).length;
+                const actualImportedRules = Object.keys(importData.rules);
+                const actualRuleCount = actualImportedRules.length;
                 const globalSetCount = Object.keys(importData.globalSets || {}).length;
-                let message = `成功导入 ${ruleCount} 个规则！`;
+                
+                let message = `成功导入 ${actualRuleCount} 个规则！`;
+                
+                // 如果有规则被跳过，显示相关信息
+                if (actualRuleCount < originalRuleCount) {
+                    const skippedCount = originalRuleCount - actualRuleCount;
+                    message += `\n跳过了 ${skippedCount} 个同名规则。`;
+                }
+                
                 if (globalSetCount > 0) {
                     message += `\n同时导入了 ${globalSetCount} 个全局集合。`;
                 }
@@ -1490,6 +1501,35 @@ class RuleEngine {
      * @param {Object} rulesData - 规则数据对象
      */
     async loadRulesFromData(rulesData) {
+        // 检查同名规则
+        const duplicateRules = [];
+        for (const name of Object.keys(rulesData)) {
+            if (this.rules.has(name)) {
+                duplicateRules.push(name);
+            }
+        }
+
+        // 如果有同名规则，弹出确认对话框
+        if (duplicateRules.length > 0) {
+            const ruleList = duplicateRules.join('\n- ');
+            const confirmMessage = `发现以下同名规则：\n- ${ruleList}\n\n是否要覆盖这些规则？\n\n点击"确定"覆盖，点击"取消"跳过同名规则。`;
+            
+            const shouldOverwrite = confirm(confirmMessage);
+            
+            if (!shouldOverwrite) {
+                // 用户选择不覆盖，从导入数据中移除同名规则
+                for (const duplicateName of duplicateRules) {
+                    delete rulesData[duplicateName];
+                }
+                
+                // 如果移除同名规则后没有剩余规则，提示用户
+                if (Object.keys(rulesData).length === 0) {
+                    alert('所有规则都是同名规则且已跳过，没有导入任何新规则。');
+                    return;
+                }
+            }
+        }
+
         for (const [name, ruleData] of Object.entries(rulesData)) {
             // 确保localSets正确转换为Map
             let localSets = new Map();
