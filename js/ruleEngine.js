@@ -3731,6 +3731,11 @@ class RuleEngine {
             i++;
         }
 
+        // 检查是否有逆序标志在集合名后面（错误格式）
+        if (i < content.length && content[i] === '-') {
+            throw new Error(`逆序标志'-'必须放在集合名前面，不能放在集合名后面: ${content}`);
+        }
+
         // 检查位置标识符
         if (i < content.length && /[\^\$\*~]/.test(content[i])) {
             positionFlag = content[i];

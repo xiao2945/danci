@@ -115,6 +115,18 @@
                 rule: "@$",
                 expected: "应该报错：位置匹配符不能独立存在",
                 shouldError: true
+            },
+                {
+                    name: "逆序标志在集合名后（错误）",
+                rule: "@(bl-)",
+                expected: "应该报错：逆序标志不能在集合名后面",
+                shouldError: true
+            },
+                {
+                    name: "逆序标志在集合名后无括号（错误）",
+                rule: "@bl-",
+                expected: "应该报错：逆序标志不能在集合名后面",
+                shouldError: true
             }
                 ];
 
