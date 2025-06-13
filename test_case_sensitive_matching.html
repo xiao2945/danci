@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,18 +11,21 @@
             margin: 20px;
             background-color: #f5f5f5;
         }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             text-align: center;
         }
+
         .test-case {
             margin: 10px 0;
             padding: 10px;
@@ -29,22 +33,27 @@
             border-radius: 4px;
             background-color: #f9f9f9;
         }
+
         .test-case.pass {
             border-color: #4CAF50;
             background-color: #e8f5e9;
         }
+
         .test-case.fail {
             border-color: #f44336;
             background-color: #ffebee;
         }
+
         .test-description {
             font-weight: bold;
             margin-bottom: 5px;
         }
+
         .test-details {
             font-size: 14px;
             color: #666;
         }
+
         .summary {
             margin-top: 20px;
             padding: 15px;
@@ -52,16 +61,19 @@
             border-radius: 4px;
             text-align: center;
         }
+
         .error {
             color: #f44336;
             font-weight: bold;
         }
+
         .success {
             color: #4CAF50;
             font-weight: bold;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>智能大小写匹配测试</h1>
@@ -69,7 +81,7 @@
         <div id="summary" class="summary"></div>
     </div>
 
-    <script src="../js/ruleEngine.js"></script>
+    <script src="js/ruleEngine.js"></script>
     <script>
         // 测试用例
         const testCases = [
@@ -138,18 +150,18 @@
                 reason: "a是小写，应该大小写都可以匹配，可以匹配Apple中的A"
             },
             {
-                description: "后缀匹配 - 大写tion不应该匹配小写tion",
-                sets: { UpperSuffix: new Set(['TION']) },
+                description: "前缀匹配 - 大写CR不应该匹配小写cr",
+                sets: { UpperSuffix: new Set(['CR']) },
                 word: "creation",
-                pattern: ":(UpperSuffix)$",
+                pattern: ":\\b(UpperSuffix)",
                 expectedMatch: false,
-                reason: "TION是大写，应该精确匹配，不应匹配creation中的tion"
+                reason: "CR是大写，应该精确匹配，不应匹配creation中的cr"
             },
             {
                 description: "后缀匹配 - 小写tion应该匹配大写TION",
                 sets: { LowerSuffix: new Set(['tion']) },
                 word: "CREATION",
-                pattern: ":(LowerSuffix)$",
+                pattern: ":(LowerSuffix)\\e",
                 expectedMatch: true,
                 reason: "tion是小写，应该大小写都可以匹配，可以匹配CREATION中的TION"
             }
@@ -169,7 +181,7 @@
                 try {
                     // 创建规则引擎实例
                     const ruleEngine = new RuleEngine();
-                    
+
                     // 设置集合
                     for (const [setName, setValues] of Object.entries(testCase.sets)) {
                         ruleEngine.globalSets.set(setName, setValues);
@@ -177,14 +189,14 @@
 
                     // 构造完整的规则文本
                     const ruleText = `# 测试规则${index + 1}\n${testCase.pattern}`;
-                    
+
                     // 解析并执行规则
                     const parsedRule = ruleEngine.parseRule(ruleText);
                     const actualMatch = ruleEngine.matchesRule(testCase.word, parsedRule);
 
                     // 判断测试是否通过
                     const testPassed = actualMatch === testCase.expectedMatch;
-                    
+
                     if (testPassed) {
                         passCount++;
                         testDiv.classList.add('pass');
@@ -203,8 +215,8 @@
                             <strong>单词:</strong> ${testCase.word}<br>
                             <strong>模式:</strong> ${testCase.pattern}<br>
                             <strong>集合:</strong> ${JSON.stringify(Object.fromEntries(
-                                Object.entries(testCase.sets).map(([k, v]) => [k, Array.from(v)])
-                            ))}<br>
+                        Object.entries(testCase.sets).map(([k, v]) => [k, Array.from(v)])
+                    ))}<br>
                             <strong>期望匹配:</strong> ${testCase.expectedMatch}<br>
                             <strong>实际匹配:</strong> ${actualMatch}<br>
                             <strong>原因:</strong> ${testCase.reason}
@@ -243,4 +255,5 @@
         document.addEventListener('DOMContentLoaded', runTests);
     </script>
 </body>
+
 </html>
