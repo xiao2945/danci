@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组合运算符验证测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        .test-case {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .test-rule {
+            font-family: 'Courier New', monospace;
+            background-color: #ecf0f1;
+            padding: 8px;
+            border-radius: 3px;
+            margin: 5px 0;
+            border-left: 4px solid #3498db;
+        }
+        .test-explanation {
+            color: #7f8c8d;
+            font-style: italic;
+            margin: 5px 0;
+        }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            color: #27ae60;
+        }
+        .error {
+            background-color: #fdf2f2;
+            border-left: 4px solid #e74c3c;
+            color: #e74c3c;
+        }
+        .warning {
+            background-color: #fef9e7;
+            border-left: 4px solid #f39c12;
+            color: #f39c12;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            border-left: 4px solid #34495e;
+        }
+        .operator-info {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        .priority-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .priority-table th, .priority-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .priority-table th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>组合运算符验证测试</h1>
+        
+        <div class="operator-info">
+            <h3>运算符优先级和结合性</h3>
+            <table class="priority-table">
+                <tr>
+                    <th>运算符</th>
+                    <th>优先级</th>
+                    <th>结合性</th>
+                    <th>说明</th>
+                </tr>
+                <tr>
+                    <td>~</td>
+                    <td>4（最高）</td>
+                    <td>右结合</td>
+                    <td>取反运算</td>
+                </tr>
+                <tr>
+                    <td>!</td>
+                    <td>3</td>
+                    <td>左结合</td>
+                    <td>差集运算</td>
+                </tr>
+                <tr>
+                    <td>&&</td>
+                    <td>2</td>
+                    <td>左结合</td>
+                    <td>与运算</td>
+                </tr>
+                <tr>
+                    <td>||</td>
+                    <td>1（最低）</td>
+                    <td>左结合</td>
+                    <td>或运算</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="controls">
+            <button onclick="runAllTests()">运行所有测试</button>
+            <button onclick="clearResults()">清除结果</button>
+        </div>
+
+        <h2>1. 基础运算符验证</h2>
+        <div id="basic-tests"></div>
+
+        <h2>2. 多规则组合验证</h2>
+        <div id="multi-rule-tests"></div>
+
+        <h2>3. 结合律验证</h2>
+        <div id="associativity-tests"></div>
+
+        <h2>4. 优先级验证</h2>
+        <div id="precedence-tests"></div>
+
+        <h2>5. 括号优先级验证</h2>
+        <div id="parentheses-tests"></div>
+
+        <div class="summary" id="test-summary" style="display: none;">
+            <h3>测试总结</h3>
+            <div id="summary-content"></div>
+        </div>
+    </div>
+
+    <script src="js/fileStorage.js"></script>
+    <script src="js/ruleEngine.js"></script>
+    <script>
+        // 使用主程序的RuleEngine进行测试
+        class TestRuleEngine extends RuleEngine {
+            constructor() {
+                super(); // 调用父类构造函数
+                this.initTestRules();
+            }
+
+            initTestRules() {
+                // 创建测试用的基础规则
+                this.rules.set('A', { name: 'A', specificRule: 'a', displayRule: 'a' });
+                this.rules.set('B', { name: 'B', specificRule: 'b', displayRule: 'b' });
+                this.rules.set('C', { name: 'C', specificRule: 'c', displayRule: 'c' });
+                this.rules.set('D', { name: 'D', specificRule: 'd', displayRule: 'd' });
+                this.rules.set('E', { name: 'E', specificRule: 'e', displayRule: 'e' });
+            }
+
+            // 模拟组合规则验证
+            validateCombinedRule(ruleExpression) {
+                try {
+                    // 直接调用父类的方法
+                    this.validateCombinedRuleSyntax(ruleExpression);
+                    const ast = this.parseLogicExpression(ruleExpression);
+                    return { success: true, ast: ast };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // 所有核心方法都使用父类RuleEngine的实现
+
+            // 将AST转换为可读的表达式字符串
+            astToString(node) {
+                if (node.type === 'rule') {
+                    return node.value;
+                } else if (node.type === 'negate') {
+                    return `~(${this.astToString(node.operand)})`;
+                } else if (node.type === 'not') {
+                    return `(${this.astToString(node.left)} ! ${this.astToString(node.right)})`;
+                } else if (node.type === 'and') {
+                    return `(${this.astToString(node.left)} && ${this.astToString(node.right)})`;
+                } else if (node.type === 'or') {
+                    return `(${this.astToString(node.left)} || ${this.astToString(node.right)})`;
+                }
+                return 'unknown';
+            }
+        }
+
+        const engine = new TestRuleEngine();
+
+        // 测试用例定义
+        const testCases = {
+            basic: [
+                {
+                    title: '取反运算符 ~',
+                    rule: '~A',
+                    explanation: '对规则A的结果取反',
+                    expected: '~(A)'
+                },
+                {
+                    title: '差集运算符 !',
+                    rule: 'A!B',
+                    explanation: '满足A但不满足B的结果',
+                    expected: '(A ! B)'
+                },
+                {
+                    title: '与运算符 &&',
+                    rule: 'A&&B',
+                    explanation: '同时满足A和B的结果',
+                    expected: '(A && B)'
+                },
+                {
+                    title: '或运算符 ||',
+                    rule: 'A||B',
+                    explanation: '满足A或B的结果',
+                    expected: '(A || B)'
+                },
+                {
+                    title: '无效：缺少操作数的取反',
+                    rule: '~',
+                    explanation: '取反操作符后缺少操作数，应该报错',
+                    shouldFail: true
+                },
+                {
+                    title: '无效：缺少右操作数的与运算',
+                    rule: 'A&&',
+                    explanation: '与操作符缺少右操作数，应该报错',
+                    shouldFail: true
+                }
+            ],
+            multiRule: [
+                {
+                    title: '三规则与运算',
+                    rule: 'A&&B&&C',
+                    explanation: '三个规则的与运算，左结合',
+                    expected: '((A && B) && C)'
+                },
+                {
+                    title: '三规则或运算',
+                    rule: 'A||B||C',
+                    explanation: '三个规则的或运算，左结合',
+                    expected: '((A || B) || C)'
+                },
+                {
+                    title: '四规则混合运算',
+                    rule: 'A&&B||C&&D',
+                    explanation: '&&优先级高于||',
+                    expected: '((A && B) || (C && D))'
+                },
+                {
+                    title: '五规则复杂运算',
+                    rule: 'A||B&&C!D||E',
+                    explanation: '复杂的多规则运算',
+                    expected: '((A || (B && (C ! D))) || E)'
+                }
+            ],
+            associativity: [
+                {
+                    title: '取反右结合性',
+                    rule: '~~A',
+                    explanation: '连续取反，右结合：~(~A)',
+                    expected: '~(~(A))'
+                },
+                {
+                    title: '差集左结合性',
+                    rule: 'A!B!C',
+                    explanation: '连续差集，左结合：(A!B)!C',
+                    expected: '((A ! B) ! C)'
+                },
+                {
+                    title: '与运算左结合性',
+                    rule: 'A&&B&&C&&D',
+                    explanation: '连续与运算，左结合',
+                    expected: '(((A && B) && C) && D)'
+                },
+                {
+                    title: '或运算左结合性',
+                    rule: 'A||B||C||D',
+                    explanation: '连续或运算，左结合',
+                    expected: '(((A || B) || C) || D)'
+                },
+                {
+                    title: '混合结合性测试',
+                    rule: '~A!~B',
+                    explanation: '取反右结合，差集左结合',
+                    expected: '(~(A) ! ~(B))'
+                }
+            ],
+            precedence: [
+                {
+                    title: '取反优先级最高',
+                    rule: '~A&&B',
+                    explanation: '~优先级4，&&优先级2，先取反再与运算',
+                    expected: '(~(A) && B)'
+                },
+                {
+                    title: '差集优先级高于与运算',
+                    rule: 'A!B&&C',
+                    explanation: '!优先级3，&&优先级2，先差集再与运算',
+                    expected: '((A ! B) && C)'
+                },
+                {
+                    title: '与运算优先级高于或运算',
+                    rule: 'A||B&&C',
+                    explanation: '&&优先级2，||优先级1，先与运算再或运算',
+                    expected: '(A || (B && C))'
+                },
+                {
+                    title: '复杂优先级测试',
+                    rule: 'A||B&&C!~D',
+                    explanation: '按优先级：~D, C!~D, B&&(C!~D), A||(B&&(C!~D))',
+                    expected: '(A || (B && (C ! ~(D))))'
+                },
+                {
+                    title: '全运算符优先级',
+                    rule: '~A!B&&C||D',
+                    explanation: '完整的优先级测试：~(4) > !(3) > &&(2) > ||(1)',
+                    expected: '(((~(A) ! B) && C) || D)'
+                }
+            ],
+            parentheses: [
+                {
+                    title: '括号改变取反范围',
+                    rule: '~(A&&B)',
+                    explanation: '括号使取反作用于整个与运算结果',
+                    expected: '~((A && B))'
+                },
+                {
+                    title: '括号改变或运算优先级',
+                    rule: '(A||B)&&C',
+                    explanation: '括号使或运算先于与运算执行',
+                    expected: '((A || B) && C)'
+                },
+                {
+                    title: '嵌套括号',
+                    rule: '~((A||B)&&C)',
+                    explanation: '嵌套括号的复杂表达式',
+                    expected: '~(((A || B) && C))'
+                },
+                {
+                    title: '多层括号改变优先级',
+                    rule: '(A||B)&&(C!D)',
+                    explanation: '括号分组改变运算顺序',
+                    expected: '((A || B) && (C ! D))'
+                },
+                {
+                    title: '括号与取反组合',
+                    rule: '~A||(~B&&C)',
+                    explanation: '括号与取反的复杂组合',
+                    expected: '(~(A) || (~(B) && C))'
+                },
+                {
+                    title: '无效：括号不匹配',
+                    rule: '(A&&B',
+                    explanation: '缺少右括号，应该报错',
+                    shouldFail: true
+                },
+                {
+                    title: '无效：多余的右括号',
+                    rule: 'A&&B)',
+                    explanation: '多余的右括号，应该报错',
+                    shouldFail: true
+                }
+            ]
+        };
+
+        function runTest(testCase) {
+            const result = engine.validateCombinedRule(testCase.rule);
+            
+            let resultHtml = '';
+            if (testCase.shouldFail) {
+                if (!result.success) {
+                    resultHtml = `<div class="test-result success">✓ 正确检测到错误: ${result.error}</div>`;
+                } else {
+                    resultHtml = `<div class="test-result error">✗ 应该失败但成功了</div>`;
+                }
+            } else {
+                if (result.success) {
+                    const actualExpression = engine.astToString(result.ast);
+                    if (testCase.expected && actualExpression === testCase.expected) {
+                        resultHtml = `<div class="test-result success">✓ 解析成功，结果正确: ${actualExpression}</div>`;
+                    } else if (testCase.expected) {
+                        resultHtml = `<div class="test-result warning">⚠ 解析成功但结果不符预期<br>期望: ${testCase.expected}<br>实际: ${actualExpression}</div>`;
+                    } else {
+                        resultHtml = `<div class="test-result success">✓ 解析成功: ${actualExpression}</div>`;
+                    }
+                } else {
+                    resultHtml = `<div class="test-result error">✗ 解析失败: ${result.error}</div>`;
+                }
+            }
+            
+            return resultHtml;
+        }
+
+        function runTestCategory(categoryName, containerId) {
+            const container = document.getElementById(containerId);
+            const tests = testCases[categoryName];
+            
+            let html = '';
+            let passed = 0;
+            let total = tests.length;
+            
+            tests.forEach(testCase => {
+                const resultHtml = runTest(testCase);
+                const isSuccess = resultHtml.includes('class="test-result success"');
+                if (isSuccess) passed++;
+                
+                html += `
+                    <div class="test-case">
+                        <div class="test-title">${testCase.title}</div>
+                        <div class="test-rule">::${testCase.rule}</div>
+                        <div class="test-explanation">${testCase.explanation}</div>
+                        ${resultHtml}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            return { passed, total };
+        }
+
+        function runAllTests() {
+            const results = {
+                basic: runTestCategory('basic', 'basic-tests'),
+                multiRule: runTestCategory('multiRule', 'multi-rule-tests'),
+                associativity: runTestCategory('associativity', 'associativity-tests'),
+                precedence: runTestCategory('precedence', 'precedence-tests'),
+                parentheses: runTestCategory('parentheses', 'parentheses-tests')
+            };
+            
+            // 显示总结
+            let totalPassed = 0;
+            let totalTests = 0;
+            let summaryHtml = '<h4>各类别测试结果：</h4><ul>';
+            
+            Object.keys(results).forEach(category => {
+                const { passed, total } = results[category];
+                totalPassed += passed;
+                totalTests += total;
+                const percentage = ((passed / total) * 100).toFixed(1);
+                summaryHtml += `<li><strong>${getCategoryName(category)}</strong>: ${passed}/${total} (${percentage}%)</li>`;
+            });
+            
+            summaryHtml += '</ul>';
+            summaryHtml += `<h4>总体结果：${totalPassed}/${totalTests} (${((totalPassed/totalTests)*100).toFixed(1)}%)</h4>`;
+            
+            if (totalPassed === totalTests) {
+                summaryHtml += '<div class="test-result success">🎉 所有测试通过！组合运算符验证完全正确。</div>';
+            } else {
+                summaryHtml += '<div class="test-result warning">⚠ 部分测试未通过，请检查实现。</div>';
+            }
+            
+            document.getElementById('summary-content').innerHTML = summaryHtml;
+            document.getElementById('test-summary').style.display = 'block';
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                basic: '基础运算符',
+                multiRule: '多规则组合',
+                associativity: '结合律',
+                precedence: '优先级',
+                parentheses: '括号优先级'
+            };
+            return names[category] || category;
+        }
+
+        function clearResults() {
+            ['basic-tests', 'multi-rule-tests', 'associativity-tests', 'precedence-tests', 'parentheses-tests'].forEach(id => {
+                document.getElementById(id).innerHTML = '';
+            });
+            document.getElementById('test-summary').style.display = 'none';
+        }
+
+        // 页面加载完成后自动运行测试
+        window.onload = function() {
+            runAllTests();
+        };
+    </script>
+</body>
+</html>

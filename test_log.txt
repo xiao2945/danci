@@ -1,0 +1,162 @@
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3094 [BACKTRACK] Set failed to match any element
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "a"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "a" (element: "a")
+ruleEngine.js:3047 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 1
+ruleEngine.js:3079 [BACKTRACK] Set matched single-char element: "b"
+ruleEngine.js:3099 [BACKTRACK] Set single match successful: "b" (element: "b")

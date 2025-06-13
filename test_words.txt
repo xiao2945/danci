@@ -1,20 +1,48 @@
-competition 0 1
-action      0
-attention   0
-addition    0 1 
-position
-promotion
-emotion     0
-creation
-relation
-information
-comaabbaaition  0 1 2
-adbbaabbtion    0
+# 基本单词+音标测试
+apple [ˈæp.əl]
+Mother-in-Law [ˈmʌðərɪnlɔː]
+Mr. [ˈmɪstə(r)]
+café [kæˈfeɪ]
+U.S.A. [juː.es.eɪ]
 
-xabcdy 1 2
-ababcdcd 1 2
-xababcdy 2
-abababcdcd 2
-abcd
-ababcd
+# 斜杠音标格式测试
+water /ˈwɔːtər/
+hello /həˈloʊ/
+computer /kəmˈpjuːtər/
+beautiful /ˈbjuːtɪfəl/
+Mr. /ˈmɪstə(r)/
 
+# 分隔符测试
+dog : [dɒɡ]
+cat - [kæt]
+bird   [bɜːrd]
+mouse:- [maʊs]
+
+# 非法内容过滤
+he1lo [hiːˈləʊ]
+f*k [fʌk]
+hello_world [hɛˈloʊ wɜːld]
+invalid_ipa [ʃɪt#]
+empty []
+
+# 正确单词+错误音标
+banana [b??nɑːnə]
+orange [invalid symbols]
+
+# 错误单词+正确音标
+go0d [ɡʊd]
+w@ter [ˈwɔːtər]
+
+# 混合序列
+red[red] blue[bluː] green[invalid]
+电子book [bʊk] 数据库
+$# apple [æp.l̩] ?banana
+
+# 独立音标处理
+[stændˈæləʊn]
+nothing [ˈnʌθɪŋ] [extra]
+   [ˈləʊnli]   
+
+# 边界用例
+pneumonoultramicroscopicsilicovolcanoconiosis [njuːˌməʊnəʊˌʌltrəˌmaɪkrəˌskɒpɪkˈsɪlɪkəʊvɒlˌkeɪnəʊkəˌniːˈəʊsɪs]
+A-B-C--- [eɪ.biː.siː]

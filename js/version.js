@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.3.4';
+        this.version = 'v1.3.5';
         this.releaseDate = '2025-06-13';
-        this.description = '完成普通规则创建部分的检查测试，修复局部集合定义和量词验证问题';
+        this.description = '完成筛选规则的全面测试，修复锚点匹配逻辑和验证顺序问题';
     }
 
     /**

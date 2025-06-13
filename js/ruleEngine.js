@@ -3,10 +3,10 @@
  * 负责解析和执行单词筛选规则
  */
 class RuleEngine {
-    constructor() {
+    constructor(fileStorage = null) {
         this.rules = new Map();
         this.globalSets = new Map();
-        this.fileStorage = new FileStorageManager();
+        this.fileStorage = fileStorage || (typeof FileStorageManager !== 'undefined' ? new FileStorageManager() : null);
 
         // 内存缓存层：运行时缓存
         this.compiledRules = new Map();
@@ -40,6 +40,11 @@ class RuleEngine {
      * 加载保存的全局集合
      */
     loadSavedGlobalSets() {
+        // 在Node.js环境中跳过localStorage操作
+        if (typeof localStorage === 'undefined') {
+            return;
+        }
+        
         const savedGlobalSets = JSON.parse(localStorage.getItem('globalSets') || '{}');
         for (const [setName, setValues] of Object.entries(savedGlobalSets)) {
             this.globalSets.set(setName, new Set(setValues));
@@ -529,7 +534,40 @@ class RuleEngine {
             }
         }
 
-        // 1. 检查锚点位置：只能在最前或最后
+        // 1. 检查是否只有锚点没有其他内容
+        if (anchors.length > 0 && !hasNonAnchorContent) {
+            throw new Error('规则不能只包含锚点，必须包含至少一个集合引用或字面字符串');
+        }
+
+        // 2. 检查重复锚点和冲突组合（优先检查）
+        const beginAnchors = anchors.filter(a => a.type === '\\b' || a.type === '\\-b');
+        const endAnchors = anchors.filter(a => a.type === '\\e' || a.type === '\\-e');
+
+        // 检查冲突的锚点组合
+        const hasBeginAnchor = beginAnchors.some(a => a.type === '\\b');
+        const hasNonBeginAnchor = beginAnchors.some(a => a.type === '\\-b');
+        const hasEndAnchor = endAnchors.some(a => a.type === '\\e');
+        const hasNonEndAnchor = endAnchors.some(a => a.type === '\\-e');
+
+        if (hasBeginAnchor && hasNonBeginAnchor) {
+            throw new Error('规则中不能同时包含 \\b 和 \\-b 锚点，它们的语义相互冲突');
+        }
+
+        if (hasEndAnchor && hasNonEndAnchor) {
+            throw new Error('规则中不能同时包含 \\e 和 \\-e 锚点，它们的语义相互冲突');
+        }
+
+        if (beginAnchors.length > 1) {
+            const types = beginAnchors.map(a => a.type).join(' 和 ');
+            throw new Error(`规则中不能包含重复的前锚点：${types}`);
+        }
+
+        if (endAnchors.length > 1) {
+            const types = endAnchors.map(a => a.type).join(' 和 ');
+            throw new Error(`规则中不能包含重复的后锚点：${types}`);
+        }
+
+        // 3. 检查锚点位置：只能在最前或最后
         for (const anchor of anchors) {
             const isBeginAnchor = anchor.type === '\\b' || anchor.type === '\\-b';
             const isEndAnchor = anchor.type === '\\e' || anchor.type === '\\-e';
@@ -545,39 +583,6 @@ class RuleEngine {
                     throw new Error(`后锚点 ${anchor.type} 只能出现在规则的最后面`);
                 }
             }
-        }
-
-        // 2. 检查是否只有锚点没有其他内容
-        if (anchors.length > 0 && !hasNonAnchorContent) {
-            throw new Error('规则不能只包含锚点，必须包含至少一个集合引用或字面字符串');
-        }
-
-        // 3. 检查重复锚点
-        const beginAnchors = anchors.filter(a => a.type === '\\b' || a.type === '\\-b');
-        const endAnchors = anchors.filter(a => a.type === '\\e' || a.type === '\\-e');
-
-        if (beginAnchors.length > 1) {
-            const types = beginAnchors.map(a => a.type).join(' 和 ');
-            throw new Error(`规则中不能包含重复的前锚点：${types}`);
-        }
-
-        if (endAnchors.length > 1) {
-            const types = endAnchors.map(a => a.type).join(' 和 ');
-            throw new Error(`规则中不能包含重复的后锚点：${types}`);
-        }
-
-        // 检查冲突的锚点组合
-        const hasBeginAnchor = beginAnchors.some(a => a.type === '\\b');
-        const hasNonBeginAnchor = beginAnchors.some(a => a.type === '\\-b');
-        const hasEndAnchor = endAnchors.some(a => a.type === '\\e');
-        const hasNonEndAnchor = endAnchors.some(a => a.type === '\\-e');
-
-        if (hasBeginAnchor && hasNonBeginAnchor) {
-            throw new Error('规则中不能同时包含 \\b 和 \\-b 锚点，它们的语义相互冲突');
-        }
-
-        if (hasEndAnchor && hasNonEndAnchor) {
-            throw new Error('规则中不能同时包含 \\e 和 \\-e 锚点，它们的语义相互冲突');
         }
     }
 
@@ -653,6 +658,9 @@ class RuleEngine {
             throw new Error('组合规则双冒号后不能为空，必须包含规则引用');
         }
 
+        // 验证组合规则语法和操作数完整性
+        this.validateCombinedRuleSyntax(ruleContent);
+
         // 提取组合规则中引用的普通规则名称
         const referencedRules = this.extractRuleReferences(combinedRule);
 
@@ -670,6 +678,80 @@ class RuleEngine {
             // 检查引用的规则是否也是组合规则（不允许组合规则引用组合规则）
             if (referencedRule.specificRule.startsWith('::')) {
                 throw new Error(`组合规则不能引用其他组合规则 "${refRuleName}"`);
+            }
+        }
+    }
+
+    /**
+     * 验证组合规则语法和操作数完整性
+     * @param {string} ruleContent - 组合规则内容（不含::前缀）
+     */
+    validateCombinedRuleSyntax(ruleContent) {
+        try {
+            // 分词
+            const tokens = this.tokenizeLogic(ruleContent);
+
+            // 检查操作数完整性
+            this.validateOperands(tokens);
+
+            // 尝试解析为AST以验证语法
+            this.parseLogicExpression(ruleContent);
+        } catch (error) {
+            throw new Error(`组合规则语法错误: ${error.message}`);
+        }
+    }
+
+    /**
+     * 验证操作数完整性
+     * @param {Array} tokens - 分词结果
+     */
+    validateOperands(tokens) {
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+
+            // 检查取反操作符~的操作数
+            if (token.type === 'neg' && token.value === '~') {
+                // 取反操作符后面必须有操作数
+                let nextTokenIndex = i + 1;
+
+                // 跳过左括号和其他取反操作符（支持连续取反如~~A）
+                while (nextTokenIndex < tokens.length &&
+                    (tokens[nextTokenIndex].type === 'lparen' || tokens[nextTokenIndex].type === 'neg')) {
+                    nextTokenIndex++;
+                }
+
+                // 检查是否有有效的操作数
+                if (nextTokenIndex >= tokens.length ||
+                    tokens[nextTokenIndex].type !== 'rule') {
+                    throw new Error('取反操作符~缺少操作数');
+                }
+            }
+
+            // 检查二元操作符的操作数
+            if (token.type === 'op' && (token.value === '&&' || token.value === '||' || token.value === '!')) {
+                // 检查左操作数
+                let prevTokenIndex = i - 1;
+                while (prevTokenIndex >= 0 &&
+                    (tokens[prevTokenIndex].type === 'rparen')) {
+                    prevTokenIndex--;
+                }
+
+                if (prevTokenIndex < 0 ||
+                    (tokens[prevTokenIndex].type !== 'rule' && tokens[prevTokenIndex].type !== 'rparen')) {
+                    throw new Error(`${token.value}操作符缺少左操作数`);
+                }
+
+                // 检查右操作数
+                let nextTokenIndex = i + 1;
+                while (nextTokenIndex < tokens.length &&
+                    (tokens[nextTokenIndex].type === 'lparen' || tokens[nextTokenIndex].type === 'neg')) {
+                    nextTokenIndex++;
+                }
+
+                if (nextTokenIndex >= tokens.length ||
+                    tokens[nextTokenIndex].type !== 'rule') {
+                    throw new Error(`${token.value}操作符缺少右操作数`);
+                }
             }
         }
     }
@@ -707,25 +789,29 @@ class RuleEngine {
 
                 // 检查集合是否存在
                 if (!this.globalSets.has(setName) && !localSets.has(setName)) {
-                    // 如果是组合规则，还需要检查引用的普通规则中的局部集合
-                    if (isCombinedRule) {
-                        let foundInReferencedRule = false;
-                        const referencedRules = this.extractRuleReferences(displayRule);
+                    // 注释掉第三种支持：引用普通规则中的局部集合
+                    // 原因：避免引用的普通规则中局部定义不一致的问题，且当前实现有BUG
+                    // if (isCombinedRule) {
+                    //     let foundInReferencedRule = false;
+                    //     const referencedRules = this.extractRuleReferences(displayRule);
+                    //
+                    //     for (const refRuleName of referencedRules) {
+                    //         const referencedRule = this.rules.get(refRuleName);
+                    //         if (referencedRule && referencedRule.localSets && referencedRule.localSets.has(setName)) {
+                    //             foundInReferencedRule = true;
+                    //             break;
+                    //         }
+                    //     }
+                    //
+                    //     if (!foundInReferencedRule) {
+                    //         throw new Error(`排序规则中引用的集合 "${setName}" 不存在`);
+                    //     }
+                    // } else {
+                    //     throw new Error(`排序规则中引用的集合 "${setName}" 不存在`);
+                    // }
 
-                        for (const refRuleName of referencedRules) {
-                            const referencedRule = this.rules.get(refRuleName);
-                            if (referencedRule && referencedRule.localSets && referencedRule.localSets.has(setName)) {
-                                foundInReferencedRule = true;
-                                break;
-                            }
-                        }
-
-                        if (!foundInReferencedRule) {
-                            throw new Error(`排序规则中引用的集合 "${setName}" 不存在`);
-                        }
-                    } else {
-                        throw new Error(`排序规则中引用的集合 "${setName}" 不存在`);
-                    }
+                    // 简化逻辑：排序规则只支持全局集合和当前组合规则的局部集合
+                    throw new Error(`排序规则中引用的集合 "${setName}" 不存在`);
                 }
             }
         } catch (error) {
@@ -2022,21 +2108,21 @@ class RuleEngine {
             if (foundMatchEnd === -1) return false;
             matchEnd = foundMatchEnd;
         } else if (beginAnchorType === '\\-b' && endAnchorType === '\\e') {
-            // \\-bAB+CD\\e: A不能是开头，从位置1开始找第一个A的起始位置，后缀是D
+            // \\-bAB+CD\\e: A不能是开头，从当前startPos开始找第一个A的起始位置，后缀是D
             if (startPos === 0) return false;
             const firstElement = elements[0];
-            matchStart = this.findFirstElementFromStart(word, firstElement, 1);
+            matchStart = this.findFirstElementFromStart(word, firstElement, startPos);
             if (matchStart === -1) return false;
             matchEnd = word.length;
         } else if (beginAnchorType === '\\-b' && endAnchorType === '\\-e') {
-            // \\-bAB+CD\\-e: A不能是开头，D不能是结尾，从位置1开始找第一个A，从倒数第二个位置反向找最后一个D
+            // \\-bAB+CD\\-e: A不能是开头，D不能是结尾，从当前startPos开始找第一个A，从倒数第二个位置反向找最后一个D
             if (startPos === 0) {
                 return false;
             }
             const firstElement = elements[0];
             const lastElement = elements[elements.length - 1];
 
-            matchStart = this.findFirstElementFromStart(word, firstElement, 1);
+            matchStart = this.findFirstElementFromStart(word, firstElement, startPos);
             if (matchStart === -1) {
                 return false;
             }
@@ -2099,7 +2185,8 @@ class RuleEngine {
             // \\-bAB+C: A不能是开头，去掉首字母后找到第1个A
             if (startPos === 0) return false;
             const firstElement = elements[0];
-            matchStart = this.findFirstElementFromStart(word, firstElement, 1);
+            // 对于\-b锚点，从当前startPos开始查找第一个匹配的元素
+            matchStart = this.findFirstElementFromStart(word, firstElement, startPos);
             if (matchStart === -1) return false;
         }
 
@@ -2117,9 +2204,10 @@ class RuleEngine {
             // A+BC\\e: 后缀是C，前面紧邻结构，但A前面还有没有都行
             matchEnd = word.length;
         } else if (endAnchorType === '\\-e') {
-            // A+BC\\-e: C不能是结尾，去掉尾字母后向前找到第1个C
+            // A+BC\\-e: C不能是结尾，从倒数第二个位置开始向前找到最后一个C
             const lastElement = elements[elements.length - 1];
-            matchEnd = this.findLastElementFromEnd(word, lastElement, word.length - 1);
+            // 从倒数第二个位置开始查找，确保匹配的元素不在最后位置
+            matchEnd = this.findLastElementFromEnd(word, lastElement, word.length - 2);
             if (matchEnd === -1) return false;
         }
 
@@ -2147,7 +2235,7 @@ class RuleEngine {
         for (let i = endPos; i >= 0; i--) {
             const matchResult = this.matchElementFromEnd(word, element, i + 1);
             if (matchResult.matched) {
-                return matchResult.startPos;
+                return i + 1; // 返回匹配结束位置
             }
         }
         return -1;
