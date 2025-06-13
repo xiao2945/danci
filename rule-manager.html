@@ -1669,13 +1669,26 @@
                             continue;
                         }
 
+                        // 检查是否为有效的集合定义格式
+                        if (!line.includes('==')) {
+                            errorLines.push(`无效的集合定义格式，应为 "集合名=={元素1,元素2,...}": ${line}`);
+                            continue;
+                        }
+
                         if (line.includes('==')) {
                             const [setName, setDef] = line.split('==');
                             const cleanSetName = setName.trim();
+                            const cleanSetDef = setDef.trim();
 
                             // 检查是否试图覆盖默认集合
                             if (defaultSets.includes(cleanSetName)) {
                                 conflictingSets.push(cleanSetName);
+                                continue;
+                            }
+
+                            // 检查全局集合定义中是否包含集合运算符（不允许）
+                            if (cleanSetDef.includes('>>') || cleanSetDef.includes('<<')) {
+                                errorLines.push(`全局集合定义不支持集合运算符，请使用字面值定义格式 {a,b,c}: ${line}`);
                                 continue;
                             }
 
@@ -1686,11 +1699,15 @@
                                     throw new Error(`单字母集合名 "${cleanSetName}" 必须是大写字母`);
                                 }
                             } else {
+                                // 多字符集合名验证：必须以字母开头，可包含字母和数字
+                                if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(cleanSetName)) {
+                                    throw new Error(`多字符集合名 "${cleanSetName}" 格式无效，必须以字母开头，只能包含字母和数字`);
+                                }
                                 // 多字母集合名在引用时需要用括号
                                 console.warn(`集合名称 "${cleanSetName}" 长度超过1个字符，在引用时请使用括号：(${cleanSetName})`);
                             }
 
-                            const setValues = this.parseSetValues(setDef.trim());
+                            const setValues = this.parseSetValues(cleanSetDef);
                             newCustomSets.set(cleanSetName, setValues);
                         }
                     }
@@ -2073,25 +2090,36 @@
             checkRulesUsingSpecificSets(setNames) {
                 const rulesUsingSet = [];
                 const ruleNames = this.ruleEngine.getRuleNames();
-                
+
                 for (const ruleName of ruleNames) {
                     const rule = this.ruleEngine.getRule(ruleName);
                     // 检查规则的筛选规则部分
                     const ruleText = rule.specificRule;
-                    
+
                     // 检查局部集合定义
                     if (rule.localSets) {
                         for (const [localSetName, localSetDef] of rule.localSets) {
+                            // 获取原始集合定义字符串
+                            let originalSetDef = '';
+                            if (this.ruleEngine.getOriginalSetDefinition) {
+                                originalSetDef = this.ruleEngine.getOriginalSetDefinition(localSetName, rule.localSets) || '';
+                            }
+
+                            // 如果无法获取原始定义，跳过检查（避免错误）
+                            if (!originalSetDef || typeof originalSetDef !== 'string') {
+                                continue;
+                            }
+
                             // 检查局部集合定义中是否引用了要删除的集合
                             for (const setName of setNames) {
-                                if (localSetDef.includes(setName)) {
+                                if (originalSetDef.includes(setName)) {
                                     rulesUsingSet.push(ruleName);
                                     break;
                                 }
                             }
                         }
                     }
-                    
+
                     // 检查筛选规则中是否直接使用了要删除的集合
                     for (const setName of setNames) {
                         if (ruleText.includes(setName)) {
@@ -2101,7 +2129,7 @@
                             break;
                         }
                     }
-                    
+
                     // 检查排序规则中是否使用了要删除的集合
                     if (rule.displayRule) {
                         for (const setName of setNames) {
@@ -2114,7 +2142,7 @@
                         }
                     }
                 }
-                
+
                 return rulesUsingSet;
             }
 

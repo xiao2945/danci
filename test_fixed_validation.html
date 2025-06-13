@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试修复后的无效集合名称验证</title>
+    <script src="js/fileStorage.js"></script>
+    <script src="js/ruleEngine.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+
+        .test-case {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .test-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .test-input {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 3px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>测试修复后的无效集合名称验证</h1>
+    <p>测试修复后的筛选规则验证功能是否能正确识别无效集合名称</p>
+
+    <div id="test-results"></div>
+    <div id="summary" class="summary"></div>
+
+    <script>
+        // 初始化规则引擎
+        const ruleEngine = new RuleEngine();
+        const testResults = document.getElementById('test-results');
+        const summaryDiv = document.getElementById('summary');
+
+        // 测试用例
+        const testCases = [
+            {
+                title: "测试1: A1 - 集合名后跟数字（应该报错）",
+                rule: `测试规则
+A == {a,b,c}
+:A1`,
+                expectError: true,
+                expectedMessage: "集合名称 \"A\" 后不能跟随无意义的字符 \"1\""
+            },
+            {
+                title: "测试2: B2 - 另一个集合名后跟数字（应该报错）",
+                rule: `测试规则
+B == {x,y,z}
+:B2`,
+                expectError: true,
+                expectedMessage: "集合名称 \"B\" 后不能跟随无意义的字符 \"2\""
+            },
+            {
+                title: "测试3: Ax - 集合名后跟字母（应该报错）",
+                rule: `测试规则
+A == {a,b,c}
+:Ax`,
+                expectError: true,
+                expectedMessage: "普通规则中引用的集合 \"x\" 不存在"
+
+            },
+            {
+                title: "测试4: A+ - 正确的量词用法（应该成功）",
+                rule: `测试规则
+A == {a,b,c}
+:A+`,
+                expectError: false
+            },
+            {
+                title: "测试5: (A1) - 正确的括号形式（应该成功）",
+                rule: `测试规则
+A1 == {a,b,c}
+:(A1)`,
+                expectError: false
+            },
+            {
+                title: "测试6: 单独的数字1（应该报错）",
+                rule: `测试规则
+A == {a,b,c}
+:1`,
+                expectError: true,
+                expectedMessage: "筛选规则中不允许使用数字 \"1\""
+            },
+            {
+                title: "测试7: 正常的单字母集合A（应该成功）",
+                rule: `测试规则
+A == {a,b,c}
+:A`,
+                expectError: false
+            },
+            {
+                title: "测试8: X9Y - 多个无效组合（应该报错）",
+                rule: `测试规则
+X == {a,b}
+Y == {c,d}
+:X9Y`,
+                expectError: true,
+                expectedMessage: "集合名称 \"X\" 后不能跟随无意义的字符 \"9\""
+            }
+        ];
+
+        // 运行测试
+        let passedTests = 0;
+        let failedTests = 0;
+
+        function runTest(testCase) {
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-case';
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'test-title';
+            titleDiv.textContent = testCase.title;
+            testDiv.appendChild(titleDiv);
+
+            const inputDiv = document.createElement('div');
+            inputDiv.className = 'test-input';
+            inputDiv.textContent = testCase.rule;
+            testDiv.appendChild(inputDiv);
+
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result';
+
+            try {
+                const parsedRule = ruleEngine.parseRule(testCase.rule);
+
+                if (testCase.expectError) {
+                    resultDiv.className += ' error';
+                    resultDiv.textContent = '❌ 测试失败：期望出现错误，但解析成功了';
+                    failedTests++;
+                } else {
+                    resultDiv.className += ' success';
+                    resultDiv.textContent = '✅ 测试通过：规则解析成功';
+                    passedTests++;
+                }
+            } catch (error) {
+                if (testCase.expectError) {
+                    const errorMessage = error.message;
+                    if (testCase.expectedMessage && errorMessage.includes(testCase.expectedMessage)) {
+                        resultDiv.className += ' success';
+                        resultDiv.textContent = `✅ 测试通过：正确捕获错误 - ${errorMessage}`;
+                        passedTests++;
+                    } else if (!testCase.expectedMessage) {
+                        resultDiv.className += ' success';
+                        resultDiv.textContent = `✅ 测试通过：捕获到错误 - ${errorMessage}`;
+                        passedTests++;
+                    } else {
+                        resultDiv.className += ' error';
+                        resultDiv.textContent = `❌ 测试失败：错误信息不匹配\n期望包含: ${testCase.expectedMessage}\n实际错误: ${errorMessage}`;
+                        failedTests++;
+                    }
+                } else {
+                    resultDiv.className += ' error';
+                    resultDiv.textContent = `❌ 测试失败：不期望出现错误，但出现了错误 - ${error.message}`;
+                    failedTests++;
+                }
+            }
+
+            testDiv.appendChild(resultDiv);
+            testResults.appendChild(testDiv);
+        }
+
+        // 运行所有测试并显示结果
+        testCases.forEach(runTest);
+
+        // 显示测试总结
+        summaryDiv.innerHTML = `
+            <h2>测试结果总结</h2>
+            <p>通过: ${passedTests}/${testCases.length} (${(passedTests / testCases.length * 100).toFixed(2)}%)</p>
+            <p>失败: ${failedTests}/${testCases.length} (${(failedTests / testCases.length * 100).toFixed(2)}%)</p>
+        `;
+    </script>
+</body>
+
+</html>

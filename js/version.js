@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.3.3';
-        this.releaseDate = '2025-06-12';
-        this.description = '实现严格的集合定义解析规则，统一集合语法标准，支持四种集合定义格式';
+        this.version = 'v1.3.4';
+        this.releaseDate = '2025-06-13';
+        this.description = '完成普通规则创建部分的检查测试，修复局部集合定义和量词验证问题';
     }
 
     /**

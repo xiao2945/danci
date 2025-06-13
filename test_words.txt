@@ -10,3 +10,11 @@ relation
 information
 comaabbaaition  0 1 2
 adbbaabbtion    0
+
+xabcdy 1 2
+ababcdcd 1 2
+xababcdy 2
+abababcdcd 2
+abcd
+ababcd
+

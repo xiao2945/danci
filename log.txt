@@ -1,82 +1,162 @@
-ruleEngine.js:961 [DEBUG] Loading rule "末尾Xle":
-ruleEngine.js:962 [DEBUG] - displayRule from localStorage: "@@X(Le$)"
-ruleEngine.js:963 [DEBUG] - specificRule from localStorage: ":(Le)\e"
-ruleEngine.js:964 [DEBUG] - Full ruleData: {name: '末尾Xle', comment: '', localSets: Array(2), specificRule: ':(Le)\\e', displayRule: '@@X(Le$)'}
-ruleEngine.js:1002 [DEBUG] Final rule object for "末尾Xle":
-ruleEngine.js:1003 [DEBUG] - rule.displayRule: "@@X(Le$)"
-ruleEngine.js:1004 [DEBUG] - rule.specificRule: ":(Le)\e"
 app.js:440 更新生成按钮状态: {hasFile: false, ruleName: '', hasRule: '', disabled: true}
-ruleEngine.js:961 [DEBUG] Loading rule "末尾Xle":
-ruleEngine.js:962 [DEBUG] - displayRule from localStorage: "@@X(Le$)"
-ruleEngine.js:963 [DEBUG] - specificRule from localStorage: ":(Le)\e"
-ruleEngine.js:964 [DEBUG] - Full ruleData: {name: '末尾Xle', comment: '', localSets: Array(2), specificRule: ':(Le)\\e', displayRule: '@@X(Le$)'}
-ruleEngine.js:1002 [DEBUG] Final rule object for "末尾Xle":
-ruleEngine.js:1003 [DEBUG] - rule.displayRule: "@@X(Le$)"
-ruleEngine.js:1004 [DEBUG] - rule.specificRule: ":(Le)\e"
 app.js:32 全局集合加载情况: Map(3) {'C' => Set(21), 'V' => Set(5), 'L' => Set(26)}
 app.js:71 检查规则更新: {current: {…}, last: {…}, changed: false}
-app.js:245 文件读取结果: {words: Array(3), totalExtracted: 3, validCount: 3, duplicateCount: 0, invalidCount: 0, …}
+app.js:245 文件读取结果: {words: Array(18), totalExtracted: 29, validCount: 18, duplicateCount: 0, invalidCount: 11, …}
 app.js:440 更新生成按钮状态: {hasFile: true, ruleName: '', hasRule: '', disabled: true}
-app.js:275 文件选择后的状态: {currentWords: Array(3), currentFile: File, fileStats: {…}}
+app.js:275 文件选择后的状态: {currentWords: Array(18), currentFile: File, fileStats: {…}}
 app.js:71 检查规则更新: {current: {…}, last: {…}, changed: false}
 app.js:71 检查规则更新: {current: {…}, last: {…}, changed: false}
-app.js:299 规则选择变化: 末尾Xle
-app.js:440 更新生成按钮状态: {hasFile: true, ruleName: '末尾Xle', hasRule: {…}, disabled: false}
-app.js:322 规则选择变化后的按钮状态: {hasFile: true, ruleName: '末尾Xle', hasRule: {…}}
+app.js:299 规则选择变化: 筛选规则测试
+app.js:440 更新生成按钮状态: {hasFile: true, ruleName: '筛选规则测试', hasRule: {…}, disabled: false}
+app.js:322 规则选择变化后的按钮状态: {hasFile: true, ruleName: '筛选规则测试', hasRule: {…}}
 app.js:71 检查规则更新: {current: {…}, last: {…}, changed: false}
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2441 [BACKTRACK] Set matched multi-char element: "le"
-ruleEngine.js:2471 [BACKTRACK] Set single match successful: "le" (element: "le")
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2441 [BACKTRACK] Set matched multi-char element: "le"
-ruleEngine.js:2471 [BACKTRACK] Set single match successful: "le" (element: "le")
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2466 [BACKTRACK] Set failed to match any element
-ruleEngine.js:2044 [DEBUG] 无歧义，使用标准回溯算法
-ruleEngine.js:2419 [BACKTRACK] matchSetOnceWithBacktrack: trying to match one element from position 0
-ruleEngine.js:2441 [BACKTRACK] Set matched multi-char element: "le"
-ruleEngine.js:2471 [BACKTRACK] Set single match successful: "le" (element: "le")
-app.js:824 [DEBUG] Rule parsing result:
-app.js:825 [DEBUG] - sortRule: "X(Le$)"
-app.js:826 [DEBUG] - isAdjacent: false
-app.js:827 [DEBUG] - sortGroups.length: 2
-app.js:828 [DEBUG] - sortGroups: (2) [{…}, {…}]
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="competition", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="action", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="attention", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="addition", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="position", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="promotion", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="emotion", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="creation", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="relation", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="information", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="comaabbaaition", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="adbbaabbtion", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="xabcdy", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="ababcdcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="xababcdy", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="abababcdcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="abcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="ababcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+app.js:71 检查规则更新: {current: {…}, last: {…}, changed: false}
+app.js:71 检查规则更新: {current: {…}, last: {…}, changed: false}
+app.js:299 规则选择变化: 筛选规则测试2
+app.js:440 更新生成按钮状态: {hasFile: true, ruleName: '筛选规则测试2', hasRule: {…}, disabled: false}
+app.js:322 规则选择变化后的按钮状态: {hasFile: true, ruleName: '筛选规则测试2', hasRule: {…}}
+app.js:71 检查规则更新: {current: {…}, last: {…}, changed: false}
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="competition", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="action", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="attention", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="addition", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="position", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="promotion", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="emotion", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="creation", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="relation", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="information", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="comaabbaaition", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="adbbaabbtion", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="xabcdy", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="ababcdcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="xababcdy", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="abababcdcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="abcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false
+ruleEngine.js:1846 [DEBUG] handleDoubleAnchor: word="ababcd", beginAnchor="\-b", endAnchor="\-e", startPos=0
+ruleEngine.js:1847 [DEBUG] elements: (2) [{…}, {…}]
+ruleEngine.js:1881 [DEBUG] Processing \-b and \-e anchors
+ruleEngine.js:1883 [DEBUG] startPos is 0, returning false

@@ -134,6 +134,9 @@ class RuleEngine {
                 const [setName] = line.split('==');
                 const cleanSetName = setName.trim();
                 this.originalSetDefinitions.set(cleanSetName, line);
+            } else if (line.includes('=') && !line.includes('==')) {
+                // 检查是否是错误的单等号集合定义
+                throw new Error(`集合定义需要使用双等号(==): ${line}`);
             } else if (line.startsWith(':') && !line.startsWith('::')) {
                 // 普通规则
                 specificRule = line;
@@ -157,6 +160,9 @@ class RuleEngine {
             throw new Error('筛选规则不能为空');
         }
 
+        // 验证集合定义和引用的顺序
+        this.validateDefinitionOrder(lines, localSets, specificRule, displayRule);
+
         // 执行有效性检查
         this.validateRule({
             name: ruleName,
@@ -176,6 +182,79 @@ class RuleEngine {
     }
 
     /**
+     * 验证集合定义和引用的顺序
+     * @param {Array} lines - 规则文本行数组
+     * @param {Map} localSets - 局部集合
+     * @param {string} specificRule - 筛选规则
+     * @param {string} displayRule - 排序规则
+     */
+    validateDefinitionOrder(lines, localSets, specificRule, displayRule) {
+        const setDefinitionLines = new Map(); // 集合名 -> 行号
+        const setReferenceLines = new Map(); // 集合名 -> 首次引用行号
+        let specificRuleLine = -1;
+        let displayRuleLine = -1;
+
+        // 遍历所有行，记录集合定义和引用的位置
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
+
+            // 跳过注释行
+            if (line.startsWith('#') || line.startsWith('//') || !line) {
+                continue;
+            }
+
+            // 移除行尾注释
+            line = line.replace(/\/\/.*$/, '').trim();
+            if (!line) continue;
+
+            // 记录集合定义行
+            if (line.includes('==')) {
+                const [setName] = line.split('==');
+                const cleanSetName = setName.trim();
+                setDefinitionLines.set(cleanSetName, i);
+            }
+            // 记录筛选规则行
+            else if (line.startsWith(':')) {
+                if (specificRuleLine === -1) {
+                    specificRuleLine = i;
+                }
+            }
+            // 记录排序规则行
+            else if (line.startsWith('@')) {
+                if (displayRuleLine === -1) {
+                    displayRuleLine = i;
+                }
+            }
+        }
+
+        // 检查筛选规则中的集合引用
+        if (specificRule && specificRuleLine !== -1) {
+            const referencedSets = this.extractSetReferences(specificRule);
+            for (const setName of referencedSets) {
+                if (localSets.has(setName)) {
+                    const definitionLine = setDefinitionLines.get(setName);
+                    if (definitionLine !== undefined && definitionLine > specificRuleLine) {
+                        throw new Error(`集合 "${setName}" 在第 ${definitionLine + 1} 行定义，但在第 ${specificRuleLine + 1} 行的筛选规则中被引用。集合定义必须在引用之前。`);
+                    }
+                }
+            }
+        }
+
+        // 检查排序规则中的集合引用
+        if (displayRule && displayRuleLine !== -1) {
+            const referencedSets = this.extractSetReferences(displayRule);
+            for (const setName of referencedSets) {
+                if (localSets.has(setName)) {
+                    const definitionLine = setDefinitionLines.get(setName);
+                    if (definitionLine !== undefined && definitionLine > displayRuleLine) {
+                        throw new Error(`集合 "${setName}" 在第 ${definitionLine + 1} 行定义，但在第 ${displayRuleLine + 1} 行的排序规则中被引用。集合定义必须在引用之前。`);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * 验证规则的有效性
      * @param {Object} rule - 规则对象
      */
@@ -186,6 +265,8 @@ class RuleEngine {
         // 2. 验证普通规则中的集合引用
         if (!rule.specificRule.startsWith('::')) {
             this.validateBasicRuleReferences(rule.specificRule, rule.localSets);
+            // 验证普通规则的格式
+            this.validateSpecificRuleFormat(rule.specificRule, rule.localSets);
         }
 
         // 3. 验证组合规则中的普通规则引用
@@ -214,6 +295,290 @@ class RuleEngine {
 
         // 9. 验证规则名称冲突
         this.validateRuleNameConflict(rule.name);
+    }
+
+    /**
+     * 验证普通规则的格式
+     * @param {string} specificRule - 筛选规则
+     * @param {Map} localSets - 本地集合映射
+     */
+    validateSpecificRuleFormat(specificRule, localSets) {
+        if (!specificRule.startsWith(':')) {
+            throw new Error('筛选规则必须以:开头');
+        }
+
+        // 移除开头的:
+        const rulePattern = specificRule.substring(1);
+
+        // 检查括号、引号是否成对出现
+        let openParenCount = 0;
+        let openQuoteCount = 0;
+
+        // 首先进行括号检查，避免后续处理中遇到问题
+        for (let j = 0; j < rulePattern.length; j++) {
+            if (rulePattern[j] === '(') {
+                openParenCount++;
+            } else if (rulePattern[j] === ')') {
+                openParenCount--;
+                if (openParenCount < 0) {
+                    throw new Error('筛选规则中括号不匹配：有多余的右括号');
+                }
+            } else if (rulePattern[j] === '"') {
+                openQuoteCount = 1 - openQuoteCount; // 0->1, 1->0
+            }
+        }
+
+        // 最终检查括号和引号是否闭合
+        if (openParenCount > 0) {
+            throw new Error('筛选规则中括号不匹配：有未闭合的左括号');
+        }
+
+        if (openQuoteCount !== 0) {
+            throw new Error('筛选规则中引号不匹配：有未闭合的引号');
+        }
+
+        // 重置计数器，开始详细规则验证
+        openParenCount = 0;
+        openQuoteCount = 0;
+        let i = 0;
+
+        // 锚点验证：检查重复锚点和只有锚点的情况
+        this.validateAnchors(rulePattern);
+
+        while (i < rulePattern.length) {
+            // 处理位置锚点
+            if (rulePattern[i] === '\\') {
+                // 跳过位置标记
+                if (i + 1 < rulePattern.length && /[be]/.test(rulePattern[i + 1])) {
+                    i += 2; // 跳过 \b 或 \e
+                } else if (i + 2 < rulePattern.length && rulePattern[i + 1] === '-' && /[be]/.test(rulePattern[i + 2])) {
+                    i += 3; // 跳过 \-b 或 \-e
+                } else {
+                    i++; // 跳过单个反斜杠
+                }
+                continue;
+            }
+
+            // 检查单独的数字（不允许）
+            if (/[0-9]/.test(rulePattern[i]) && openQuoteCount === 0) {
+                // 如果数字不是作为集合名后缀出现，而是单独出现
+                const isAfterSetName = i > 0 && /[A-Z]/.test(rulePattern[i - 1]);
+
+                if (!isAfterSetName) {
+                    throw new Error(`筛选规则中不允许使用数字 "${rulePattern[i]}"`);
+                }
+            }
+
+            // 处理括号内的多字母集合引用
+            if (rulePattern[i] === '(') {
+                // 找到对应的右括号位置
+                let endPos = i + 1;
+                let depth = 1;
+
+                while (endPos < rulePattern.length && depth > 0) {
+                    if (rulePattern[endPos] === '(') depth++;
+                    if (rulePattern[endPos] === ')') depth--;
+                    endPos++;
+                }
+
+                // 提取多字母集合名称
+                if (depth === 0) { // 如果找到了匹配的右括号
+                    const setName = rulePattern.substring(i + 1, endPos - 1);
+                    // 验证集合名称格式
+                    if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(setName)) {
+                        // 检查多字母集合是否存在
+                        const setExists = this.globalSets.has(setName) || localSets.has(setName);
+                        if (!setExists) {
+                            throw new Error(`筛选规则中引用的多字母集合 "${setName}" 不存在`);
+                        }
+                    } else {
+                        throw new Error(`筛选规则中集合名称格式不正确: "${setName}"`);
+                    }
+                    i = endPos; // 跳过整个括号内容
+                    continue;
+                }
+            }
+
+            // 处理引号
+            if (rulePattern[i] === '"') {
+                // 找到对应的右引号位置
+                const endPos = rulePattern.indexOf('"', i + 1);
+                if (endPos !== -1) {
+                    i = endPos + 1; // 跳过整个引号内容
+                    continue;
+                } else {
+                    throw new Error('筛选规则中引号不匹配：有未闭合的引号');
+                }
+            }
+
+            // 检查单字母集合引用（仅当不在引号内）
+            if (/[A-Z]/.test(rulePattern[i]) && openQuoteCount === 0) {
+                const char = rulePattern[i];
+
+                // 检查单字母集合是否存在
+                const setExists = this.globalSets.has(char) || localSets.has(char);
+                if (!setExists) {
+                    throw new Error(`筛选规则中引用的单字母集合 "${char}" 不存在`);
+                }
+
+                // 检查后面是否紧跟字母或数字（非法格式）
+                if (i + 1 < rulePattern.length && /[0-9a-z]/.test(rulePattern[i + 1]) && rulePattern[i + 1] !== '+') {
+                    const invalidChar = rulePattern[i + 1];
+                    throw new Error(`集合名称 "${char}" 后不能跟随无意义的字符 "${invalidChar}"`);
+                }
+            }
+
+            // 检查小写字母（仅当不在引号内）
+            if (/[a-z]/.test(rulePattern[i]) && openQuoteCount === 0) {
+                // 检查是否在合法的位置标记内
+                if (i > 0 && rulePattern[i - 1] === '\\' && /[be]/.test(rulePattern[i])) {
+                    // 这是位置标记的一部分，如 \b 或 \e，已经在前面处理过了
+                } else if (i > 1 && rulePattern[i - 2] === '\\' && rulePattern[i - 1] === '-' && /[be]/.test(rulePattern[i])) {
+                    // 这是位置标记的一部分，如 \-b 或 \-e，已经在前面处理过了
+                } else {
+                    throw new Error(`筛选规则中存在无效字符 "${rulePattern[i]}"。小写字母只能出现在引号内作为字面量`);
+                }
+            }
+
+            // 检查+量词的位置是否合法
+            if (rulePattern[i] === '+' && openQuoteCount === 0) {
+                // +量词必须跟在集合或字面字符串后面
+                if (i === 0) {
+                    throw new Error('量词+不能出现在规则开头');
+                }
+
+                // 检查+前面的字符
+                let validPrevious = false;
+
+                // 情况1：前面是单字母集合
+                if (i > 0 && /[A-Z]/.test(rulePattern[i - 1])) {
+                    validPrevious = true;
+                }
+
+                // 情况2：前面是括号集合的右括号
+                if (i > 0 && rulePattern[i - 1] === ')') {
+                    validPrevious = true;
+                }
+
+                // 情况3：前面是字面字符串的右引号
+                if (i > 0 && rulePattern[i - 1] === '"') {
+                    validPrevious = true;
+                }
+
+                if (!validPrevious) {
+                    throw new Error('量词+只能跟在集合或字面字符串后面');
+                }
+
+                // 检查是否有连续的+
+                if (i + 1 < rulePattern.length && rulePattern[i + 1] === '+') {
+                    throw new Error('不允许连续的量词++');
+                }
+            }
+
+            // 检查非字母数字字符是否合法（排除已处理的括号、引号和位置标记）
+            if (!/[A-Za-z0-9\(\)"\\+\-]/.test(rulePattern[i]) && openQuoteCount === 0) {
+                throw new Error(`筛选规则中存在无效字符 "${rulePattern[i]}"`);
+            }
+
+            i++;
+        }
+    }
+
+    /**
+     * 验证锚点的合理性
+     * @param {string} rulePattern - 规则模式（去掉开头的:）
+     */
+    validateAnchors(rulePattern) {
+        const anchors = [];
+        let hasNonAnchorContent = false;
+
+        let i = 0;
+        while (i < rulePattern.length) {
+            if (rulePattern[i] === '\\') {
+                // 检查位置锚点
+                if (i + 1 < rulePattern.length && rulePattern[i + 1] === 'b') {
+                    anchors.push({ type: '\\b', position: i });
+                    i += 2;
+                } else if (i + 1 < rulePattern.length && rulePattern[i + 1] === 'e') {
+                    anchors.push({ type: '\\e', position: i });
+                    i += 2;
+                } else if (i + 2 < rulePattern.length && rulePattern[i + 1] === '-' && rulePattern[i + 2] === 'b') {
+                    anchors.push({ type: '\\-b', position: i });
+                    i += 3;
+                } else if (i + 2 < rulePattern.length && rulePattern[i + 1] === '-' && rulePattern[i + 2] === 'e') {
+                    anchors.push({ type: '\\-e', position: i });
+                    i += 3;
+                } else {
+                    i++;
+                }
+            } else if (rulePattern[i] === '"') {
+                // 跳过引号内容
+                const endPos = rulePattern.indexOf('"', i + 1);
+                if (endPos !== -1) {
+                    hasNonAnchorContent = true;
+                    i = endPos + 1;
+                } else {
+                    i++;
+                }
+            } else if (/[A-Z()]/.test(rulePattern[i])) {
+                // 集合引用或括号集合
+                hasNonAnchorContent = true;
+                i++;
+            } else {
+                i++;
+            }
+        }
+
+        // 1. 检查锚点位置：只能在最前或最后
+        for (const anchor of anchors) {
+            const isBeginAnchor = anchor.type === '\\b' || anchor.type === '\\-b';
+            const isEndAnchor = anchor.type === '\\e' || anchor.type === '\\-e';
+
+            if (isBeginAnchor && anchor.position !== 0) {
+                throw new Error(`前锚点 ${anchor.type} 只能出现在规则的最前面`);
+            }
+
+            if (isEndAnchor) {
+                // 计算锚点应该在的位置（规则末尾）
+                const expectedEndPos = rulePattern.length - anchor.type.length;
+                if (anchor.position !== expectedEndPos) {
+                    throw new Error(`后锚点 ${anchor.type} 只能出现在规则的最后面`);
+                }
+            }
+        }
+
+        // 2. 检查是否只有锚点没有其他内容
+        if (anchors.length > 0 && !hasNonAnchorContent) {
+            throw new Error('规则不能只包含锚点，必须包含至少一个集合引用或字面字符串');
+        }
+
+        // 3. 检查重复锚点
+        const beginAnchors = anchors.filter(a => a.type === '\\b' || a.type === '\\-b');
+        const endAnchors = anchors.filter(a => a.type === '\\e' || a.type === '\\-e');
+
+        if (beginAnchors.length > 1) {
+            const types = beginAnchors.map(a => a.type).join(' 和 ');
+            throw new Error(`规则中不能包含重复的前锚点：${types}`);
+        }
+
+        if (endAnchors.length > 1) {
+            const types = endAnchors.map(a => a.type).join(' 和 ');
+            throw new Error(`规则中不能包含重复的后锚点：${types}`);
+        }
+
+        // 检查冲突的锚点组合
+        const hasBeginAnchor = beginAnchors.some(a => a.type === '\\b');
+        const hasNonBeginAnchor = beginAnchors.some(a => a.type === '\\-b');
+        const hasEndAnchor = endAnchors.some(a => a.type === '\\e');
+        const hasNonEndAnchor = endAnchors.some(a => a.type === '\\-e');
+
+        if (hasBeginAnchor && hasNonBeginAnchor) {
+            throw new Error('规则中不能同时包含 \\b 和 \\-b 锚点，它们的语义相互冲突');
+        }
+
+        if (hasEndAnchor && hasNonEndAnchor) {
+            throw new Error('规则中不能同时包含 \\e 和 \\-e 锚点，它们的语义相互冲突');
+        }
     }
 
     /**
@@ -282,8 +647,19 @@ class RuleEngine {
      * @param {string} combinedRule - 组合规则
      */
     validateCombinedRuleReferences(combinedRule) {
+        // 检查双冒号后是否为空
+        const ruleContent = combinedRule.substring(2).trim();
+        if (!ruleContent) {
+            throw new Error('组合规则双冒号后不能为空，必须包含规则引用');
+        }
+
         // 提取组合规则中引用的普通规则名称
         const referencedRules = this.extractRuleReferences(combinedRule);
+
+        // 检查是否有有效的规则引用
+        if (referencedRules.length === 0) {
+            throw new Error('组合规则必须包含至少一个有效的规则引用');
+        }
 
         for (const refRuleName of referencedRules) {
             const referencedRule = this.rules.get(refRuleName);
@@ -403,11 +779,11 @@ class RuleEngine {
             }
         }
 
-        // 处理集合运算：如 A>>B, A<<B (不包括 A>>{xxx} 这样的字面值运算)
-        const operationMatches = text.match(/([A-Z])\s*(>>|<<)\s*([A-Z])/g);
+        // 处理集合运算：如 A>>B, A<<B, a>>b, a<<b (不包括 A>>{xxx} 这样的字面值运算)
+        const operationMatches = text.match(/([A-Za-z])\s*(>>|<<)\s*([A-Za-z])/g);
         if (operationMatches) {
             for (const match of operationMatches) {
-                const parts = match.match(/([A-Z])\s*(>>|<<)\s*([A-Z])/);
+                const parts = match.match(/([A-Za-z])\s*(>>|<<)\s*([A-Za-z])/);
                 if (parts) {
                     setNames.push(parts[1]); // 左侧集合
                     setNames.push(parts[3]); // 右侧集合
@@ -415,16 +791,17 @@ class RuleEngine {
             }
         }
 
-        // 匹配单字母集合名称，但排除特殊上下文
+        // 匹配单字母集合名称（包括大写和小写），但排除特殊上下文
         // 先移除已经处理过的内容，避免重复匹配
         let textWithoutSpecial = text.replace(/\([a-zA-Z][a-zA-Z0-9]*\)/g, ''); // 移除括号集合
-        textWithoutSpecial = textWithoutSpecial.replace(/[A-Z]\s*(>>|<<)\s*([A-Z]|\{[^}]*\})/g, ''); // 移除集合运算
-        textWithoutSpecial = textWithoutSpecial.replace(/\\[a-zA-Z]/g, ''); // 移除 \b, \e 等转义序列
+        textWithoutSpecial = textWithoutSpecial.replace(/[A-Za-z]\s*(>>|<<)\s*([A-Za-z]|\{[^}]*\})/g, ''); // 移除集合运算
+        textWithoutSpecial = textWithoutSpecial.replace(/\\(-?[be])/g, ''); // 移除 \b, \e, \-b, \-e 等位置锚点
         textWithoutSpecial = textWithoutSpecial.replace(/@\([^)]*\)/g, ''); // 移除 @(xxx) 排序规则
-        textWithoutSpecial = textWithoutSpecial.replace(/@[A-Z]/g, ''); // 移除 @X 单字母排序规则
+        textWithoutSpecial = textWithoutSpecial.replace(/@[A-Za-z]/g, ''); // 移除 @X 单字母排序规则
         textWithoutSpecial = textWithoutSpecial.replace(/\{[^}]*\}/g, ''); // 移除 {xxx} 内容
+        textWithoutSpecial = textWithoutSpecial.replace(/"[^"]*"/g, ''); // 移除 "xxx" 字面字符串
 
-        const singleLetterMatches = textWithoutSpecial.match(/[A-Z]/g);
+        const singleLetterMatches = textWithoutSpecial.match(/[A-Za-z]/g);
         if (singleLetterMatches) {
             for (const match of singleLetterMatches) {
                 setNames.push(match);
@@ -619,6 +996,25 @@ class RuleEngine {
      * @param {Map} localSets - 本地集合映射
      */
     parseSetDefinition(line, localSets) {
+        // 检查是否使用了单等号而非双等号
+        // 匹配类似 "T={a,b,c}" 的模式，但不包含双等号
+        if (line.includes('=') && !line.includes('==')) {
+            // 检查是否看起来像集合定义（包含等号和大括号）
+            if (line.includes('{') && line.includes('}')) {
+                throw new Error(`集合定义需要使用双等号(==): ${line}`);
+            }
+            // 检查是否是简单的 name=value 格式（可能是错误的集合定义）
+            const equalIndex = line.indexOf('=');
+            if (equalIndex > 0 && equalIndex < line.length - 1) {
+                const beforeEqual = line.substring(0, equalIndex).trim();
+                const afterEqual = line.substring(equalIndex + 1).trim();
+                // 如果等号前是标识符，等号后包含大括号，很可能是错误的集合定义
+                if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(beforeEqual) && afterEqual.includes('{')) {
+                    throw new Error(`集合定义需要使用双等号(==): ${line}`);
+                }
+            }
+        }
+
         const parts = line.split('==');
         if (parts.length !== 2) {
             throw new Error(`无效的集合定义: ${line}`);
@@ -707,7 +1103,7 @@ class RuleEngine {
         // 情况3：大括号字面集合（如 {a,b,c}）
         if (hasBraces) {
             expression = expression.slice(1, -1);
-            
+
             // 分割元素
             const elements = this.splitElements(expression);
 
@@ -740,7 +1136,7 @@ class RuleEngine {
         // 处理 >> 运算符（集合减法）
         if (currentExpression.includes('>>')) {
             const parts = currentExpression.split('>>');
-            
+
             // 验证左侧操作数
             const leftPart = parts[0].trim();
             this.validateSetOperand(leftPart, localSets);
@@ -751,10 +1147,10 @@ class RuleEngine {
                 let partToEvaluate = parts[i].trim();
                 // 去除行尾注释
                 partToEvaluate = partToEvaluate.replace(/\s*\/\/.*$/, '').trim();
-                
+
                 // 验证右侧操作数
                 this.validateSetOperand(partToEvaluate, localSets);
-                
+
                 console.log('[evaluateSetOperation] Processing subtraction part (comment stripped): ' + partToEvaluate);
                 // 检查是否是大括号表达式，如果是则直接处理为字面值
                 const isFromBraces = partToEvaluate.startsWith('{') && partToEvaluate.endsWith('}');
@@ -782,10 +1178,10 @@ class RuleEngine {
                 let partToEvaluate = part.trim();
                 // 去除行尾注释
                 partToEvaluate = partToEvaluate.replace(/\s*\/\/.*$/, '').trim();
-                
+
                 // 验证操作数
                 this.validateSetOperand(partToEvaluate, localSets);
-                
+
                 const isFromBraces = partToEvaluate.startsWith('{') && partToEvaluate.endsWith('}');
                 const partSet = this.evaluateSetExpression(partToEvaluate, localSets, isFromBraces);
                 partSet.forEach(item => result.add(item));
@@ -838,11 +1234,11 @@ class RuleEngine {
      */
     isSetName(str) {
         // 排除带引号的字符串，这些应该作为字面值处理
-        if ((str.startsWith('"') && str.endsWith('"')) || 
+        if ((str.startsWith('"') && str.endsWith('"')) ||
             (str.startsWith("'") && str.endsWith("'"))) {
             return false;
         }
-        
+
         // 单字母集合只允许大写字母
         if (str.length === 1 && /^[A-Z]$/.test(str)) {
             return true;
@@ -894,12 +1290,12 @@ class RuleEngine {
         if (operand.startsWith('{') && operand.endsWith('}')) {
             return;
         }
-        
+
         // 情况2：双引号字面字符串
         if (operand.startsWith('"') && operand.endsWith('"')) {
             return;
         }
-        
+
         // 情况3：单大写字母集合名
         if (/^[A-Z]$/.test(operand)) {
             const referencedSet = this.getSet(operand, localSets);
@@ -908,7 +1304,7 @@ class RuleEngine {
             }
             return;
         }
-        
+
         // 情况4：括号形式的集合名（支持单字母和多字母）
         if (operand.startsWith('(') && operand.endsWith(')')) {
             const setName = operand.slice(1, -1);
@@ -923,7 +1319,7 @@ class RuleEngine {
                 throw new Error(`无效的集合名格式: ${operand}`);
             }
         }
-        
+
         // 其他情况都不允许
         throw new Error(`无效的集合操作数格式: ${operand}。只允许：1）单大写字母集合名(如A) 2）括号集合名(如(ShortV)) 3）大括号字面集合(如{a,b}) 4）双引号字面字符串(如"abc")`);
     }
@@ -1391,7 +1787,8 @@ class RuleEngine {
                     }
                     pattern.push(element);
                 } else {
-                    i++;
+                    // 引号不闭合，抛出错误
+                    throw new Error('规则模式中引号不匹配：存在未闭合的引号');
                 }
             } else if (rulePattern[i] === '(') {
                 // 集合引用（括号内的集合名，支持多字母）
@@ -1401,10 +1798,14 @@ class RuleEngine {
                     const set = this.getSet(setName, localSets);
                     let element;
                     if (!set) {
-                        console.warn(`集合 "${setName}" 未找到`);
-                        element = { type: 'set', value: new Set() };
+                        throw new Error(`集合 "${setName}" 未找到`);
                     } else {
-                        element = { type: 'set', value: set };
+                        element = {
+                            type: 'set',
+                            value: set,
+                            bracketSet: true,  // 标记这是一个括号集合
+                            setName: setName    // 保存集合名称用于调试
+                        };
                     }
                     i = setEnd + 1;
 
@@ -1415,17 +1816,21 @@ class RuleEngine {
                     }
                     pattern.push(element);
                 } else {
-                    i++;
+                    // 括号不闭合，抛出错误
+                    throw new Error('规则模式中括号不匹配：存在未闭合的左括号');
                 }
             } else if (this.isSetName(rulePattern[i])) {
                 // 单字母集合名称（直接引用）
                 const set = this.getSet(rulePattern[i], localSets);
                 let element;
                 if (!set) {
-                    console.warn(`集合 "${rulePattern[i]}" 未找到`);
-                    element = { type: 'set', value: new Set() };
+                    throw new Error(`集合 "${rulePattern[i]}" 未找到`);
                 } else {
-                    element = { type: 'set', value: set };
+                    element = {
+                        type: 'set',
+                        value: set,
+                        setName: rulePattern[i]  // 保存集合名称用于调试
+                    };
                 }
                 i++;
 
@@ -1476,8 +1881,23 @@ class RuleEngine {
         const hasPositionMarkers = pattern.some(element => element.type === 'position');
 
         if (hasPositionMarkers) {
-            // 如果有位置标记，只从单词开头开始匹配
-            return this.matchesPatternAtPosition(word, pattern, 0);
+            // 检查具体的锚点类型
+            const hasBeginAnchor = pattern.some(el => el.type === 'position' && el.value === '\\b');
+            const hasNonBeginAnchor = pattern.some(el => el.type === 'position' && el.value === '\\-b');
+            const hasEndAnchor = pattern.some(el => el.type === 'position' && (el.value === '\\e' || el.value === '\\-e'));
+
+            if (hasNonBeginAnchor && !hasBeginAnchor) {
+                // 如果只有 \-b 锚点（不能从开头开始），从位置 1 开始尝试
+                for (let startPos = 1; startPos <= word.length - this.getPatternMinLength(pattern); startPos++) {
+                    if (this.matchesPatternAtPosition(word, pattern, startPos)) {
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                // 其他情况（包含 \b 或 \e 或 \-e），从位置 0 开始
+                return this.matchesPatternAtPosition(word, pattern, 0);
+            }
         } else {
             // 支持部分匹配：检查模式是否在单词的任何位置匹配
             for (let startPos = 0; startPos <= word.length - this.getPatternMinLength(pattern); startPos++) {
@@ -1513,7 +1933,11 @@ class RuleEngine {
         } else {
             // 对于单个集合规则（如:V），使用部分匹配而不是完全匹配
             // 这样:V规则就能正确匹配包含元音的单词，而不是要求所有字符都是元音
-            if (pattern.length === 1 && pattern[0].type === 'set') {
+            // 当无锚点且模式中有多字母集合组合时，也使用部分匹配
+            const hasBracketSets = pattern.some(el => el.bracketSet === true);
+            const isMultiSetPattern = pattern.filter(el => el.type === 'set').length > 1;
+
+            if (pattern.length === 1 && pattern[0].type === 'set' || hasBracketSets || isMultiSetPattern) {
                 const result = this.matchesPatternPartial(word, pattern, startPos);
                 // console.log(`[DEBUG] matchesPatternPartial result: ${result}`);
                 return result;
@@ -1581,28 +2005,56 @@ class RuleEngine {
             matchStart = 0;
             matchEnd = word.length;
         } else if (beginAnchorType === '\\b' && endAnchorType === '\\-e') {
-            // \\bAB+CD\\-e: 前缀是A，D不能是结尾，去掉尾字母后向前找到第1个D
+            // \\bAB+CD\\-e: 前缀是A，D不能是结尾，从位置0开始，从倒数第二个位置反向找最后一个D的结束位置
             if (startPos !== 0) return false;
             matchStart = 0;
             const lastElement = elements[elements.length - 1];
-            matchEnd = this.findLastElementFromEnd(word, lastElement, word.length - 1);
-            if (matchEnd === -1) return false;
+            // 从倒数第二个位置开始反向查找最后一个匹配元素的结束位置
+            let foundMatchEnd = -1;
+            for (let i = word.length - 2; i >= 0; i--) {
+                const matchResult = this.matchElementFromEnd(word, lastElement, i + 1);
+                if (matchResult.matched) {
+                    // matchElementFromEnd 返回的是匹配的起始位置，结束位置就是传入的 i + 1
+                    foundMatchEnd = i + 1;
+                    break;
+                }
+            }
+            if (foundMatchEnd === -1) return false;
+            matchEnd = foundMatchEnd;
         } else if (beginAnchorType === '\\-b' && endAnchorType === '\\e') {
-            // \\-bAB+CD\\e: A不能是开头，去掉首字母后找到第1个A，后缀是D
+            // \\-bAB+CD\\e: A不能是开头，从位置1开始找第一个A的起始位置，后缀是D
             if (startPos === 0) return false;
             const firstElement = elements[0];
             matchStart = this.findFirstElementFromStart(word, firstElement, 1);
             if (matchStart === -1) return false;
             matchEnd = word.length;
         } else if (beginAnchorType === '\\-b' && endAnchorType === '\\-e') {
-            // \\-bAB+CD\\-e: A不能是开头，D不能是结尾，中间结构且用完
-            if (startPos === 0) return false;
+            // \\-bAB+CD\\-e: A不能是开头，D不能是结尾，从位置1开始找第一个A，从倒数第二个位置反向找最后一个D
+            if (startPos === 0) {
+                return false;
+            }
             const firstElement = elements[0];
             const lastElement = elements[elements.length - 1];
+
             matchStart = this.findFirstElementFromStart(word, firstElement, 1);
-            if (matchStart === -1) return false;
-            matchEnd = this.findLastElementFromEnd(word, lastElement, word.length - 1);
-            if (matchEnd === -1) return false;
+            if (matchStart === -1) {
+                return false;
+            }
+
+            // 从倒数第二个位置开始反向查找最后一个匹配元素的结束位置
+            let foundMatchEnd = -1;
+            for (let i = word.length - 2; i >= 0; i--) {
+                const matchResult = this.matchElementFromEnd(word, lastElement, i + 1);
+                if (matchResult.matched) {
+                    // matchElementFromEnd 返回的是匹配的起始位置，结束位置就是传入的 i + 1
+                    foundMatchEnd = i + 1;
+                    break;
+                }
+            }
+            if (foundMatchEnd === -1) {
+                return false;
+            }
+            matchEnd = foundMatchEnd;
         }
 
         // 检查锚点是否交叉
@@ -1622,13 +2074,15 @@ class RuleEngine {
             }
         }
 
+        let finalResult;
         if (hasAmbiguity) {
             // Enhanced backtracking for ambiguous patterns
-            return this.matchWithEnhancedBacktrack(targetText, elements, 0);
+            finalResult = this.matchWithEnhancedBacktrack(targetText, elements, 0);
         } else {
             // Standard matching for unambiguous patterns
-            return this.matchesPatternSequential(targetText, elements, 0);
+            finalResult = this.matchesPatternSequential(targetText, elements, 0);
         }
+        return finalResult;
     }
 
     /**
@@ -3064,7 +3518,7 @@ class RuleEngine {
             // 在严格排序模式下，如果!不在开头，则忽略!开关
             finalHasNonGrouping = false;
         }
-        
+
         // 宽松排序模式下，如果!不在开头，应该根据!的位置进行分组
         // 这里finalHasNonGrouping应该表示是否完全不分组
         // 对于@(BL^)!(V*)这种情况，应该按!之前的部分分组，所以不是完全不分组
@@ -3814,6 +4268,28 @@ class RuleEngine {
         }
 
         return preview;
+    }
+
+    /**
+     * 筛选单词列表
+     * @param {Array} words - 单词列表
+     * @param {string} ruleName - 规则名称
+     * @returns {Array} 筛选结果
+     */
+    filterWords(words, ruleName) {
+        const rule = this.getRule(ruleName);
+        if (!rule) {
+            throw new Error(`规则 "${ruleName}" 不存在`);
+        }
+
+        const filteredWords = [];
+        for (const word of words) {
+            if (this.matchesRule(word, rule)) {
+                filteredWords.push(word);
+            }
+        }
+
+        return filteredWords;
     }
 }
 
