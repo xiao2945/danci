@@ -2331,26 +2331,79 @@ class RuleEngine {
                 continue;
             }
 
+            // 智能大小写匹配逻辑
+            const isElementLowerCase = setElement === setElement.toLowerCase();
+            
             if (typeof setElement === 'string' && setElement.length > 1) {
                 if (isFromEnd) {
-                    if (startPos - setElement.length >= 0 &&
-                        word.substring(startPos - setElement.length, startPos) === setElement) {
-                        candidates.push({ element: setElement, length: setElement.length });
+                    if (startPos - setElement.length >= 0) {
+                        const wordSubstring = word.substring(startPos - setElement.length, startPos);
+                        let isMatch = false;
+                        
+                        if (isElementLowerCase) {
+                            // 如果集合元素是小写，则大小写都可以匹配
+                            isMatch = wordSubstring.toLowerCase() === setElement;
+                        } else {
+                            // 如果集合元素含大写，则需要精确匹配
+                            isMatch = wordSubstring === setElement;
+                        }
+                        
+                        if (isMatch) {
+                            candidates.push({ element: setElement, length: setElement.length });
+                        }
                     }
                 } else {
-                    if (startPos + setElement.length <= word.length &&
-                        word.substring(startPos, startPos + setElement.length) === setElement) {
-                        candidates.push({ element: setElement, length: setElement.length });
+                    if (startPos + setElement.length <= word.length) {
+                        const wordSubstring = word.substring(startPos, startPos + setElement.length);
+                        let isMatch = false;
+                        
+                        if (isElementLowerCase) {
+                            // 如果集合元素是小写，则大小写都可以匹配
+                            isMatch = wordSubstring.toLowerCase() === setElement;
+                        } else {
+                            // 如果集合元素含大写，则需要精确匹配
+                            isMatch = wordSubstring === setElement;
+                        }
+                        
+                        if (isMatch) {
+                            candidates.push({ element: setElement, length: setElement.length });
+                        }
                     }
                 }
             } else {
                 if (isFromEnd) {
-                    if (startPos > 0 && word[startPos - 1] === setElement) {
-                        candidates.push({ element: setElement, length: 1 });
+                    if (startPos > 0) {
+                        const wordChar = word[startPos - 1];
+                        let isMatch = false;
+                        
+                        if (isElementLowerCase) {
+                            // 如果集合元素是小写，则大小写都可以匹配
+                            isMatch = wordChar.toLowerCase() === setElement;
+                        } else {
+                            // 如果集合元素含大写，则需要精确匹配
+                            isMatch = wordChar === setElement;
+                        }
+                        
+                        if (isMatch) {
+                            candidates.push({ element: setElement, length: 1 });
+                        }
                     }
                 } else {
-                    if (startPos < word.length && word[startPos] === setElement) {
-                        candidates.push({ element: setElement, length: 1 });
+                    if (startPos < word.length) {
+                        const wordChar = word[startPos];
+                        let isMatch = false;
+                        
+                        if (isElementLowerCase) {
+                            // 如果集合元素是小写，则大小写都可以匹配
+                            isMatch = wordChar.toLowerCase() === setElement;
+                        } else {
+                            // 如果集合元素含大写，则需要精确匹配
+                            isMatch = wordChar === setElement;
+                        }
+                        
+                        if (isMatch) {
+                            candidates.push({ element: setElement, length: 1 });
+                        }
                     }
                 }
             }
@@ -4328,12 +4381,25 @@ class RuleEngine {
                 // 对于前缀匹配，只有在startPosition为0时才有效
                 if (startPosition === 0) {
                     for (const element of sortedElements) {
-                        const lowerElement = element.toLowerCase();
-                        if (lowerWord.startsWith(lowerElement)) {
+                        // 智能大小写匹配逻辑
+                        const isElementLowerCase = element === element.toLowerCase();
+                        let matchElement, isMatch;
+                        
+                        if (isElementLowerCase) {
+                            // 如果集合元素是小写，则大小写都可以匹配
+                            matchElement = element;
+                            isMatch = lowerWord.startsWith(element);
+                        } else {
+                            // 如果集合元素含大写，则需要精确匹配
+                            matchElement = element;
+                            isMatch = word.startsWith(element);
+                        }
+                        
+                        if (isMatch) {
                             return {
-                                element: lowerElement,
+                                element: matchElement,
                                 startPosition: 0,
-                                endPosition: lowerElement.length
+                                endPosition: matchElement.length
                             };
                         }
                     }
@@ -4342,30 +4408,53 @@ class RuleEngine {
 
             case '$': // 后缀匹配
                 for (const element of sortedElements) {
-                    const lowerElement = element.toLowerCase();
-                    if (lowerWord.endsWith(lowerElement)) {
-                        const matchStart = lowerWord.length - lowerElement.length;
-                        // 检查匹配位置是否在startPosition之后
-                        if (matchStart >= startPosition) {
-                            return {
-                                element: lowerElement,
-                                startPosition: matchStart,
-                                endPosition: lowerWord.length
-                            };
-                        }
+                    // 智能大小写匹配逻辑
+                    const isElementLowerCase = element === element.toLowerCase();
+                    let matchElement, isMatch, matchStart;
+                    
+                    if (isElementLowerCase) {
+                        // 如果集合元素是小写，则大小写都可以匹配
+                        matchElement = element;
+                        isMatch = lowerWord.endsWith(element);
+                        matchStart = lowerWord.length - element.length;
+                    } else {
+                        // 如果集合元素含大写，则需要精确匹配
+                        matchElement = element;
+                        isMatch = word.endsWith(element);
+                        matchStart = word.length - element.length;
+                    }
+                    
+                    if (isMatch && matchStart >= startPosition) {
+                        return {
+                            element: matchElement,
+                            startPosition: matchStart,
+                            endPosition: isElementLowerCase ? lowerWord.length : word.length
+                        };
                     }
                 }
                 break;
 
             case '*': // 包含匹配
                 for (const element of sortedElements) {
-                    const lowerElement = element.toLowerCase();
-                    const index = lowerWord.indexOf(lowerElement, startPosition);
+                    // 智能大小写匹配逻辑
+                    const isElementLowerCase = element === element.toLowerCase();
+                    let matchElement, index;
+                    
+                    if (isElementLowerCase) {
+                        // 如果集合元素是小写，则大小写都可以匹配
+                        matchElement = element;
+                        index = lowerWord.indexOf(element, startPosition);
+                    } else {
+                        // 如果集合元素含大写，则需要精确匹配
+                        matchElement = element;
+                        index = word.indexOf(element, startPosition);
+                    }
+                    
                     if (index !== -1) {
                         return {
-                            element: lowerElement,
+                            element: matchElement,
                             startPosition: index,
-                            endPosition: index + lowerElement.length
+                            endPosition: index + matchElement.length
                         };
                     }
                 }
@@ -4373,19 +4462,39 @@ class RuleEngine {
 
             case '~': // 严格中间匹配（元素必须出现在单词中间，不在首尾）
                 for (const element of sortedElements) {
-                    const lowerElement = element.toLowerCase();
+                    // 智能大小写匹配逻辑
+                    const isElementLowerCase = element === element.toLowerCase();
+                    let matchElement, index;
+                    
                     // 修复严格中间匹配的位置指针逻辑
                     // 当位置指针为1时，应该从位置2开始搜索
                     // 当位置指针大于1时，直接从指针位置开始搜索
                     const searchStartPos = startPosition === 1 ? 2 : startPosition;
-                    const index = lowerWord.indexOf(lowerElement, searchStartPos);
-                    // 检查元素是否在中间位置（不在开头和结尾）且在startPosition之后
-                    if (index > 0 && index < lowerWord.length - lowerElement.length && index >= startPosition) {
-                        return {
-                            element: lowerElement,
-                            startPosition: index,
-                            endPosition: index + lowerElement.length
-                        };
+                    
+                    if (isElementLowerCase) {
+                        // 如果集合元素是小写，则大小写都可以匹配
+                        matchElement = element;
+                        index = lowerWord.indexOf(element, searchStartPos);
+                        // 检查元素是否在中间位置（不在开头和结尾）且在startPosition之后
+                        if (index > 0 && index < lowerWord.length - element.length && index >= startPosition) {
+                            return {
+                                element: matchElement,
+                                startPosition: index,
+                                endPosition: index + matchElement.length
+                            };
+                        }
+                    } else {
+                        // 如果集合元素含大写，则需要精确匹配
+                        matchElement = element;
+                        index = word.indexOf(element, searchStartPos);
+                        // 检查元素是否在中间位置（不在开头和结尾）且在startPosition之后
+                        if (index > 0 && index < word.length - element.length && index >= startPosition) {
+                            return {
+                                element: matchElement,
+                                startPosition: index,
+                                endPosition: index + matchElement.length
+                            };
+                        }
                     }
                 }
                 break;

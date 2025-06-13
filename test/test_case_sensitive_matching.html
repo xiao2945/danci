@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能大小写匹配测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .test-case.pass {
+            border-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+        .test-case.fail {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+        .test-description {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-details {
+            font-size: 14px;
+            color: #666;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>智能大小写匹配测试</h1>
+        <div id="test-results"></div>
+        <div id="summary" class="summary"></div>
+    </div>
+
+    <script src="../js/ruleEngine.js"></script>
+    <script>
+        // 测试用例
+        const testCases = [
+            {
+                description: "小写集合元素匹配大写单词 - U集合应该匹配不到American",
+                sets: { U: new Set(['A', 'E', 'I', 'O', 'U']) },
+                word: "American",
+                pattern: ":U",
+                expectedMatch: false,
+                reason: "U集合元素是大写，应该精确匹配，不应匹配到American中的小写字母"
+            },
+            {
+                description: "小写集合元素匹配大写单词 - LowV集合应该匹配到American",
+                sets: { LowV: new Set(['a', 'e', 'i', 'o', 'u']) },
+                word: "American",
+                pattern: ":LowV",
+                expectedMatch: true,
+                reason: "LowV集合元素是小写，应该大小写都可以匹配"
+            },
+            {
+                description: "混合大小写集合 - Ab应该精确匹配",
+                sets: { Eg: new Set(['Ab', 'cd']) },
+                word: "About",
+                pattern: ":Eg",
+                expectedMatch: true,
+                reason: "Ab含大写，应该精确匹配About中的Ab"
+            },
+            {
+                description: "混合大小写集合 - Ab不应该匹配ab",
+                sets: { Eg: new Set(['Ab', 'cd']) },
+                word: "about",
+                pattern: ":Eg",
+                expectedMatch: false,
+                reason: "Ab含大写，应该精确匹配，不应匹配about中的ab"
+            },
+            {
+                description: "混合大小写集合 - cd应该匹配CD",
+                sets: { Eg: new Set(['Ab', 'cd']) },
+                word: "ABCD",
+                pattern: ":Eg",
+                expectedMatch: true,
+                reason: "cd是小写，应该大小写都可以匹配，可以匹配ABCD中的CD"
+            },
+            {
+                description: "混合大小写集合 - cd应该匹配cd",
+                sets: { Eg: new Set(['Ab', 'cd']) },
+                word: "abcd",
+                pattern: ":Eg",
+                expectedMatch: true,
+                reason: "cd是小写，应该匹配abcd中的cd"
+            },
+            {
+                description: "单字符大写集合 - A不应该匹配a",
+                sets: { UpperA: new Set(['A']) },
+                word: "apple",
+                pattern: ":UpperA",
+                expectedMatch: false,
+                reason: "A是大写，应该精确匹配，不应匹配apple中的a"
+            },
+            {
+                description: "单字符小写集合 - a应该匹配A",
+                sets: { LowerA: new Set(['a']) },
+                word: "Apple",
+                pattern: ":LowerA",
+                expectedMatch: true,
+                reason: "a是小写，应该大小写都可以匹配，可以匹配Apple中的A"
+            },
+            {
+                description: "后缀匹配 - 大写tion不应该匹配小写tion",
+                sets: { UpperSuffix: new Set(['TION']) },
+                word: "creation",
+                pattern: ":UpperSuffix$",
+                expectedMatch: false,
+                reason: "TION是大写，应该精确匹配，不应匹配creation中的tion"
+            },
+            {
+                description: "后缀匹配 - 小写tion应该匹配大写TION",
+                sets: { LowerSuffix: new Set(['tion']) },
+                word: "CREATION",
+                pattern: ":LowerSuffix$",
+                expectedMatch: true,
+                reason: "tion是小写，应该大小写都可以匹配，可以匹配CREATION中的TION"
+            }
+        ];
+
+        // 执行测试
+        function runTests() {
+            const resultsContainer = document.getElementById('test-results');
+            const summaryContainer = document.getElementById('summary');
+            let passCount = 0;
+            let totalCount = testCases.length;
+
+            testCases.forEach((testCase, index) => {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-case';
+
+                try {
+                    // 创建规则引擎实例
+                    const ruleEngine = new RuleEngine();
+                    
+                    // 设置集合
+                    for (const [setName, setValues] of Object.entries(testCase.sets)) {
+                        ruleEngine.globalSets.set(setName, setValues);
+                    }
+
+                    // 解析并执行规则
+                    const parsedRule = ruleEngine.parseRule(testCase.pattern);
+                    const result = ruleEngine.matchWord(testCase.word, parsedRule);
+                    const actualMatch = result.isMatch;
+
+                    // 判断测试是否通过
+                    const testPassed = actualMatch === testCase.expectedMatch;
+                    
+                    if (testPassed) {
+                        passCount++;
+                        testDiv.classList.add('pass');
+                    } else {
+                        testDiv.classList.add('fail');
+                    }
+
+                    testDiv.innerHTML = `
+                        <div class="test-description">
+                            测试 ${index + 1}: ${testCase.description}
+                            <span class="${testPassed ? 'success' : 'error'}">
+                                ${testPassed ? '✓ 通过' : '✗ 失败'}
+                            </span>
+                        </div>
+                        <div class="test-details">
+                            <strong>单词:</strong> ${testCase.word}<br>
+                            <strong>模式:</strong> ${testCase.pattern}<br>
+                            <strong>集合:</strong> ${JSON.stringify(Object.fromEntries(
+                                Object.entries(testCase.sets).map(([k, v]) => [k, Array.from(v)])
+                            ))}<br>
+                            <strong>期望匹配:</strong> ${testCase.expectedMatch}<br>
+                            <strong>实际匹配:</strong> ${actualMatch}<br>
+                            <strong>原因:</strong> ${testCase.reason}
+                            ${result.matches ? '<br><strong>匹配详情:</strong> ' + JSON.stringify(result.matches) : ''}
+                        </div>
+                    `;
+
+                } catch (error) {
+                    testDiv.classList.add('fail');
+                    testDiv.innerHTML = `
+                        <div class="test-description">
+                            测试 ${index + 1}: ${testCase.description}
+                            <span class="error">✗ 错误</span>
+                        </div>
+                        <div class="test-details">
+                            <strong>错误:</strong> ${error.message}<br>
+                            <strong>原因:</strong> ${testCase.reason}
+                        </div>
+                    `;
+                }
+
+                resultsContainer.appendChild(testDiv);
+            });
+
+            // 显示总结
+            const passRate = ((passCount / totalCount) * 100).toFixed(1);
+            summaryContainer.innerHTML = `
+                <h3>测试总结</h3>
+                <p>总测试数: ${totalCount}</p>
+                <p>通过数: <span class="success">${passCount}</span></p>
+                <p>失败数: <span class="error">${totalCount - passCount}</span></p>
+                <p>通过率: <strong>${passRate}%</strong></p>
+            `;
+        }
+
+        // 页面加载完成后运行测试
+        document.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>
