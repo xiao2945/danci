@@ -3,9 +3,9 @@
  */
 class VersionManager {
     constructor() {
-        this.version = 'v1.3.5';
+        this.version = 'v1.3.6';
         this.releaseDate = '2025-06-13';
-        this.description = '完成筛选规则的全面测试，修复锚点匹配逻辑和验证顺序问题';
+        this.description = '修复排序单元规则解析问题，实现规则导入同名检查功能';
     }
 
     /**

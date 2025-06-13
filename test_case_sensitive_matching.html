@@ -74,18 +74,18 @@
         // 测试用例
         const testCases = [
             {
-                description: "小写集合元素匹配大写单词 - U集合应该匹配不到American",
+                description: "大写集合元素匹配大写单词 - U集合应该匹配到American",
                 sets: { U: new Set(['A', 'E', 'I', 'O', 'U']) },
                 word: "American",
-                pattern: ":U",
-                expectedMatch: false,
-                reason: "U集合元素是大写，应该精确匹配，不应匹配到American中的小写字母"
+                pattern: ":(U)",
+                expectedMatch: true,
+                reason: "U集合元素是大写，应该精确匹配，可以匹配到American中的大写字母A"
             },
             {
                 description: "小写集合元素匹配大写单词 - LowV集合应该匹配到American",
                 sets: { LowV: new Set(['a', 'e', 'i', 'o', 'u']) },
                 word: "American",
-                pattern: ":LowV",
+                pattern: ":(LowV)",
                 expectedMatch: true,
                 reason: "LowV集合元素是小写，应该大小写都可以匹配"
             },
@@ -93,7 +93,7 @@
                 description: "混合大小写集合 - Ab应该精确匹配",
                 sets: { Eg: new Set(['Ab', 'cd']) },
                 word: "About",
-                pattern: ":Eg",
+                pattern: ":(Eg)",
                 expectedMatch: true,
                 reason: "Ab含大写，应该精确匹配About中的Ab"
             },
@@ -101,7 +101,7 @@
                 description: "混合大小写集合 - Ab不应该匹配ab",
                 sets: { Eg: new Set(['Ab', 'cd']) },
                 word: "about",
-                pattern: ":Eg",
+                pattern: ":(Eg)",
                 expectedMatch: false,
                 reason: "Ab含大写，应该精确匹配，不应匹配about中的ab"
             },
@@ -109,7 +109,7 @@
                 description: "混合大小写集合 - cd应该匹配CD",
                 sets: { Eg: new Set(['Ab', 'cd']) },
                 word: "ABCD",
-                pattern: ":Eg",
+                pattern: ":(Eg)",
                 expectedMatch: true,
                 reason: "cd是小写，应该大小写都可以匹配，可以匹配ABCD中的CD"
             },
@@ -117,7 +117,7 @@
                 description: "混合大小写集合 - cd应该匹配cd",
                 sets: { Eg: new Set(['Ab', 'cd']) },
                 word: "abcd",
-                pattern: ":Eg",
+                pattern: ":(Eg)",
                 expectedMatch: true,
                 reason: "cd是小写，应该匹配abcd中的cd"
             },
@@ -125,7 +125,7 @@
                 description: "单字符大写集合 - A不应该匹配a",
                 sets: { UpperA: new Set(['A']) },
                 word: "apple",
-                pattern: ":UpperA",
+                pattern: ":(UpperA)",
                 expectedMatch: false,
                 reason: "A是大写，应该精确匹配，不应匹配apple中的a"
             },
@@ -133,7 +133,7 @@
                 description: "单字符小写集合 - a应该匹配A",
                 sets: { LowerA: new Set(['a']) },
                 word: "Apple",
-                pattern: ":LowerA",
+                pattern: ":(LowerA)",
                 expectedMatch: true,
                 reason: "a是小写，应该大小写都可以匹配，可以匹配Apple中的A"
             },
@@ -141,7 +141,7 @@
                 description: "后缀匹配 - 大写tion不应该匹配小写tion",
                 sets: { UpperSuffix: new Set(['TION']) },
                 word: "creation",
-                pattern: ":UpperSuffix$",
+                pattern: ":(UpperSuffix)$",
                 expectedMatch: false,
                 reason: "TION是大写，应该精确匹配，不应匹配creation中的tion"
             },
@@ -149,7 +149,7 @@
                 description: "后缀匹配 - 小写tion应该匹配大写TION",
                 sets: { LowerSuffix: new Set(['tion']) },
                 word: "CREATION",
-                pattern: ":LowerSuffix$",
+                pattern: ":(LowerSuffix)$",
                 expectedMatch: true,
                 reason: "tion是小写，应该大小写都可以匹配，可以匹配CREATION中的TION"
             }
@@ -175,10 +175,12 @@
                         ruleEngine.globalSets.set(setName, setValues);
                     }
 
+                    // 构造完整的规则文本
+                    const ruleText = `# 测试规则${index + 1}\n${testCase.pattern}`;
+                    
                     // 解析并执行规则
-                    const parsedRule = ruleEngine.parseRule(testCase.pattern);
-                    const result = ruleEngine.matchWord(testCase.word, parsedRule);
-                    const actualMatch = result.isMatch;
+                    const parsedRule = ruleEngine.parseRule(ruleText);
+                    const actualMatch = ruleEngine.matchesRule(testCase.word, parsedRule);
 
                     // 判断测试是否通过
                     const testPassed = actualMatch === testCase.expectedMatch;
@@ -206,7 +208,6 @@
                             <strong>期望匹配:</strong> ${testCase.expectedMatch}<br>
                             <strong>实际匹配:</strong> ${actualMatch}<br>
                             <strong>原因:</strong> ${testCase.reason}
-                            ${result.matches ? '<br><strong>匹配详情:</strong> ' + JSON.stringify(result.matches) : ''}
                         </div>
                     `;
 
